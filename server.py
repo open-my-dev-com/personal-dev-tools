@@ -341,9 +341,8 @@ def init_db():
         )
         """
     )
-    # Seed i18n from JSON files if table is empty
-    if conn.execute("SELECT COUNT(*) FROM i18n").fetchone()[0] == 0:
-        _seed_i18n(conn)
+    # Seed i18n from JSON files (INSERT OR IGNORE — adds new keys without overwriting user edits)
+    _seed_i18n(conn)
     conn.commit()
     conn.close()
 
@@ -1823,6 +1822,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/site-config":
             self._dev_get_site_config()
             return
+        if path == "/api/dev/onboarding":
+            self._dev_get_onboarding()
+            return
         if path == "/api/dev/cdn/status":
             self._dev_cdn_status()
             return
@@ -1941,6 +1943,10 @@ input[type="checkbox"] {{ margin-right: 6px; }}
 
         if path == "/api/diff/save":
             self._diff_save_file()
+            return
+
+        if path == "/api/dev/onboarding/complete":
+            self._dev_complete_onboarding()
             return
 
         self._proxy_mock("POST", path)
@@ -2822,6 +2828,30 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         conn.commit()
         conn.close()
         logger.info("Site config changed: name=%s, lang=%s", site_name, lang)
+        self._send_json({"ok": True})
+
+    def _dev_get_onboarding(self):
+        conn = get_conn()
+        row = conn.execute("SELECT value FROM dev_settings WHERE key='onboarding_complete'").fetchone()
+        conn.close()
+        completed = False
+        if row:
+            try:
+                completed = json.loads(row[0]).get("completed", False)
+            except Exception:
+                completed = False
+        self._send_json({"ok": True, "completed": completed})
+
+    def _dev_complete_onboarding(self):
+        import datetime
+        config = {"completed": True, "completedAt": datetime.datetime.now().isoformat()}
+        conn = get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO dev_settings (key, value, encrypted) VALUES ('onboarding_complete', ?, 0)",
+            (json.dumps(config),),
+        )
+        conn.commit()
+        conn.close()
         self._send_json({"ok": True})
 
     def _dev_get_modules(self):
