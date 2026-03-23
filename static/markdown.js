@@ -1068,6 +1068,9 @@ var mdProofreadToggle = document.getElementById("mdProofreadToggle");
 var mdProofreadMenu = document.getElementById("mdProofreadMenu");
 var mdProofreadStyle = document.getElementById("mdProofreadStyle");
 var mdProofreadPanel = document.getElementById("mdProofreadPanel");
+var mdAiProvider = document.getElementById("mdAiProvider");
+
+loadAiProviders(mdAiProvider);
 var mdProofreadHeader = document.getElementById("mdProofreadHeader");
 var mdProofreadBody = document.getElementById("mdProofreadBody");
 var mdProofreadCount = document.getElementById("mdProofreadCount");
@@ -1143,7 +1146,7 @@ function updateCharCount() {
   }
 }
 mdInput.addEventListener("input", updateCharCount);
-updateCharCount();
+i18nReady(updateCharCount);
 
 // 드롭다운 토글
 mdProofreadToggle.addEventListener("click", function (e) {
@@ -1178,7 +1181,7 @@ mdProofreadBtn.addEventListener("click", async function () {
     var resp = await fetch("/api/md/proofread", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text, includeStyle: mdProofreadStyle.checked }),
+      body: JSON.stringify({ text: text, includeStyle: mdProofreadStyle.checked, provider: mdAiProvider.value }),
     });
     var data = await resp.json();
     if (!data.ok) {

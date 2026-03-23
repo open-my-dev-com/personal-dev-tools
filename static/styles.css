@@ -360,6 +360,9 @@ button:hover {
 }
 .opt-label input[type="checkbox"] { margin: 0; accent-color: var(--accent); }
 .opt-label select { padding: 4px 8px; font-size: 12px; border-radius: var(--radius-sm); }
+.ai-provider-select { padding: 4px 8px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); }
+.ai-key-status { font-size: 11px; font-weight: 400; color: #9ca3af; margin-left: 4px; }
+.ai-key-status.registered { color: #16a34a; }
 #mybatisStatus, #jsonFmtStatus, #translateStatus, #csvStatus {
   color: var(--muted);
   font-size: 12px;
@@ -1030,7 +1033,8 @@ textarea.dev-detail-edit { resize: vertical; white-space: pre; min-height: 40px;
 
 /* ===== Data AI ===== */
 .dataai-prompt { width: 100%; resize: vertical; font-size: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: inherit; box-sizing: border-box; }
-.dataai-options { display: flex; gap: 12px; align-items: end; margin-top: 8px; flex-wrap: wrap; }
+.dataai-options { display: flex; gap: 12px; align-items: center; margin-top: 8px; flex-wrap: wrap; justify-content: space-between; }
+.dataai-options-left { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .dataai-status { margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
 .dataai-status.loading { background: #eff6ff; color: #2563eb; }
 .dataai-status.error { background: #fef2f2; color: #dc2626; }
@@ -1525,6 +1529,21 @@ textarea.dev-detail-edit { resize: vertical; white-space: pre; min-height: 40px;
 .onboarding-tab-item:hover { background: var(--hover, #f8fafc); }
 .onboarding-tab-item input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 .onboarding-tab-item label { flex: 1; cursor: pointer; font-size: 14px; }
+
+.onboarding-apikeys-list {
+  display: flex; flex-direction: column; gap: 10px;
+  margin: 16px 0; padding: 16px; border: 1px solid var(--line, #e2e8f0); border-radius: 10px;
+}
+.onboarding-apikey-field {
+  display: flex; align-items: center; gap: 12px;
+}
+.onboarding-apikey-field span {
+  width: 70px; font-size: 14px; font-weight: 600; flex-shrink: 0;
+}
+.onboarding-apikey-field input {
+  flex: 1; padding: 8px 12px; border: 1px solid var(--line, #e2e8f0);
+  border-radius: 8px; font-size: 13px; background: var(--bg, #fff);
+}
 
 /* ── Tutorial Page ── */
 .tutorial-cards {

@@ -12,7 +12,7 @@
 | CSV 편집기 | CSV 편집, 인코딩 변환, 중복 분석, 행/열 추가 |
 | Markdown | 에디터 + 실시간 미리보기, AI 맞춤법 검수, 팝업 보기, 저장/버전 관리 |
 | JSON 정렬 | JSON 정렬, 포맷팅, 트리 뷰 |
-| 번역 | OpenAI 기반 다국어 번역 |
+| 번역 | AI 기반 다국어 번역 (OpenAI, Gemini, Claude, Grok) |
 | MyBatis | MyBatis XML ↔ 쿼리 변환 |
 | 글자수 세기 | 바이트/글자/단어 카운트, 인코딩별 바이트 수 |
 | Diff 비교 | 텍스트 비교 (인라인/사이드바이사이드) |
@@ -20,7 +20,8 @@
 | 파라미터 변환 | URL 파라미터 ↔ JSON 상호 변환 |
 | Git 관리 | 로컬 Git 저장소 상태 확인, 커밋, 브랜치 관리 |
 | Data AI | AI 기반 가상 데이터 생성 (CSV/JSON/TSV), DB 저장 |
-| 개발자 모드 | 툴 명 변경, DB 탐색기, 탭 관리, 모듈 설정, CDN 라이브러리 관리 |
+| Tutorial | 각 도구별 사용법 가이드 |
+| 개발자 모드 | 툴 명 변경, DB 탐색기, 탭 관리, 모듈 설정, AI API 키 관리, CDN 라이브러리 관리 |
 
 ## 시작하기
 
@@ -61,11 +62,6 @@ python3 -m venv .venv
 source .venv/bin/activate        # macOS / Linux
 .venv\Scripts\activate           # Windows
 
-# 환경변수 설정 (AI 기능 사용 시)
-cp .env.example .env             # macOS / Linux
-copy .env.example .env           # Windows
-# .env 파일에 OPENAI_API_KEY 입력
-
 # 서버 실행
 python3 server.py                # macOS / Linux
 python server.py                 # Windows
@@ -81,12 +77,13 @@ python3 server.py --no-open          # 브라우저 자동 열기 비활성화
 
 ### 3. AI 기능 설정 (선택)
 
-번역, 맞춤법 검수, Data AI 기능을 사용하려면 OpenAI API Key가 필요합니다.
+번역, 맞춤법 검수, Data AI 기능을 사용하려면 AI API Key가 필요합니다.
 사용하지 않는다면 이 과정은 건너뛰어도 됩니다.
 
-1. [OpenAI API Keys](https://platform.openai.com/api-keys) 페이지에서 회원가입 후 API Key를 발급받습니다.
-2. 프로젝트 폴더의 `.env.example` 파일을 `.env`로 복사합니다.
-3. `.env` 파일을 메모장(Windows) 또는 텍스트 편집기(macOS)로 열고, `sk-your-api-key-here` 부분을 발급받은 키로 교체합니다.
+**지원 AI 프로바이더**: OpenAI, Google Gemini, Anthropic Claude, xAI Grok
+
+첫 실행 시 온보딩 위자드에서 API 키를 등록하거나, 이후 **DEV > 모듈 설정**에서 등록할 수 있습니다.
+환경변수(`.env`)로도 설정 가능합니다: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `GROK_API_KEY`
 
 ### 오프라인 사용
 
@@ -96,7 +93,7 @@ python3 server.py --no-open          # 브라우저 자동 열기 비활성화
 2. **현재 버전 다운로드** 또는 **최신 버전 다운로드** 클릭
 3. `static/vendor/`에 저장되며, 이후 오프라인에서도 동작
 
-> AI 기능(번역, 검수, Data AI)은 OpenAI API 연결이 필요하므로 오프라인에서 사용 불가
+> AI 기능(번역, 검수, Data AI)은 AI API 연결이 필요하므로 오프라인에서 사용 불가
 
 ## 패키지 의존성
 
@@ -104,12 +101,15 @@ python3 server.py --no-open          # 브라우저 자동 열기 비활성화
 
 | 패키지 | 용도 | 필수 여부 |
 |--------|------|-----------|
-| `openai` | AI 번역, 맞춤법 검수, Data AI | AI 기능 사용 시 |
+| `openai` | OpenAI AI 연동 | AI 기능 사용 시 |
+| `anthropic` | Claude AI 연동 | AI 기능 사용 시 |
+| `google-genai` | Gemini AI 연동 | AI 기능 사용 시 |
+| `xai-sdk` | Grok AI 연동 | AI 기능 사용 시 |
 | `cryptography` | 개발자 모드 암호화 | 개발자 모드 사용 시 |
 | `openpyxl` | PDF → XLSX 변환 | PDF 변환 사용 시 |
 | `python-pptx` | PDF → PPTX 변환 | PDF 변환 사용 시 |
 
-> 자동 설치가 실패하면 수동으로 설치: `pip install openai cryptography openpyxl python-pptx`
+> 자동 설치가 실패하면 수동으로 설치: `pip install openai anthropic google-genai xai-sdk cryptography openpyxl python-pptx`
 
 ## 프로젝트 구조
 
@@ -117,13 +117,13 @@ python3 server.py --no-open          # 브라우저 자동 열기 비활성화
 ├── server.py           # Python 서버 (전체 백엔드)
 ├── start.sh            # macOS/Linux 간편 실행
 ├── start.bat           # Windows 간편 실행
-├── .env.example        # 환경변수 예시
 ├── static/
 │   ├── index.html      # 메인 페이지
 │   ├── styles.css      # 스타일
 │   ├── app.js          # 공통 로직
 │   ├── *.js            # 각 도구별 클라이언트 스크립트
 │   └── vendor/         # CDN 라이브러리 로컬 캐시 (gitignore)
+├── dev-tool.db         # SQLite 데이터베이스 (자동 생성, gitignore)
 ├── logs/               # 서버 로그 (gitignore)
 └── .env                # 환경변수 (gitignore)
 ```

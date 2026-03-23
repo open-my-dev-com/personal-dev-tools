@@ -12,7 +12,10 @@ var dataaiToCsvBtn = document.getElementById("dataaiToCsvBtn");
 var dataaiToJsonBtn = document.getElementById("dataaiToJsonBtn");
 var dataaiSaveBtn = document.getElementById("dataaiSaveBtn");
 var dataaiPreviewWrap = document.getElementById("dataaiPreviewWrap");
+var dataaiProvider = document.getElementById("dataaiProvider");
 var dataaiSavesBody = document.querySelector("#dataaiSavesTable tbody");
+
+loadAiProviders(dataaiProvider);
 
 var _dataaiLastResult = "";
 var _dataaiLastPrompt = "";
@@ -150,7 +153,7 @@ dataaiGenerateBtn.addEventListener("click", async function () {
     var r = await fetch("/api/dataai/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: prompt, format: fmt, count: count }),
+      body: JSON.stringify({ prompt: prompt, format: fmt, count: count, provider: dataaiProvider.value }),
     });
     var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     var res = await r.json();
