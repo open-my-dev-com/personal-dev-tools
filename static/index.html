@@ -29,6 +29,7 @@
           <button class="nav-btn" data-tab="dataai" data-tooltip="Data AI" data-i18n-tooltip="nav.dataai"><i data-lucide="sparkles"></i><span class="nav-label" data-i18n="nav.dataai">Data AI</span></button>
           <hr class="nav-divider">
           <button class="nav-btn dev-mode-btn" data-tab="devmode" data-tooltip="DEV"><i data-lucide="wrench"></i><span class="nav-label">DEV</span></button>
+          <button class="nav-btn" data-tab="tutorial" data-tooltip="Tutorial"><i data-lucide="book-open"></i><span class="nav-label">Tutorial</span></button>
         </nav>
       </aside>
 
@@ -948,6 +949,19 @@
             </div>
           </section>
         </div>
+
+        <!-- 튜토리얼 -->
+        <div class="tab-content" data-tab="tutorial">
+          <section class="panel tutorial-panel">
+            <h2 data-i18n="tutorial.title">사용 가이드</h2>
+            <p class="desc" data-i18n="tutorial.subtitle">각 도구의 사용법을 확인하세요. 카드를 클릭하면 상세 가이드가 열립니다.</p>
+            <div class="tutorial-cards" id="tutorialCards"></div>
+            <div class="tutorial-detail" id="tutorialDetail" style="display:none">
+              <button class="tutorial-back-btn" id="tutorialBackBtn" data-i18n="tutorial.back_to_list">목록으로</button>
+              <div id="tutorialDetailContent"></div>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
 
@@ -974,5 +988,7 @@
     <script src="/dataai.js"></script>
     <script src="/i18n.js"></script>
     <script src="/devmode.js"></script>
+    <script src="/tutorial.js"></script>
+    <script src="/onboarding.js"></script>
   </body>
 </html>
