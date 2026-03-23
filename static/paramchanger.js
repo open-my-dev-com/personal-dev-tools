@@ -35,7 +35,7 @@ function convertParams() {
   const items = parseItems(paramInput.value);
   if (!items.length) {
     paramOutput.value = "";
-    setParamStatus("입력값이 없습니다", true);
+    setParamStatus(t("common.no_input"), true);
     return;
   }
   const fmt = paramFormat.value;
@@ -51,7 +51,7 @@ function convertParams() {
     default:        result = items.join(",");
   }
   paramOutput.value = result;
-  setParamStatus(`${items.length}개 항목 변환 완료`);
+  setParamStatus(t("param.convert_done", {count: items.length}));
 }
 
 paramConvertBtn.addEventListener("click", convertParams);
@@ -61,6 +61,6 @@ paramDelimiter.addEventListener("change", convertParams);
 
 paramCopyBtn.addEventListener("click", () => {
   const text = paramOutput.value;
-  if (!text) { setParamStatus("복사할 내용이 없습니다", true); return; }
-  navigator.clipboard.writeText(text).then(() => setParamStatus("복사 완료"));
+  if (!text) { setParamStatus(t("param.no_copy"), true); return; }
+  navigator.clipboard.writeText(text).then(() => setParamStatus(t("param.copy_done")));
 });

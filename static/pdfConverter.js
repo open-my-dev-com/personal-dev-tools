@@ -53,7 +53,7 @@ function addFiles(fileList) {
   for (const file of fileList) {
     const ext = getFileExt(file.name);
     if (!PDF_SUPPORTED_EXTS.has(ext)) {
-      setPdfStatus(`지원하지 않는 형식: .${ext}`, true);
+      setPdfStatus(t("pdf.unsupported", {ext}), true);
       continue;
     }
     const reader = new FileReader();
@@ -92,17 +92,17 @@ function renderFileList() {
     const statusClass = f.status === "ready" ? "pdf-status-ready" :
                         f.status === "error" ? "pdf-status-error" :
                         "pdf-status-pending";
-    const statusText = f.status === "ready" ? "준비" :
-                       f.status === "error" ? "실패" :
-                       f.status === "converting" ? "변환중..." : "대기";
+    const statusText = f.status === "ready" ? t("pdf.status_ready") :
+                       f.status === "error" ? t("pdf.status_fail") :
+                       f.status === "converting" ? t("pdf.status_converting") : t("pdf.status_waiting");
     html += `<div class="pdf-file-item" data-id="${f.id}">
-      <span class="pdf-file-drag" title="드래그하여 순서 변경">☰</span>
+      <span class="pdf-file-drag" title="${t("pdf.drag_reorder")}">☰</span>
       <span class="pdf-file-icon">${getFileIcon(f.ext)}</span>
       <span class="pdf-file-name">${escHtml(f.name)}</span>
       <span class="pdf-file-size">${formatFileSize(f.size)}</span>
       <span class="pdf-file-status ${statusClass}">${statusText}</span>
-      <button class="pdf-file-preview-btn" data-id="${f.id}" title="미리보기">미리보기</button>
-      <button class="pdf-file-remove" data-id="${f.id}" title="제거">✕</button>
+      <button class="pdf-file-preview-btn" data-id="${f.id}" title="${t("common.preview")}">${t("common.preview")}</button>
+      <button class="pdf-file-remove" data-id="${f.id}" title="${t("pdf.remove")}">✕</button>
     </div>`;
   });
   pdfFileList.innerHTML = html;
@@ -213,7 +213,7 @@ async function convertFileToHtml(entry) {
   } catch (e) {
     console.error("PDF convert error:", e);
     entry.status = "error";
-    entry.htmlContent = `<p style="color:red">변환 실패: ${escHtml(e.message)}</p>`;
+    entry.htmlContent = `<p style="color:red">${t("pdf.convert_fail", {msg: escHtml(e.message)})}</p>`;
   }
   renderFileList();
 }
@@ -232,7 +232,7 @@ async function serverConvert(arrayBuffer, url) {
   formData.append("file", new Blob([arrayBuffer]));
   const res = await fetch(url, { method: "POST", body: formData });
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || "서버 변환 실패");
+  if (!data.ok) throw new Error(data.error || t("pdf.server_fail"));
   return data.html;
 }
 
@@ -242,8 +242,8 @@ async function showPreview(fileId) {
   if (!file || !file.htmlContent) return;
   pdfPreview.style.display = "";
   pdfPreview.innerHTML = `<div class="pdf-preview-header">
-    <span>미리보기: ${escHtml(file.name)}</span>
-    <button class="pdf-preview-close" id="pdfPreviewClose">닫기</button>
+    <span>${t("pdf.preview_title", {name: escHtml(file.name)})}</span>
+    <button class="pdf-preview-close" id="pdfPreviewClose">${t("common.close")}</button>
   </div>
   <div class="pdf-preview-content">${file.htmlContent}</div>`;
   document.getElementById("pdfPreviewClose").addEventListener("click", () => {
@@ -260,7 +260,7 @@ async function showPreview(fileId) {
         const { svg } = await mermaid.render("pdf-mermaid-" + Date.now() + Math.random().toString(36).slice(2), code);
         el.innerHTML = svg;
       } catch (e) {
-        el.innerHTML = `<pre style="color:#bf233a;font-size:12px">Mermaid 오류: ${e.message || e}</pre>`;
+        el.innerHTML = `<pre style="color:#bf233a;font-size:12px">${t("md.mermaid_error", {msg: e.message || e})}</pre>`;
       }
     }
   }
@@ -279,7 +279,7 @@ async function renderMermaidInContainer(container) {
       var result = await mermaid.render("pdf-mermaid-" + Date.now() + "-" + i, code);
       el.innerHTML = result.svg;
     } catch (e) {
-      el.innerHTML = '<pre style="color:#bf233a;font-size:12px">Mermaid 오류: ' + (e.message || e) + '</pre>';
+      el.innerHTML = '<pre style="color:#bf233a;font-size:12px">' + t("md.mermaid_error", {msg: e.message || e}) + '</pre>';
     }
   }
 }
@@ -336,8 +336,8 @@ function getPdfOptions() {
 // ── 개별 변환 ──
 document.getElementById("pdfConvertBtn").addEventListener("click", async () => {
   const readyFiles = pdfFiles.filter(f => f.status === "ready");
-  if (!readyFiles.length) { setPdfStatus("변환할 파일이 없습니다", true); return; }
-  setPdfStatus(`${readyFiles.length}개 파일 변환 중...`);
+  if (!readyFiles.length) { setPdfStatus(t("pdf.no_files"), true); return; }
+  setPdfStatus(t("pdf.converting", {count: readyFiles.length}));
   const opts = getPdfOptions();
 
   for (const file of readyFiles) {
@@ -377,18 +377,18 @@ document.getElementById("pdfConvertBtn").addEventListener("click", async () => {
       document.body.removeChild(container);
     } catch (e) {
       console.error("PDF generation error:", e);
-      setPdfStatus(`${file.name} 변환 실패: ${e.message}`, true);
+      setPdfStatus(t("pdf.file_fail", {name: file.name, msg: e.message}), true);
       return;
     }
   }
-  setPdfStatus(`${readyFiles.length}개 파일 PDF 변환 완료`);
+  setPdfStatus(t("pdf.convert_done", {count: readyFiles.length}));
 });
 
 // ── 병합 변환 ──
 document.getElementById("pdfMergeBtn").addEventListener("click", async () => {
   const readyFiles = pdfFiles.filter(f => f.status === "ready");
-  if (readyFiles.length < 2) { setPdfStatus("병합하려면 2개 이상의 파일이 필요합니다", true); return; }
-  setPdfStatus(`${readyFiles.length}개 파일 병합 중...`);
+  if (readyFiles.length < 2) { setPdfStatus(t("pdf.merge_min"), true); return; }
+  setPdfStatus(t("pdf.merging", {count: readyFiles.length}));
   const opts = getPdfOptions();
 
   const container = document.createElement("div");
@@ -427,9 +427,9 @@ document.getElementById("pdfMergeBtn").addEventListener("click", async () => {
     await worker.toPdf().get("pdf").then(function(pdf) {
       addOutlineFromHeadings(pdf, headings, containerH, opts);
     }).save();
-    setPdfStatus(`${readyFiles.length}개 파일 병합 PDF 완료`);
+    setPdfStatus(t("pdf.merge_done", {count: readyFiles.length}));
   } catch (e) {
-    setPdfStatus("병합 실패: " + e.message, true);
+    setPdfStatus(t("pdf.merge_fail", {msg: e.message}), true);
   }
   document.body.removeChild(container);
 });
@@ -455,14 +455,14 @@ pdfLoadMdSaveBtn.addEventListener("click", async () => {
   try {
     const res = await fetch("/api/md/saves");
     const items = await res.json();
-    if (!items || !items.length) { setPdfStatus("저장된 Markdown이 없습니다", true); return; }
-    pdfMdSaveSelect.innerHTML = '<option value="">-- 선택 --</option>';
+    if (!items || !items.length) { setPdfStatus(t("pdf.no_md_saved"), true); return; }
+    pdfMdSaveSelect.innerHTML = '<option value="">-- ' + t("common.file_select") + ' --</option>';
     items.forEach(item => {
       pdfMdSaveSelect.innerHTML += `<option value="${item.id}">${escHtml(item.name)}</option>`;
     });
     pdfMdSaveSelect.style.display = "";
   } catch (e) {
-    setPdfStatus("Markdown 목록 로드 실패", true);
+    setPdfStatus(t("pdf.md_list_fail"), true);
   }
 });
 
@@ -486,8 +486,8 @@ pdfMdSaveSelect.addEventListener("change", async () => {
     renderFileList();
     convertFileToHtml(entry);
     pdfMdSaveSelect.style.display = "none";
-    setPdfStatus(`"${item.name}" 추가됨`);
+    setPdfStatus(t("pdf.md_added", {name: item.name}));
   } catch (e) {
-    setPdfStatus("Markdown 불러오기 실패", true);
+    setPdfStatus(t("pdf.md_load_fail"), true);
   }
 });

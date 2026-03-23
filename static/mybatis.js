@@ -217,7 +217,7 @@
     var rawParams = paramsInput.value.trim();
 
     if (!rawQuery) {
-      setStatus("SQL 쿼리를 입력하세요.", true);
+      setStatus(t("mybatis.sql_required"), true);
       return;
     }
 
@@ -239,20 +239,20 @@
 
     // 결과 출력
     var paramInfo = params.length > 0
-      ? params.length + "개 파라미터 바인딩 완료"
-      : "파라미터 없음";
+      ? t("mybatis.bind_done", {count: params.length})
+      : t("mybatis.no_params");
     setStatus(paramInfo);
 
     resultEl.innerHTML =
       '<div class="mybatis-query-block" style="position:relative">' +
       '<pre><code>' + esc(bound) + '</code></pre>' +
-      '<button type="button" class="mybatis-copy-btn">복사</button>' +
+      '<button type="button" class="mybatis-copy-btn">' + t("common.copy") + '</button>' +
       "</div>";
 
     // 복사 버튼
     resultEl.querySelector(".mybatis-copy-btn").addEventListener("click", function () {
       navigator.clipboard.writeText(bound).then(function () {
-        setStatus("클립보드에 복사되었습니다.");
+        setStatus(t("mybatis.copied"));
       });
     });
   }
@@ -292,7 +292,7 @@
         queryInput.value = queryLines.join("\n").trim();
         paramsInput.value = paramLines.join("\n").trim();
         paramsInput.focus();
-        setStatus("로그에서 쿼리와 파라미터를 자동 분리했습니다.");
+        setStatus(t("mybatis.auto_split"));
       }
     }, 0);
   });

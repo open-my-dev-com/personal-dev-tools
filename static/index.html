@@ -12,21 +12,21 @@
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <h1 class="logo">Personal Dev Tools</h1>
-          <button class="sidebar-toggle" id="sidebarToggle" title="사이드바 접기"><i data-lucide="chevrons-left"></i></button>
+          <button class="sidebar-toggle" id="sidebarToggle" data-i18n-title="nav.sidebar_collapse" title="사이드바 접기"><i data-lucide="chevrons-left"></i></button>
         </div>
         <nav class="nav">
-          <button class="nav-btn active" data-tab="mock" data-tooltip="Mock 서버"><i data-lucide="server"></i><span class="nav-label">Mock 서버</span></button>
-          <button class="nav-btn" data-tab="charcount" data-tooltip="문자수 체크"><i data-lucide="text-cursor-input"></i><span class="nav-label">문자수 체크</span></button>
-          <button class="nav-btn" data-tab="mybatis" data-tooltip="MyBatis 로그"><i data-lucide="scroll-text"></i><span class="nav-label">MyBatis 로그</span></button>
-          <button class="nav-btn" data-tab="jsonformat" data-tooltip="JSON 정렬"><i data-lucide="braces"></i><span class="nav-label">JSON 정렬</span></button>
-          <button class="nav-btn" data-tab="translate" data-tooltip="번역"><i data-lucide="languages"></i><span class="nav-label">번역</span></button>
-          <button class="nav-btn" data-tab="csv" data-tooltip="CSV 편집"><i data-lucide="table"></i><span class="nav-label">CSV 편집</span></button>
-          <button class="nav-btn" data-tab="markdown" data-tooltip="Markdown"><i data-lucide="file-pen"></i><span class="nav-label">Markdown</span></button>
-          <button class="nav-btn" data-tab="paramchanger" data-tooltip="파라미터 변환"><i data-lucide="arrow-left-right"></i><span class="nav-label">파라미터 변환</span></button>
-          <button class="nav-btn" data-tab="pdfconvert" data-tooltip="PDF 변환"><i data-lucide="file-text"></i><span class="nav-label">PDF 변환</span></button>
-          <button class="nav-btn" data-tab="diffcompare" data-tooltip="Diff 비교"><i data-lucide="git-compare"></i><span class="nav-label">Diff 비교</span></button>
-          <button class="nav-btn" data-tab="git" data-tooltip="Git"><i data-lucide="git-branch"></i><span class="nav-label">Git</span></button>
-          <button class="nav-btn" data-tab="dataai" data-tooltip="Data AI"><i data-lucide="sparkles"></i><span class="nav-label">Data AI</span></button>
+          <button class="nav-btn active" data-tab="mock" data-tooltip="Mock 서버" data-i18n-tooltip="nav.mock"><i data-lucide="server"></i><span class="nav-label" data-i18n="nav.mock">Mock 서버</span></button>
+          <button class="nav-btn" data-tab="charcount" data-tooltip="문자수 체크" data-i18n-tooltip="nav.charcount"><i data-lucide="text-cursor-input"></i><span class="nav-label" data-i18n="nav.charcount">문자수 체크</span></button>
+          <button class="nav-btn" data-tab="mybatis" data-tooltip="MyBatis 로그" data-i18n-tooltip="nav.mybatis"><i data-lucide="scroll-text"></i><span class="nav-label" data-i18n="nav.mybatis">MyBatis 로그</span></button>
+          <button class="nav-btn" data-tab="jsonformat" data-tooltip="JSON 정렬" data-i18n-tooltip="nav.json"><i data-lucide="braces"></i><span class="nav-label" data-i18n="nav.json">JSON 정렬</span></button>
+          <button class="nav-btn" data-tab="translate" data-tooltip="번역" data-i18n-tooltip="nav.translate"><i data-lucide="languages"></i><span class="nav-label" data-i18n="nav.translate">번역</span></button>
+          <button class="nav-btn" data-tab="csv" data-tooltip="CSV 편집" data-i18n-tooltip="nav.csv"><i data-lucide="table"></i><span class="nav-label" data-i18n="nav.csv">CSV 편집</span></button>
+          <button class="nav-btn" data-tab="markdown" data-tooltip="Markdown" data-i18n-tooltip="nav.markdown"><i data-lucide="file-pen"></i><span class="nav-label" data-i18n="nav.markdown">Markdown</span></button>
+          <button class="nav-btn" data-tab="paramchanger" data-tooltip="파라미터 변환" data-i18n-tooltip="nav.param"><i data-lucide="arrow-left-right"></i><span class="nav-label" data-i18n="nav.param">파라미터 변환</span></button>
+          <button class="nav-btn" data-tab="pdfconvert" data-tooltip="PDF 변환" data-i18n-tooltip="nav.pdf"><i data-lucide="file-text"></i><span class="nav-label" data-i18n="nav.pdf">PDF 변환</span></button>
+          <button class="nav-btn" data-tab="diffcompare" data-tooltip="Diff 비교" data-i18n-tooltip="nav.diff"><i data-lucide="git-compare"></i><span class="nav-label" data-i18n="nav.diff">Diff 비교</span></button>
+          <button class="nav-btn" data-tab="git" data-tooltip="Git" data-i18n-tooltip="nav.git"><i data-lucide="git-branch"></i><span class="nav-label" data-i18n="nav.git">Git</span></button>
+          <button class="nav-btn" data-tab="dataai" data-tooltip="Data AI" data-i18n-tooltip="nav.dataai"><i data-lucide="sparkles"></i><span class="nav-label" data-i18n="nav.dataai">Data AI</span></button>
           <hr class="nav-divider">
           <button class="nav-btn dev-mode-btn" data-tab="devmode" data-tooltip="DEV"><i data-lucide="wrench"></i><span class="nav-label">DEV</span></button>
         </nav>
@@ -35,12 +35,12 @@
       <main class="main">
         <div class="tab-content active" data-tab="mock">
           <section class="panel">
-            <h2>Mock 등록</h2>
-            <p class="desc">엔드포인트/요청/응답을 정의하면 SQLite에 저장되고 즉시 목 API로 동작합니다.</p>
+            <h2 data-i18n="mock.title">Mock 등록</h2>
+            <p class="desc" data-i18n-html="mock.desc">엔드포인트/요청/응답을 정의하면 SQLite에 저장되고 즉시 목 API로 동작합니다.</p>
 
             <form id="mockForm" class="form-grid">
-              <label>이름 <input id="name" required placeholder="ex) 주문조회 성공" /></label>
-              <label>메서드
+              <label><span data-i18n="mock.name">이름</span> <input id="name" required data-i18n-placeholder="mock.name_ph" placeholder="ex) 주문조회 성공" /></label>
+              <label><span data-i18n="mock.method">메서드</span>
                 <select id="method">
                   <option>GET</option>
                   <option>POST</option>
@@ -49,48 +49,48 @@
                   <option>DELETE</option>
                 </select>
               </label>
-              <label>경로 <input id="path" required placeholder="/api/orders" /></label>
-              <label>응답 코드 <input id="status" type="number" value="200" /></label>
+              <label><span data-i18n="mock.path">경로</span> <input id="path" required placeholder="/api/orders" /></label>
+              <label><span data-i18n="mock.status_code">응답 코드</span> <input id="status" type="number" value="200" /></label>
 
-              <label class="span-2">요청(JSON, 비우면 어떤 바디든 매칭)
+              <label class="span-2"><span data-i18n="mock.request_body">요청(JSON, 비우면 어떤 바디든 매칭)</span>
                 <textarea id="requestJson" rows="7" placeholder='{"id": 1, "items": [{"sku": "A"}]}'></textarea>
               </label>
 
-              <label class="span-2">응답 헤더(JSON object)
+              <label class="span-2"><span data-i18n="mock.response_headers">응답 헤더(JSON object)</span>
                 <textarea id="responseHeaders" rows="4" placeholder='{"X-Mock": "yes"}'>{}</textarea>
               </label>
 
-              <label class="span-2">응답 바디(JSON)
+              <label class="span-2"><span data-i18n="mock.response_body">응답 바디(JSON)</span>
                 <textarea id="responseBody" rows="7" placeholder='{"ok": true, "data": []}'></textarea>
               </label>
 
               <div class="actions span-2">
-                <button type="button" id="previewBtn">JSON 미리보기/편집</button>
-                <button type="submit" id="saveBtn">저장</button>
-                <button type="button" id="resetBtn">초기화</button>
+                <button type="button" id="previewBtn" data-i18n="mock.json_preview">JSON 미리보기/편집</button>
+                <button type="submit" id="saveBtn" data-i18n="common.save">저장</button>
+                <button type="button" id="resetBtn" data-i18n="common.reset">초기화</button>
                 <span id="statusText"></span>
               </div>
             </form>
           </section>
 
           <section class="panel">
-            <h2>JSON 테이블 편집기 (응답 바디)</h2>
-            <p class="desc">JSON 붙여넣기 후 미리보기를 누르면 구조가 보입니다. 배열 항목은 <code>+ 복제</code>로 같은 값을 추가할 수 있습니다.</p>
+            <h2 data-i18n="mock.json_editor_title">JSON 테이블 편집기 (응답 바디)</h2>
+            <p class="desc" data-i18n-html="mock.json_editor_desc">JSON 붙여넣기 후 미리보기를 누르면 구조가 보입니다. 배열 항목은 <code>+ 복제</code>로 같은 값을 추가할 수 있습니다.</p>
             <div id="jsonTableWrap"></div>
           </section>
 
           <section class="panel">
-            <h2>저장된 Mock 목록</h2>
+            <h2 data-i18n="mock.saved_list">저장된 Mock 목록</h2>
             <table id="mockTable">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>이름</th>
+                  <th data-i18n="common.name">이름</th>
                   <th>Method</th>
                   <th>Path</th>
-                  <th>요청 조건</th>
-                  <th>응답</th>
-                  <th>작업</th>
+                  <th data-i18n="mock.request_cond">요청 조건</th>
+                  <th data-i18n="mock.response">응답</th>
+                  <th data-i18n="common.action">작업</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -98,18 +98,18 @@
           </section>
 
           <section class="panel">
-            <h2>요청/응답 로그</h2>
-            <p class="desc">실제 목 엔드포인트로 들어온 트래픽이 저장됩니다. 최근 로그부터 표시합니다.</p>
+            <h2 data-i18n="mock.log_title">요청/응답 로그</h2>
+            <p class="desc" data-i18n="mock.log_desc">실제 목 엔드포인트로 들어온 트래픽이 저장됩니다. 최근 로그부터 표시합니다.</p>
             <div class="actions">
-              <button type="button" id="refreshLogsBtn">로그 새로고침</button>
-              <button type="button" id="clearLogsBtn">로그 비우기</button>
+              <button type="button" id="refreshLogsBtn" data-i18n="mock.log_refresh">로그 새로고침</button>
+              <button type="button" id="clearLogsBtn" data-i18n="mock.log_clear">로그 비우기</button>
             </div>
             <table id="logTable">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>시간</th>
-                  <th>매칭</th>
+                  <th data-i18n="mock.log_time">시간</th>
+                  <th data-i18n="mock.log_match">매칭</th>
                   <th>Method</th>
                   <th>Path</th>
                   <th>Request</th>
@@ -123,27 +123,27 @@
 
         <div class="tab-content" data-tab="charcount">
           <section class="panel">
-            <h2>문자수 체크</h2>
-            <p class="desc">텍스트를 붙여넣으면 개행 단위로 각 줄의 문자수를 표시합니다.</p>
-            <textarea id="charCountInput" rows="8" placeholder="여기에 텍스트를 붙여넣기 하세요..."></textarea>
+            <h2 data-i18n="charcount.title">문자수 체크</h2>
+            <p class="desc" data-i18n="charcount.desc">텍스트를 붙여넣으면 개행 단위로 각 줄의 문자수를 표시합니다.</p>
+            <textarea id="charCountInput" rows="8" data-i18n-placeholder="charcount.placeholder" placeholder="여기에 텍스트를 붙여넣기 하세요..."></textarea>
             <div id="charCountResult" class="char-count-result"></div>
           </section>
         </div>
         <div class="tab-content" data-tab="mybatis">
           <section class="panel">
-            <h2>MyBatis 로그 변환</h2>
-            <p class="desc">MyBatis 로그를 붙여넣으면 <code>?</code>에 파라미터를 바인딩하고, SQL 주석을 제거한 실행 가능한 쿼리를 생성합니다.</p>
+            <h2 data-i18n="mybatis.title">MyBatis 로그 변환</h2>
+            <p class="desc" data-i18n-html="mybatis.desc">MyBatis 로그를 붙여넣으면 <code>?</code>에 파라미터를 바인딩하고, SQL 주석을 제거한 실행 가능한 쿼리를 생성합니다.</p>
             <div class="mybatis-inputs">
               <div class="mybatis-input-group">
-                <label for="mybatisQuery">SQL 쿼리</label>
-                <textarea id="mybatisQuery" rows="8" placeholder="SELECT * FROM users WHERE id = ? AND name = ?
+                <label for="mybatisQuery" data-i18n="mybatis.sql_label">SQL 쿼리</label>
+                <textarea id="mybatisQuery" rows="8" data-i18n-placeholder="mybatis.sql_ph" placeholder="SELECT * FROM users WHERE id = ? AND name = ?
 
 또는 로그를 그대로 붙여넣기:
 ==>  Preparing: SELECT * FROM users WHERE id = ? AND name = ?"></textarea>
               </div>
               <div class="mybatis-input-group">
-                <label for="mybatisParams">파라미터</label>
-                <textarea id="mybatisParams" rows="4" placeholder="1(Integer), Hong(String)
+                <label for="mybatisParams" data-i18n="mybatis.param_label">파라미터</label>
+                <textarea id="mybatisParams" rows="4" data-i18n-placeholder="mybatis.param_ph" placeholder="1(Integer), Hong(String)
 
 또는 로그를 그대로 붙여넣기:
 ==> Parameters: 1(Integer), Hong(String)"></textarea>
@@ -151,11 +151,11 @@
             </div>
             <div class="toolbar">
               <div class="toolbar-group">
-                <button type="button" id="mybatisConvertBtn">변환</button>
+                <button type="button" id="mybatisConvertBtn" data-i18n="common.convert">변환</button>
               </div>
               <div class="toolbar-group">
-                <label class="opt-label"><input type="checkbox" id="mybatisStripComments" checked /> 주석 제거</label>
-                <label class="opt-label"><input type="checkbox" id="mybatisFormatSql" /> 포맷팅</label>
+                <label class="opt-label"><input type="checkbox" id="mybatisStripComments" checked /> <span data-i18n="mybatis.remove_comments">주석 제거</span></label>
+                <label class="opt-label"><input type="checkbox" id="mybatisFormatSql" /> <span data-i18n="mybatis.formatting">포맷팅</span></label>
               </div>
               <span id="mybatisStatus"></span>
             </div>
@@ -164,29 +164,29 @@
         </div>
         <div class="tab-content" data-tab="jsonformat">
           <section class="panel">
-            <h2>JSON 정렬</h2>
-            <p class="desc">JSON을 붙여넣으면 자동으로 포맷팅합니다. 키 알파벳 정렬, 압축(minify) 옵션을 제공합니다.</p>
+            <h2 data-i18n="json.title">JSON 정렬</h2>
+            <p class="desc" data-i18n="json.desc">JSON을 붙여넣으면 자동으로 포맷팅합니다. 키 알파벳 정렬, 압축(minify) 옵션을 제공합니다.</p>
             <textarea id="jsonFmtInput" rows="24" placeholder='{"name":"Hong","age":30,"items":[1,2,3]}'></textarea>
             <div class="toolbar">
               <div class="toolbar-group">
-                <button type="button" id="jsonFmtBtn">정렬</button>
-                <button type="button" id="jsonMinifyBtn">압축 (Minify)</button>
-                <button type="button" id="jsonFmtCopyBtn">복사</button>
-                <label class="file-upload-btn"><input type="file" id="jsonFileInput" accept=".json,application/json" hidden />파일 불러오기</label>
-                <button type="button" id="jsonSaveFileBtn">파일로 저장</button>
-                <button type="button" id="jsonSaveDbBtn">임시저장</button>
+                <button type="button" id="jsonFmtBtn" data-i18n="json.sort">정렬</button>
+                <button type="button" id="jsonMinifyBtn" data-i18n="json.minify">압축 (Minify)</button>
+                <button type="button" id="jsonFmtCopyBtn" data-i18n="common.copy">복사</button>
+                <label class="file-upload-btn"><input type="file" id="jsonFileInput" accept=".json,application/json" hidden /><span data-i18n="json.file_load">파일 불러오기</span></label>
+                <button type="button" id="jsonSaveFileBtn" data-i18n="json.file_save">파일로 저장</button>
+                <button type="button" id="jsonSaveDbBtn" data-i18n="json.temp_save">임시저장</button>
               </div>
               <div class="toolbar-group">
-                <button type="button" id="jsonRemoveEmptyBtn">빈 값 제거</button>
-                <button type="button" id="jsonFindDupKeysBtn">중복 키 찾기</button>
+                <button type="button" id="jsonRemoveEmptyBtn" data-i18n="json.remove_empty">빈 값 제거</button>
+                <button type="button" id="jsonFindDupKeysBtn" data-i18n="json.find_dup">중복 키 찾기</button>
               </div>
               <div class="toolbar-group">
-                <label class="opt-label"><input type="checkbox" id="jsonSortKeys" /> 키 알파벳순</label>
-                <label class="opt-label">들여쓰기
+                <label class="opt-label"><input type="checkbox" id="jsonSortKeys" /> <span data-i18n="json.sort_alpha">키 알파벳순</span></label>
+                <label class="opt-label"><span data-i18n="json.indent">들여쓰기</span>
                   <select id="jsonIndent">
-                    <option value="2" selected>2칸</option>
-                    <option value="4">4칸</option>
-                    <option value="tab">탭</option>
+                    <option value="2" selected data-i18n="json.indent_2">2칸</option>
+                    <option value="4" data-i18n="json.indent_4">4칸</option>
+                    <option value="tab" data-i18n="json.indent_tab">탭</option>
                   </select>
                 </label>
               </div>
@@ -194,31 +194,31 @@
             </div>
 
             <div class="json-util-tabs">
-              <button class="json-util-tab" data-panel="jsonTreePanel">트리 뷰어</button>
+              <button class="json-util-tab" data-panel="jsonTreePanel" data-i18n="json.tree_viewer">트리 뷰어</button>
               <button class="json-util-tab" data-panel="jsonDiffPanel">Diff</button>
               <button class="json-util-tab" data-panel="jsonPathPanel">Path</button>
-              <button class="json-util-tab" data-panel="jsonBuilderPanel">K-V 빌더</button>
+              <button class="json-util-tab" data-panel="jsonBuilderPanel" data-i18n="json.kv_builder">K-V 빌더</button>
             </div>
 
             <div id="jsonTreePanel" class="json-util-panel" style="display:none">
               <div class="json-util-panel-toolbar">
-                <button type="button" id="jsonTreeExpandAll">모두 펼치기</button>
-                <button type="button" id="jsonTreeCollapseAll">모두 접기</button>
+                <button type="button" id="jsonTreeExpandAll" data-i18n="json.expand_all">모두 펼치기</button>
+                <button type="button" id="jsonTreeCollapseAll" data-i18n="json.collapse_all">모두 접기</button>
               </div>
               <div id="jsonTreeView" class="json-tree-view"></div>
             </div>
 
             <div id="jsonDiffPanel" class="json-util-panel" style="display:none">
-              <p class="json-diff-header">원본: 현재 입력값 &mdash; 아래에 비교 대상 JSON을 붙여넣으세요</p>
-              <textarea id="jsonDiffTarget" rows="8" placeholder="비교할 JSON을 붙여넣으세요"></textarea>
-              <div class="json-diff-actions"><button type="button" id="jsonDiffRunBtn">비교</button></div>
+              <p class="json-diff-header" data-i18n="json.diff_desc">원본: 현재 입력값 &mdash; 아래에 비교 대상 JSON을 붙여넣으세요</p>
+              <textarea id="jsonDiffTarget" rows="8" data-i18n-placeholder="json.diff_ph" placeholder="비교할 JSON을 붙여넣으세요"></textarea>
+              <div class="json-diff-actions"><button type="button" id="jsonDiffRunBtn" data-i18n="common.compare">비교</button></div>
               <div id="jsonDiffResult" class="json-diff-result"></div>
             </div>
 
             <div id="jsonPathPanel" class="json-util-panel" style="display:none">
               <div class="json-path-input-row">
                 <input id="jsonPathInput" type="text" placeholder="$.store.book[0].title 또는 $..author" />
-                <button type="button" id="jsonPathRunBtn">실행</button>
+                <button type="button" id="jsonPathRunBtn" data-i18n="json.run">실행</button>
               </div>
               <div id="jsonPathResult" class="json-path-result"></div>
             </div>
@@ -226,23 +226,23 @@
             <div id="jsonBuilderPanel" class="json-util-panel" style="display:none">
               <div id="jsonBuilderRows" class="json-builder-rows"></div>
               <div class="json-builder-actions">
-                <button type="button" id="jsonBuilderAddBtn">+ 필드 추가</button>
-                <button type="button" id="jsonBuilderInsertBtn">JSON에 삽입</button>
-                <button type="button" id="jsonBuilderFromJsonBtn">현재 JSON에서 불러오기</button>
+                <button type="button" id="jsonBuilderAddBtn" data-i18n="json.add_field">+ 필드 추가</button>
+                <button type="button" id="jsonBuilderInsertBtn" data-i18n="json.insert_json">JSON에 삽입</button>
+                <button type="button" id="jsonBuilderFromJsonBtn" data-i18n="json.load_from_json">현재 JSON에서 불러오기</button>
               </div>
             </div>
           </section>
 
           <section class="panel">
-            <h2>임시저장 목록</h2>
-            <p class="desc">현재 JSON을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
+            <h2 data-i18n="json.temp_list_title">임시저장 목록</h2>
+            <p class="desc" data-i18n="json.temp_list_desc">현재 JSON을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
             <table id="jsonSavesTable">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>이름</th>
-                  <th>저장 시간</th>
-                  <th>작업</th>
+                  <th data-i18n="common.name">이름</th>
+                  <th data-i18n="common.save_time">저장 시간</th>
+                  <th data-i18n="common.action">작업</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -251,28 +251,28 @@
         </div>
         <div class="tab-content" data-tab="translate">
           <section class="panel">
-            <h2>번역</h2>
-            <p class="desc">OpenAI GPT를 사용하여 한국어/영어/일본어 간 번역을 수행합니다. <code>.env</code>에 <code>OPENAI_API_KEY</code> 설정이 필요합니다.</p>
-            <textarea id="translateInput" rows="10" placeholder="번역할 텍스트를 입력하세요..."></textarea>
+            <h2 data-i18n="translate.title">번역</h2>
+            <p class="desc" data-i18n-html="translate.desc">OpenAI GPT를 사용하여 한국어/영어/일본어 간 번역을 수행합니다. <code>.env</code>에 <code>OPENAI_API_KEY</code> 설정이 필요합니다.</p>
+            <textarea id="translateInput" rows="10" data-i18n-placeholder="translate.placeholder" placeholder="번역할 텍스트를 입력하세요..."></textarea>
             <div class="toolbar">
               <div class="toolbar-group">
-                <button type="button" id="translateBtn">번역</button>
+                <button type="button" id="translateBtn" data-i18n="translate.title">번역</button>
               </div>
               <div class="toolbar-group">
-                <label class="opt-label">원본
+                <label class="opt-label"><span data-i18n="translate.source">원본</span>
                   <select id="translateSource">
-                    <option value="ko">한국어</option>
-                    <option value="en">영어</option>
-                    <option value="ja">일본어</option>
+                    <option value="ko" data-i18n="translate.ko">한국어</option>
+                    <option value="en" data-i18n="translate.en">영어</option>
+                    <option value="ja" data-i18n="translate.ja">일본어</option>
                   </select>
                 </label>
               </div>
               <div class="toolbar-group">
                 <label class="opt-label">→</label>
-                <label class="opt-label"><input type="checkbox" id="translateSelectAll" checked /> 전체</label>
-                <label class="opt-label"><input type="checkbox" class="translate-target" value="ko" /> 한국어</label>
-                <label class="opt-label"><input type="checkbox" class="translate-target" value="en" checked /> 영어</label>
-                <label class="opt-label"><input type="checkbox" class="translate-target" value="ja" checked /> 일본어</label>
+                <label class="opt-label"><input type="checkbox" id="translateSelectAll" checked /> <span data-i18n="translate.all">전체</span></label>
+                <label class="opt-label"><input type="checkbox" class="translate-target" value="ko" /> <span data-i18n="translate.ko">한국어</span></label>
+                <label class="opt-label"><input type="checkbox" class="translate-target" value="en" checked /> <span data-i18n="translate.en">영어</span></label>
+                <label class="opt-label"><input type="checkbox" class="translate-target" value="ja" checked /> <span data-i18n="translate.ja">일본어</span></label>
               </div>
               <span id="translateStatus"></span>
             </div>
@@ -281,48 +281,48 @@
         </div>
         <div class="tab-content" data-tab="csv">
           <section class="panel">
-            <h2>CSV 편집기</h2>
-            <p class="desc">CSV 파일을 업로드하면 그리드로 편집할 수 있습니다. 인코딩 자동 감지를 지원합니다.</p>
+            <h2 data-i18n="csv.title">CSV 편집기</h2>
+            <p class="desc" data-i18n="csv.desc">CSV 파일을 업로드하면 그리드로 편집할 수 있습니다. 인코딩 자동 감지를 지원합니다.</p>
             <div id="csvUploadZone" class="csv-upload-zone">
               <input type="file" id="csvFileInput" accept=".csv,.tsv,.txt" hidden />
-              <p>CSV 파일을 드래그하거나 클릭하여 업로드<br><small style="color:#94a3b8">또는 Ctrl+V로 클립보드 내용 붙여넣기</small></p>
+              <p><span data-i18n="csv.upload_text">CSV 파일을 드래그하거나 클릭하여 업로드</span><br><small style="color:#94a3b8" data-i18n="csv.upload_hint">또는 Ctrl+V로 클립보드 내용 붙여넣기</small></p>
             </div>
             <div class="toolbar">
               <div class="toolbar-group">
                 <span class="csv-split-btn">
-                  <button type="button" id="csvAddRowBtn">행 추가</button>
+                  <button type="button" id="csvAddRowBtn" data-i18n="csv.add_row">행 추가</button>
                   <button type="button" class="csv-split-arrow" id="csvAddRowArrow">&#9662;</button>
                   <div class="csv-split-menu" id="csvAddRowMenu">
-                    <div data-dir="above">&#8593; 위에 추가</div>
-                    <div data-dir="below">&#8595; 아래에 추가</div>
+                    <div data-dir="above" data-i18n="csv.add_above">&#8593; 위에 추가</div>
+                    <div data-dir="below" data-i18n="csv.add_below">&#8595; 아래에 추가</div>
                   </div>
                 </span>
                 <span class="csv-split-btn">
-                  <button type="button" id="csvAddColBtn">열 추가</button>
+                  <button type="button" id="csvAddColBtn" data-i18n="csv.add_col">열 추가</button>
                   <button type="button" class="csv-split-arrow" id="csvAddColArrow">&#9662;</button>
                   <div class="csv-split-menu" id="csvAddColMenu">
-                    <div data-dir="left">&#8592; 왼쪽에 추가</div>
-                    <div data-dir="right">&#8594; 오른쪽에 추가</div>
+                    <div data-dir="left" data-i18n="csv.add_left">&#8592; 왼쪽에 추가</div>
+                    <div data-dir="right" data-i18n="csv.add_right">&#8594; 오른쪽에 추가</div>
                   </div>
                 </span>
-                <button type="button" id="csvDelRowBtn">행 삭제</button>
-                <button type="button" id="csvDelColBtn">열 삭제</button>
+                <button type="button" id="csvDelRowBtn" data-i18n="csv.delete_row">행 삭제</button>
+                <button type="button" id="csvDelColBtn" data-i18n="csv.delete_col">열 삭제</button>
               </div>
               <div class="toolbar-group">
-                <label class="file-upload-btn"><input type="file" id="csvFileInput2" accept=".csv,.tsv,.txt" hidden />파일 변경</label>
-                <button type="button" id="csvDownloadBtn">다운로드</button>
-                <button type="button" id="csvSaveBtn">임시저장</button>
-                <button type="button" id="csvResetBtn">초기화</button>
-                <button type="button" id="csvDupCheckBtn">중복 분석</button>
+                <label class="file-upload-btn"><input type="file" id="csvFileInput2" accept=".csv,.tsv,.txt" hidden /><span data-i18n="csv.change_file">파일 변경</span></label>
+                <button type="button" id="csvDownloadBtn" data-i18n="common.download">다운로드</button>
+                <button type="button" id="csvSaveBtn" data-i18n="csv.temp_save">임시저장</button>
+                <button type="button" id="csvResetBtn" data-i18n="common.reset">초기화</button>
+                <button type="button" id="csvDupCheckBtn" data-i18n="csv.dup_analysis">중복 분석</button>
               </div>
               <div class="toolbar-group">
-                <label class="opt-label">구분자
+                <label class="opt-label"><span data-i18n="csv.delimiter">구분자</span>
                   <select id="csvDelimiter">
-                    <option value="," selected>콤마 (,)</option>
-                    <option value="&#9;">탭</option>
+                    <option value="," selected data-i18n="csv.delimiter_comma">콤마 (,)</option>
+                    <option value="&#9;" data-i18n="csv.delimiter_tab">탭</option>
                   </select>
                 </label>
-                <label class="opt-label">인코딩
+                <label class="opt-label"><span data-i18n="csv.encoding">인코딩</span>
                   <select id="csvEncoding">
                     <option value="utf-8">UTF-8</option>
                     <option value="utf-8-bom">UTF-8 BOM</option>
@@ -337,17 +337,17 @@
           </section>
 
           <section class="panel">
-            <h2>임시저장 목록</h2>
-            <p class="desc">현재 작업물을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
+            <h2 data-i18n="csv.temp_list_title">임시저장 목록</h2>
+            <p class="desc" data-i18n="csv.temp_list_desc">현재 작업물을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
             <table id="csvSavesTable">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>이름</th>
-                  <th>구분자</th>
-                  <th>인코딩</th>
-                  <th>저장 시간</th>
-                  <th>작업</th>
+                  <th data-i18n="common.name">이름</th>
+                  <th data-i18n="csv.delimiter">구분자</th>
+                  <th data-i18n="csv.encoding">인코딩</th>
+                  <th data-i18n="common.save_time">저장 시간</th>
+                  <th data-i18n="common.action">작업</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -356,14 +356,14 @@
         </div>
         <div class="tab-content" data-tab="markdown">
           <section class="panel">
-            <h2>Markdown 편집기</h2>
-            <p class="desc">Markdown을 작성하고 실시간으로 미리보기를 확인할 수 있습니다. 파일 업로드, DB 저장, .md 다운로드를 지원합니다.</p>
+            <h2 data-i18n="md.title">Markdown 편집기</h2>
+            <p class="desc" data-i18n="md.desc">Markdown을 작성하고 실시간으로 미리보기를 확인할 수 있습니다. 파일 업로드, DB 저장, .md 다운로드를 지원합니다.</p>
 
             <details class="md-guide">
-              <summary>Markdown 문법 가이드 (클릭하여 열기/닫기)</summary>
+              <summary data-i18n="md.guide_toggle">Markdown 문법 가이드 (클릭하여 열기/닫기)</summary>
               <div class="md-guide-content">
                 <table>
-                  <thead><tr><th>문법</th><th>설명</th><th>결과</th></tr></thead>
+                  <thead><tr><th data-i18n="md.guide_syntax">문법</th><th data-i18n="md.guide_desc">설명</th><th data-i18n="md.guide_result">결과</th></tr></thead>
                   <tbody>
                     <tr><td><code># 제목</code></td><td>제목 (h1~h6, #개수로 레벨)</td><td><strong style="font-size:1.2em">제목</strong></td></tr>
                     <tr><td><code>**굵게**</code></td><td>볼드</td><td><strong>굵게</strong></td></tr>
@@ -387,58 +387,58 @@
 
             <div id="mdUploadZone" class="md-upload-zone">
               <input type="file" id="mdFileInput" accept=".md,.markdown,.txt" hidden />
-              <p>.md 파일을 드래그하거나 클릭하여 업로드</p>
+              <p data-i18n="md.upload_text">.md 파일을 드래그하거나 클릭하여 업로드</p>
             </div>
 
             <div class="toolbar">
               <div class="toolbar-group">
-                <button type="button" class="md-tb" data-action="bold" title="굵게">B</button>
-                <button type="button" class="md-tb" data-action="italic" title="기울임"><em>I</em></button>
-                <button type="button" class="md-tb" data-action="strikethrough" title="취소선"><s>S</s></button>
-                <button type="button" class="md-tb" data-action="h1" title="제목1">H1</button>
-                <button type="button" class="md-tb" data-action="h2" title="제목2">H2</button>
-                <button type="button" class="md-tb" data-action="h3" title="제목3">H3</button>
-                <button type="button" class="md-tb" data-action="link" title="링크">🔗</button>
-                <button type="button" class="md-tb" data-action="image" title="이미지">🖼</button>
-                <button type="button" class="md-tb" data-action="code" title="인라인 코드">&lt;/&gt;</button>
-                <button type="button" class="md-tb" data-action="codeblock" title="코드 블록">```</button>
-                <button type="button" class="md-tb" data-action="quote" title="인용">&gt;</button>
-                <button type="button" class="md-tb" data-action="ul" title="목록">&#8226;</button>
-                <button type="button" class="md-tb" data-action="ol" title="순서목록">1.</button>
-                <button type="button" class="md-tb" data-action="checkbox" title="체크박스">☑</button>
-                <button type="button" class="md-tb" data-action="hr" title="구분선">―</button>
-                <button type="button" class="md-tb" data-action="table" title="테이블 생성">표</button>
-                <button type="button" class="md-tb" data-action="toc" title="목차 생성">TOC</button>
+                <button type="button" class="md-tb" data-action="bold" data-i18n-title="md.tb_bold" title="굵게">B</button>
+                <button type="button" class="md-tb" data-action="italic" data-i18n-title="md.tb_italic" title="기울임"><em>I</em></button>
+                <button type="button" class="md-tb" data-action="strikethrough" data-i18n-title="md.tb_strike" title="취소선"><s>S</s></button>
+                <button type="button" class="md-tb" data-action="h1" data-i18n-title="md.tb_h1" title="제목1">H1</button>
+                <button type="button" class="md-tb" data-action="h2" data-i18n-title="md.tb_h2" title="제목2">H2</button>
+                <button type="button" class="md-tb" data-action="h3" data-i18n-title="md.tb_h3" title="제목3">H3</button>
+                <button type="button" class="md-tb" data-action="link" data-i18n-title="md.tb_link" title="링크">🔗</button>
+                <button type="button" class="md-tb" data-action="image" data-i18n-title="md.tb_image" title="이미지">🖼</button>
+                <button type="button" class="md-tb" data-action="code" data-i18n-title="md.tb_code" title="인라인 코드">&lt;/&gt;</button>
+                <button type="button" class="md-tb" data-action="codeblock" data-i18n-title="md.tb_codeblock" title="코드 블록">```</button>
+                <button type="button" class="md-tb" data-action="quote" data-i18n-title="md.tb_quote" title="인용">&gt;</button>
+                <button type="button" class="md-tb" data-action="ul" data-i18n-title="md.tb_ul" title="목록">&#8226;</button>
+                <button type="button" class="md-tb" data-action="ol" data-i18n-title="md.tb_ol" title="순서목록">1.</button>
+                <button type="button" class="md-tb" data-action="checkbox" data-i18n-title="md.tb_checkbox" title="체크박스">☑</button>
+                <button type="button" class="md-tb" data-action="hr" data-i18n-title="md.tb_hr" title="구분선">―</button>
+                <button type="button" class="md-tb" data-action="table" data-i18n-title="md.tb_table" title="테이블 생성"><span data-i18n="md.tb_table_short">표</span></button>
+                <button type="button" class="md-tb" data-action="toc" data-i18n-title="md.tb_toc" title="목차 생성">TOC</button>
               </div>
               <div class="toolbar-group">
-                <button type="button" id="mdLayoutToggle">가로 모드</button>
-                <button type="button" id="mdKeymapBtn" title="단축키 설정">&#9881;</button>
+                <button type="button" id="mdLayoutToggle" data-i18n="md.horizontal">가로 모드</button>
+                <button type="button" id="mdKeymapBtn" data-i18n-title="md.keymap_title" title="단축키 설정">&#9881;</button>
               </div>
               <div class="toolbar-group md-split-group">
-                <span class="opt-label">비율</span>
-                <button type="button" class="md-split-btn" data-ratio="100:0" title="편집만">편집</button>
+                <span class="opt-label" data-i18n="md.ratio">비율</span>
+                <button type="button" class="md-split-btn" data-ratio="100:0" data-i18n-title="md.edit_only" title="편집만" data-i18n="md.edit_short">편집</button>
                 <button type="button" class="md-split-btn" data-ratio="75:25" title="편집 75%">3:1</button>
-                <button type="button" class="md-split-btn active" data-ratio="50:50" title="반반">1:1</button>
-                <button type="button" class="md-split-btn" data-ratio="25:75" title="미리보기 75%">1:3</button>
-                <button type="button" class="md-split-btn" data-ratio="0:100" title="미리보기만">보기</button>
+                <button type="button" class="md-split-btn active" data-ratio="50:50" data-i18n-title="md.half" title="반반">1:1</button>
+                <button type="button" class="md-split-btn" data-ratio="25:75" data-i18n-title="md.preview_75" title="미리보기 75%">1:3</button>
+                <button type="button" class="md-split-btn" data-ratio="0:100" data-i18n-title="md.preview_only" title="미리보기만" data-i18n="md.preview_short">보기</button>
               </div>
             </div>
 
             <div id="mdKeymapPanel" class="md-keymap-panel" hidden>
               <div class="md-keymap-header">
-                <h3>단축키 설정</h3>
+                <h3 data-i18n="md.keymap_title">단축키 설정</h3>
                 <button type="button" id="mdKeymapClose">&times;</button>
               </div>
-              <p class="desc">각 항목을 클릭한 뒤 원하는 키 조합을 누르세요. Ctrl/Cmd + 키 조합을 지원합니다.</p>
+              <p class="desc" data-i18n="md.keymap_desc">각 항목을 클릭한 뒤 원하는 키 조합을 누르세요. Ctrl/Cmd + 키 조합을 지원합니다.</p>
               <div id="mdKeymapList" class="md-keymap-list"></div>
               <div class="md-keymap-actions">
-                <button type="button" id="mdKeymapReset">기본값 복원</button>
+                <button type="button" id="mdKeymapReset" data-i18n="md.keymap_restore">기본값 복원</button>
               </div>
             </div>
 
             <div id="mdEditorWrap" class="md-editor-wrap md-layout-horizontal">
               <div class="md-edit-pane" id="mdEditPane">
-                <textarea id="mdInput" placeholder="여기에 Markdown을 작성하세요..."></textarea>
+                <textarea id="mdInput" data-i18n-placeholder="md.placeholder" placeholder="여기에 Markdown을 작성하세요..."></textarea>
               </div>
               <div class="md-resizer" id="mdResizer"></div>
               <div class="md-preview-pane" id="mdPreview"></div>
@@ -446,25 +446,25 @@
 
             <div class="toolbar">
               <div class="toolbar-group">
-                <button type="button" id="mdNewBtn">새 문서</button>
-                <button type="button" id="mdSaveBtn">저장</button>
-                <button type="button" id="mdSaveAsBtn">다른 이름으로 저장</button>
-                <button type="button" id="mdDownloadBtn">다운로드 (.md)</button>
-                <button type="button" id="mdExportPdfBtn">PDF 내보내기</button>
+                <button type="button" id="mdNewBtn" data-i18n="md.new_doc">새 문서</button>
+                <button type="button" id="mdSaveBtn" data-i18n="common.save">저장</button>
+                <button type="button" id="mdSaveAsBtn" data-i18n="md.save_as">다른 이름으로 저장</button>
+                <button type="button" id="mdDownloadBtn" data-i18n="md.download_md">다운로드 (.md)</button>
+                <button type="button" id="mdExportPdfBtn" data-i18n="md.export_pdf">PDF 내보내기</button>
               </div>
               <div class="toolbar-group" style="position:relative;">
                 <div class="md-proofread-split-btn" id="mdProofreadSplit">
-                  <button type="button" id="mdProofreadBtn">AI 검수</button>
+                  <button type="button" id="mdProofreadBtn" data-i18n="md.ai_review">AI 검수</button>
                   <button type="button" class="md-proofread-split-toggle" id="mdProofreadToggle">&#9662;</button>
                   <div class="md-proofread-split-menu" id="mdProofreadMenu" hidden>
-                    <label><input type="checkbox" id="mdProofreadStyle"> 문체/가독성 포함</label>
+                    <label><input type="checkbox" id="mdProofreadStyle"> <span data-i18n="md.style_check">문체/가독성 포함</span></label>
                   </div>
                 </div>
               </div>
               <div class="toolbar-group">
-                <label class="md-autosave-toggle" title="자동저장">
+                <label class="md-autosave-toggle" data-i18n-title="md.autosave" title="자동저장">
                   <input type="checkbox" id="mdAutoSaveToggle">
-                  <span>자동저장</span>
+                  <span data-i18n="md.autosave">자동저장</span>
                 </label>
               </div>
               <span id="mdStatus"></span>
@@ -474,17 +474,17 @@
               <div class="md-proofread-header" id="mdProofreadHeader">
                 <span class="md-proofread-toggle-icon">&#9654;</span>
                 <h3>AI 검수 결과 (<span id="mdProofreadCount">0</span>건)</h3>
-                <button type="button" id="mdProofreadApplyAll" class="btn-sm">모두 적용</button>
+                <button type="button" id="mdProofreadApplyAll" class="btn-sm" data-i18n="md.review_apply_all">모두 적용</button>
               </div>
               <div class="md-proofread-body" id="mdProofreadBody" hidden>
                 <table id="mdProofreadTable">
                   <thead>
                     <tr>
-                      <th>줄</th>
-                      <th>수정전</th>
-                      <th>수정후</th>
-                      <th>수정이유</th>
-                      <th>적용</th>
+                      <th data-i18n="md.review_col_line">줄</th>
+                      <th data-i18n="md.review_col_before">수정전</th>
+                      <th data-i18n="md.review_col_after">수정후</th>
+                      <th data-i18n="md.review_col_reason">수정이유</th>
+                      <th data-i18n="md.review_col_apply">적용</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
@@ -494,15 +494,15 @@
           </section>
 
           <section class="panel">
-            <h2>저장 목록</h2>
-            <p class="desc">작성한 Markdown을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
+            <h2 data-i18n="md.saved_list_title">저장 목록</h2>
+            <p class="desc" data-i18n="md.saved_list_desc">작성한 Markdown을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
             <table id="mdSavesTable">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>이름</th>
-                  <th>저장 시간</th>
-                  <th>작업</th>
+                  <th data-i18n="common.name">이름</th>
+                  <th data-i18n="common.save_time">저장 시간</th>
+                  <th data-i18n="common.action">작업</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -510,16 +510,16 @@
           </section>
 
           <section class="panel" id="mdVersionPanel" hidden>
-            <h2>버전 이력 <span id="mdVersionTitle"></span></h2>
-            <p class="desc">저장할 때마다 이전 내용이 자동으로 버전에 기록됩니다. 원하는 버전으로 롤백할 수 있습니다.</p>
-            <button type="button" id="mdVersionClose" class="btn-sm">닫기</button>
+            <h2 data-i18n="md.version_title">버전 이력 <span id="mdVersionTitle"></span></h2>
+            <p class="desc" data-i18n="md.version_desc">저장할 때마다 이전 내용이 자동으로 버전에 기록됩니다. 원하는 버전으로 롤백할 수 있습니다.</p>
+            <button type="button" id="mdVersionClose" class="btn-sm" data-i18n="common.close">닫기</button>
             <table id="mdVersionTable">
               <thead>
                 <tr>
-                  <th>버전</th>
-                  <th>코멘트</th>
-                  <th>저장 시간</th>
-                  <th>작업</th>
+                  <th data-i18n="md.version_col">버전</th>
+                  <th data-i18n="md.version_comment">코멘트</th>
+                  <th data-i18n="common.save_time">저장 시간</th>
+                  <th data-i18n="common.action">작업</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -529,58 +529,58 @@
 
         <div class="tab-content" data-tab="paramchanger">
           <section class="panel">
-            <h2>파라미터 변환</h2>
-            <p class="desc">값 목록을 다양한 포맷으로 변환합니다. 공백, 개행, 콤마, 탭 등으로 구분된 값을 입력하세요.</p>
-            <textarea id="paramInput" rows="10" placeholder="A B C&#10;또는&#10;A&#10;B&#10;C"></textarea>
+            <h2 data-i18n="param.title">파라미터 변환</h2>
+            <p class="desc" data-i18n="param.desc">값 목록을 다양한 포맷으로 변환합니다. 공백, 개행, 콤마, 탭 등으로 구분된 값을 입력하세요.</p>
+            <textarea id="paramInput" rows="10" data-i18n-placeholder="param.input_ph" placeholder="A B C&#10;또는&#10;A&#10;B&#10;C"></textarea>
             <div class="toolbar">
               <div class="toolbar-group">
-                <label class="opt-label">구분자 감지
+                <label class="opt-label"><span data-i18n="param.detect">구분자 감지</span>
                   <select id="paramDelimiter">
-                    <option value="auto">자동</option>
-                    <option value="\n">개행</option>
-                    <option value=" ">공백</option>
-                    <option value=",">콤마</option>
-                    <option value="\t">탭</option>
+                    <option value="auto" data-i18n="param.auto">자동</option>
+                    <option value="\n" data-i18n="param.newline">개행</option>
+                    <option value=" " data-i18n="param.space">공백</option>
+                    <option value="," data-i18n="param.comma">콤마</option>
+                    <option value="\t" data-i18n="param.tab">탭</option>
                   </select>
                 </label>
               </div>
               <div class="toolbar-group">
-                <label class="opt-label">출력 포맷
+                <label class="opt-label"><span data-i18n="param.output_format">출력 포맷</span>
                   <select id="paramFormat">
-                    <option value="comma">콤마 (A,B,C)</option>
-                    <option value="sq">작은따옴표 ('A','B','C')</option>
-                    <option value="dq">큰따옴표 ("A","B","C")</option>
+                    <option value="comma" data-i18n="param.fmt_comma">콤마 (A,B,C)</option>
+                    <option value="sq" data-i18n="param.fmt_single">작은따옴표 ('A','B','C')</option>
+                    <option value="dq" data-i18n="param.fmt_double">큰따옴표 ("A","B","C")</option>
                     <option value="sql">SQL IN ('A','B','C')</option>
-                    <option value="newline">개행 (줄바꿈)</option>
-                    <option value="space">공백</option>
-                    <option value="tab">탭</option>
+                    <option value="newline" data-i18n="param.fmt_newline">개행 (줄바꿈)</option>
+                    <option value="space" data-i18n="param.fmt_space">공백</option>
+                    <option value="tab" data-i18n="param.fmt_tab">탭</option>
                   </select>
                 </label>
               </div>
               <div class="toolbar-group">
-                <button type="button" id="paramConvertBtn">변환</button>
-                <button type="button" id="paramCopyBtn">복사</button>
+                <button type="button" id="paramConvertBtn" data-i18n="common.convert">변환</button>
+                <button type="button" id="paramCopyBtn" data-i18n="common.copy">복사</button>
               </div>
               <span id="paramStatus"></span>
             </div>
-            <textarea id="paramOutput" rows="10" readonly placeholder="변환 결과가 여기에 표시됩니다."></textarea>
+            <textarea id="paramOutput" rows="10" readonly data-i18n-placeholder="param.result_ph" placeholder="변환 결과가 여기에 표시됩니다."></textarea>
           </section>
         </div>
 
         <!-- PDF 변환기 탭 -->
         <div class="tab-content" data-tab="pdfconvert">
           <section class="panel">
-            <h2>PDF 변환</h2>
-            <p class="desc">다양한 파일을 PDF로 변환합니다. 여러 파일을 하나의 PDF로 병합할 수 있습니다. 현재 이 PDF변환기는 불안정합니다. Markdown정도만 PDF로 변환하시고, docx, xlsx, pptx는 외부 PDF 변환 툴을 이용하세요.</p>
+            <h2 data-i18n="pdf.title">PDF 변환</h2>
+            <p class="desc" data-i18n="pdf.desc">다양한 파일을 PDF로 변환합니다. 여러 파일을 하나의 PDF로 병합할 수 있습니다. 현재 이 PDF변환기는 불안정합니다. Markdown정도만 PDF로 변환하시고, docx, xlsx, pptx는 외부 PDF 변환 툴을 이용하세요.</p>
 
             <div class="pdf-upload-zone" id="pdfUploadZone">
-              <p>파일을 드래그하거나 클릭하여 업로드</p>
-              <p class="pdf-upload-formats">지원: md, txt, html, jpg, png, gif, bmp, webp, docx, xlsx, pptx</p>
+              <p data-i18n="pdf.upload_text">파일을 드래그하거나 클릭하여 업로드</p>
+              <p class="pdf-upload-formats" data-i18n="pdf.formats">지원: md, txt, html, jpg, png, gif, bmp, webp, docx, xlsx, pptx</p>
               <input type="file" id="pdfFileInput" multiple accept=".md,.txt,.html,.htm,.jpg,.jpeg,.png,.gif,.bmp,.webp,.docx,.xlsx,.pptx" hidden />
             </div>
 
             <div class="pdf-md-saves">
-              <button type="button" id="pdfLoadMdSaveBtn">저장된 Markdown에서 불러오기</button>
+              <button type="button" id="pdfLoadMdSaveBtn" data-i18n="pdf.load_from_md">저장된 Markdown에서 불러오기</button>
               <select id="pdfMdSaveSelect" style="display:none"></select>
             </div>
 
@@ -588,32 +588,32 @@
 
             <div class="toolbar" id="pdfToolbar" style="display:none">
               <div class="toolbar-group">
-                <button type="button" id="pdfConvertBtn">PDF 변환</button>
-                <button type="button" id="pdfMergeBtn">하나의 PDF로 병합</button>
-                <button type="button" id="pdfClearBtn">전체 제거</button>
+                <button type="button" id="pdfConvertBtn" data-i18n="pdf.convert_btn">PDF 변환</button>
+                <button type="button" id="pdfMergeBtn" data-i18n="pdf.merge_btn">하나의 PDF로 병합</button>
+                <button type="button" id="pdfClearBtn" data-i18n="pdf.remove_all">전체 제거</button>
               </div>
               <div class="toolbar-group">
-                <label class="opt-label">용지
+                <label class="opt-label"><span data-i18n="pdf.paper">용지</span>
                   <select id="pdfPageSize">
                     <option value="a4" selected>A4</option>
                     <option value="letter">Letter</option>
                     <option value="legal">Legal</option>
                   </select>
                 </label>
-                <label class="opt-label">방향
+                <label class="opt-label"><span data-i18n="pdf.orientation">방향</span>
                   <select id="pdfOrientation">
-                    <option value="portrait" selected>세로</option>
-                    <option value="landscape">가로</option>
+                    <option value="portrait" selected data-i18n="pdf.portrait">세로</option>
+                    <option value="landscape" data-i18n="pdf.landscape">가로</option>
                   </select>
                 </label>
-                <label class="opt-label">여백
+                <label class="opt-label"><span data-i18n="pdf.margin">여백</span>
                   <select id="pdfMargin">
-                    <option value="10" selected>보통</option>
-                    <option value="5">좁게</option>
-                    <option value="20">넓게</option>
+                    <option value="10" selected data-i18n="pdf.margin_normal">보통</option>
+                    <option value="5" data-i18n="pdf.margin_narrow">좁게</option>
+                    <option value="20" data-i18n="pdf.margin_wide">넓게</option>
                   </select>
                 </label>
-                <label class="opt-label"><input type="checkbox" id="pdfPageBreakH2"> 제목(h2)마다 페이지 분리</label>
+                <label class="opt-label"><input type="checkbox" id="pdfPageBreakH2"> <span data-i18n="pdf.h2_break">제목(h2)마다 페이지 분리</span></label>
               </div>
               <span id="pdfStatus"></span>
             </div>
@@ -624,23 +624,23 @@
 
         <div class="tab-content" data-tab="diffcompare">
           <section class="panel">
-            <h2>Diff 비교</h2>
-            <p class="desc">두 텍스트, 파일, 또는 폴더를 비교합니다. Alt+↑↓로 블록 이동, Alt+←→로 변경 반영. (파일/폴더 선택은 로컬 서버 환경에서만 동작합니다)</p>
+            <h2 data-i18n="diff.title">Diff 비교</h2>
+            <p class="desc" data-i18n="diff.desc">두 텍스트, 파일, 또는 폴더를 비교합니다. Alt+↑↓로 블록 이동, Alt+←→로 변경 반영. (파일/폴더 선택은 로컬 서버 환경에서만 동작합니다)</p>
 
             <!-- 모드 선택 + 액션 -->
             <div class="toolbar">
               <div class="toolbar-group">
-                <label><input type="radio" name="diffMode" value="text" checked> 텍스트</label>
-                <label><input type="radio" name="diffMode" value="file"> 파일</label>
-                <label><input type="radio" name="diffMode" value="folder"> 폴더</label>
+                <label><input type="radio" name="diffMode" value="text" checked> <span data-i18n="diff.text">텍스트</span></label>
+                <label><input type="radio" name="diffMode" value="file"> <span data-i18n="diff.file">파일</span></label>
+                <label><input type="radio" name="diffMode" value="folder"> <span data-i18n="diff.folder">폴더</span></label>
               </div>
               <div class="toolbar-group">
-                <button type="button" id="diffCompareBtn">비교</button>
-                <button type="button" id="diffClearBtn">지우기</button>
-                <button type="button" id="diffCopyLeftBtn" style="display:none">왼쪽 복사</button>
-                <button type="button" id="diffCopyRightBtn" style="display:none">오른쪽 복사</button>
-                <button type="button" id="diffSaveLeftBtn" style="display:none">왼쪽 저장</button>
-                <button type="button" id="diffSaveRightBtn" style="display:none">오른쪽 저장</button>
+                <button type="button" id="diffCompareBtn" data-i18n="common.compare">비교</button>
+                <button type="button" id="diffClearBtn" data-i18n="common.clear">지우기</button>
+                <button type="button" id="diffCopyLeftBtn" style="display:none" data-i18n="diff.copy_left">왼쪽 복사</button>
+                <button type="button" id="diffCopyRightBtn" style="display:none" data-i18n="diff.copy_right">오른쪽 복사</button>
+                <button type="button" id="diffSaveLeftBtn" style="display:none" data-i18n="diff.save_left">왼쪽 저장</button>
+                <button type="button" id="diffSaveRightBtn" style="display:none" data-i18n="diff.save_right">오른쪽 저장</button>
               </div>
               <span id="diffStatus"></span>
             </div>
@@ -649,11 +649,11 @@
             <div id="diffTextInputs" class="diff-input-row">
               <div class="diff-input-col">
                 <div class="diff-input-header">Left</div>
-                <textarea id="diffLeftText" class="diff-textarea" placeholder="왼쪽 텍스트를 붙여넣으세요"></textarea>
+                <textarea id="diffLeftText" class="diff-textarea" data-i18n-placeholder="diff.left_ph" placeholder="왼쪽 텍스트를 붙여넣으세요"></textarea>
               </div>
               <div class="diff-input-col">
                 <div class="diff-input-header">Right</div>
-                <textarea id="diffRightText" class="diff-textarea" placeholder="오른쪽 텍스트를 붙여넣으세요"></textarea>
+                <textarea id="diffRightText" class="diff-textarea" data-i18n-placeholder="diff.right_ph" placeholder="오른쪽 텍스트를 붙여넣으세요"></textarea>
               </div>
             </div>
 
@@ -662,16 +662,16 @@
               <div class="diff-input-col">
                 <div class="diff-input-header">Left</div>
                 <div class="diff-folder-row">
-                  <input type="text" id="diffLeftFilePath" class="diff-folder-input" placeholder="파일 경로 입력">
-                  <button type="button" id="diffLeftFilePickBtn" class="diff-folder-btn">파일 선택</button>
+                  <input type="text" id="diffLeftFilePath" class="diff-folder-input" data-i18n-placeholder="diff.path_ph" placeholder="파일 경로 입력">
+                  <button type="button" id="diffLeftFilePickBtn" class="diff-folder-btn" data-i18n="common.file_select">파일 선택</button>
                 </div>
                 <div id="diffLeftFileName" class="diff-file-name"></div>
               </div>
               <div class="diff-input-col">
                 <div class="diff-input-header">Right</div>
                 <div class="diff-folder-row">
-                  <input type="text" id="diffRightFilePath" class="diff-folder-input" placeholder="파일 경로 입력">
-                  <button type="button" id="diffRightFilePickBtn" class="diff-folder-btn">파일 선택</button>
+                  <input type="text" id="diffRightFilePath" class="diff-folder-input" data-i18n-placeholder="diff.path_ph" placeholder="파일 경로 입력">
+                  <button type="button" id="diffRightFilePickBtn" class="diff-folder-btn" data-i18n="common.file_select">파일 선택</button>
                 </div>
                 <div id="diffRightFileName" class="diff-file-name"></div>
               </div>
@@ -680,18 +680,18 @@
             <!-- 폴더 모드: 좌/우 경로 입력 또는 폴더 선택 -->
             <div id="diffFolderInputs" class="diff-input-row" style="display:none">
               <div class="diff-input-col">
-                <div class="diff-input-header">Left 폴더</div>
+                <div class="diff-input-header" data-i18n="diff.left_folder">Left 폴더</div>
                 <div class="diff-folder-row">
-                  <input type="text" id="diffLeftFolder" class="diff-folder-input" placeholder="경로 직접 입력 또는 폴더 선택">
-                  <button type="button" id="diffLeftFolderBtn" class="diff-folder-btn">폴더 선택</button>
+                  <input type="text" id="diffLeftFolder" class="diff-folder-input" data-i18n-placeholder="diff.folder_path_ph" placeholder="경로 직접 입력 또는 폴더 선택">
+                  <button type="button" id="diffLeftFolderBtn" class="diff-folder-btn" data-i18n="common.folder_select">폴더 선택</button>
                 </div>
                 <div id="diffLeftFolderName" class="diff-file-name"></div>
               </div>
               <div class="diff-input-col">
-                <div class="diff-input-header">Right 폴더</div>
+                <div class="diff-input-header" data-i18n="diff.right_folder">Right 폴더</div>
                 <div class="diff-folder-row">
-                  <input type="text" id="diffRightFolder" class="diff-folder-input" placeholder="경로 직접 입력 또는 폴더 선택">
-                  <button type="button" id="diffRightFolderBtn" class="diff-folder-btn">폴더 선택</button>
+                  <input type="text" id="diffRightFolder" class="diff-folder-input" data-i18n-placeholder="diff.folder_path_ph" placeholder="경로 직접 입력 또는 폴더 선택">
+                  <button type="button" id="diffRightFolderBtn" class="diff-folder-btn" data-i18n="common.folder_select">폴더 선택</button>
                 </div>
                 <div id="diffRightFolderName" class="diff-file-name"></div>
               </div>
@@ -714,32 +714,32 @@
         <!-- Git 관리 탭 -->
         <div class="tab-content" data-tab="git">
           <section class="panel">
-            <h2>Git 관리</h2>
-            <p class="desc">로컬 Git 저장소를 선택하면 변경사항 확인, 커밋, 브랜치 관리를 할 수 있습니다.</p>
+            <h2 data-i18n="git.title">Git 관리</h2>
+            <p class="desc" data-i18n="git.desc">로컬 Git 저장소를 선택하면 변경사항 확인, 커밋, 브랜치 관리를 할 수 있습니다.</p>
 
             <!-- 저장소 선택 -->
             <div class="git-repo-row">
-              <input type="text" id="gitRepoPath" class="git-repo-input" placeholder="저장소 경로 입력" />
-              <button type="button" id="gitPickRepoBtn" class="git-btn">폴더 선택</button>
-              <button type="button" id="gitRefreshBtn" class="git-btn">새로고침</button>
+              <input type="text" id="gitRepoPath" class="git-repo-input" data-i18n-placeholder="git.path_ph" placeholder="저장소 경로 입력" />
+              <button type="button" id="gitPickRepoBtn" class="git-btn" data-i18n="common.folder_select">폴더 선택</button>
+              <button type="button" id="gitRefreshBtn" class="git-btn" data-i18n="common.refresh">새로고침</button>
             </div>
 
             <!-- 브랜치 바 -->
             <div class="git-branch-bar" id="gitBranchBar" style="display:none">
-              <span class="git-branch-label">브랜치: <strong id="gitCurrentBranch"></strong></span>
+              <span class="git-branch-label"><span data-i18n="git.branch">브랜치:</span> <strong id="gitCurrentBranch"></strong></span>
               <select id="gitBranchSelect" class="git-branch-select"></select>
-              <button type="button" id="gitSwitchBranchBtn" class="git-btn-sm">전환</button>
-              <button type="button" id="gitNewBranchBtn" class="git-btn-sm">새 브랜치</button>
+              <button type="button" id="gitSwitchBranchBtn" class="git-btn-sm" data-i18n="git.switch">전환</button>
+              <button type="button" id="gitNewBranchBtn" class="git-btn-sm" data-i18n="git.new_branch">새 브랜치</button>
             </div>
 
             <!-- 메인: 파일 목록 + Diff -->
             <div class="git-main" id="gitMain" style="display:none">
               <div class="git-file-panel" id="gitFilePanel">
-                <div class="git-file-header">변경된 파일</div>
+                <div class="git-file-header" data-i18n="git.changed_files">변경된 파일</div>
                 <div class="git-file-list" id="gitFileList"></div>
               </div>
               <div class="git-diff-panel" id="gitDiffPanel">
-                <div class="git-diff-header" id="gitDiffHeader">파일을 선택하세요</div>
+                <div class="git-diff-header" id="gitDiffHeader" data-i18n="git.select_file">파일을 선택하세요</div>
                 <div class="git-diff-view">
                   <div class="git-diff-side git-diff-left" id="gitDiffLeft"></div>
                   <div class="git-diff-side git-diff-right" id="gitDiffRight"></div>
@@ -749,53 +749,53 @@
 
             <!-- 액션 바 -->
             <div class="git-action-bar" id="gitActionBar" style="display:none">
-              <button type="button" id="gitSelectAllBtn" class="git-btn-sm">전체 선택</button>
-              <button type="button" id="gitDeselectAllBtn" class="git-btn-sm">전체 해제</button>
-              <button type="button" id="gitDiscardBtn" class="git-btn-sm git-btn-danger">선택 Discard</button>
+              <button type="button" id="gitSelectAllBtn" class="git-btn-sm" data-i18n="git.select_all">전체 선택</button>
+              <button type="button" id="gitDeselectAllBtn" class="git-btn-sm" data-i18n="git.deselect_all">전체 해제</button>
+              <button type="button" id="gitDiscardBtn" class="git-btn-sm git-btn-danger" data-i18n="git.discard">선택 Discard</button>
             </div>
 
             <!-- 커밋 영역 -->
             <div class="git-commit-area" id="gitCommitArea" style="display:none">
               <div class="git-commit-row">
-                <textarea id="gitCommitMsg" class="git-commit-input" rows="3" placeholder="커밋 메시지를 입력하세요"></textarea>
+                <textarea id="gitCommitMsg" class="git-commit-input" rows="3" data-i18n-placeholder="git.commit_ph" placeholder="커밋 메시지를 입력하세요"></textarea>
                 <button type="button" id="gitCommitBtn" class="git-btn git-btn-primary">Commit</button>
               </div>
               <div class="git-template-row">
                 <select id="gitTemplateSelect" class="git-template-select">
-                  <option value="">템플릿 선택...</option>
+                  <option value="" data-i18n="git.template_select">템플릿 선택...</option>
                 </select>
-                <button type="button" id="gitTemplateManageBtn" class="git-btn-sm">템플릿 관리</button>
+                <button type="button" id="gitTemplateManageBtn" class="git-btn-sm" data-i18n="git.template_manage">템플릿 관리</button>
               </div>
             </div>
 
             <!-- 템플릿 관리 모달 -->
             <div class="git-template-modal" id="gitTemplateModal" style="display:none">
               <div class="git-template-modal-header">
-                <h3>커밋 메시지 템플릿</h3>
+                <h3 data-i18n="git.template_title">커밋 메시지 템플릿</h3>
                 <button type="button" id="gitTemplateModalClose">&times;</button>
               </div>
               <div class="git-template-list" id="gitTemplateList"></div>
               <div class="git-template-add">
-                <input type="text" id="gitTemplateNameInput" placeholder="템플릿 이름" />
-                <textarea id="gitTemplateContentInput" rows="2" placeholder="템플릿 내용 (예: [${branch}] ${date} - )"></textarea>
-                <button type="button" id="gitTemplateAddBtn" class="git-btn-sm">추가</button>
+                <input type="text" id="gitTemplateNameInput" data-i18n-placeholder="git.template_name_ph" placeholder="템플릿 이름" />
+                <textarea id="gitTemplateContentInput" rows="2" data-i18n-placeholder="git.template_content_ph" placeholder="템플릿 내용 (예: [${branch}] ${date} - )"></textarea>
+                <button type="button" id="gitTemplateAddBtn" class="git-btn-sm" data-i18n="common.add">추가</button>
               </div>
               <details class="git-template-vars">
-                <summary>사용 가능한 변수</summary>
+                <summary data-i18n="git.variables">사용 가능한 변수</summary>
                 <table class="git-var-table">
-                  <thead><tr><th>변수</th><th>설명</th><th>예시</th></tr></thead>
+                  <thead><tr><th data-i18n="git.var_name">변수</th><th data-i18n="git.var_desc">설명</th><th data-i18n="git.var_example">예시</th></tr></thead>
                   <tbody>
-                    <tr><td><code>${branch}</code></td><td>현재 브랜치</td><td>feature/login</td></tr>
-                    <tr><td><code>${user}</code></td><td>git user.name</td><td>jang</td></tr>
-                    <tr><td><code>${email}</code></td><td>git user.email</td><td>jang@example.com</td></tr>
-                    <tr><td><code>${date}</code></td><td>날짜 (YYYY-MM-DD)</td><td>2026-03-12</td></tr>
-                    <tr><td><code>${date:포맷}</code></td><td>커스텀 날짜</td><td>${date:YYYY/MM/DD}</td></tr>
-                    <tr><td><code>${time}</code></td><td>시간 (HH:mm:ss)</td><td>14:30:05</td></tr>
-                    <tr><td><code>${time:포맷}</code></td><td>커스텀 시간</td><td>${time:HH:mm}</td></tr>
-                    <tr><td><code>${datetime}</code></td><td>날짜+시간</td><td>2026-03-12 14:30:05</td></tr>
-                    <tr><td><code>${datetime:포맷}</code></td><td>커스텀 포맷</td><td>${datetime:YYYY/MM/DD HH:mm}</td></tr>
-                    <tr><td><code>${files}</code></td><td>커밋 대상 파일명</td><td>app.js, server.py</td></tr>
-                    <tr><td><code>${file_count}</code></td><td>커밋 대상 파일 수</td><td>3</td></tr>
+                    <tr><td><code>${branch}</code></td><td data-i18n="git.var_branch">현재 브랜치</td><td>feature/login</td></tr>
+                    <tr><td><code>${user}</code></td><td data-i18n="git.var_user">git user.name</td><td>jang</td></tr>
+                    <tr><td><code>${email}</code></td><td data-i18n="git.var_email">git user.email</td><td>jang@example.com</td></tr>
+                    <tr><td><code>${date}</code></td><td data-i18n="git.var_date">날짜 (YYYY-MM-DD)</td><td>2026-03-12</td></tr>
+                    <tr><td><code>${date:포맷}</code></td><td data-i18n="git.var_date_custom">커스텀 날짜</td><td>${date:YYYY/MM/DD}</td></tr>
+                    <tr><td><code>${time}</code></td><td data-i18n="git.var_time">시간 (HH:mm:ss)</td><td>14:30:05</td></tr>
+                    <tr><td><code>${time:포맷}</code></td><td data-i18n="git.var_time_custom">커스텀 시간</td><td>${time:HH:mm}</td></tr>
+                    <tr><td><code>${datetime}</code></td><td data-i18n="git.var_datetime">날짜+시간</td><td>2026-03-12 14:30:05</td></tr>
+                    <tr><td><code>${datetime:포맷}</code></td><td data-i18n="git.var_format_custom">커스텀 포맷</td><td>${datetime:YYYY/MM/DD HH:mm}</td></tr>
+                    <tr><td><code>${files}</code></td><td data-i18n="git.var_files">커밋 대상 파일명</td><td>app.js, server.py</td></tr>
+                    <tr><td><code>${file_count}</code></td><td data-i18n="git.var_filecount">커밋 대상 파일 수</td><td>3</td></tr>
                   </tbody>
                 </table>
               </details>
@@ -803,10 +803,10 @@
 
             <!-- 최근 커밋 로그 -->
             <div class="git-log-area" id="gitLogArea" style="display:none">
-              <h3 class="git-log-title">최근 커밋</h3>
+              <h3 class="git-log-title" data-i18n="git.recent_commits">최근 커밋</h3>
               <table class="git-log-table">
                 <thead>
-                  <tr><th>해시</th><th>메시지</th><th>작성자</th><th>날짜</th></tr>
+                  <tr><th data-i18n="git.col_hash">해시</th><th data-i18n="git.col_message">메시지</th><th data-i18n="git.col_author">작성자</th><th data-i18n="git.col_date">날짜</th></tr>
                 </thead>
                 <tbody id="gitLogBody"></tbody>
               </table>
@@ -817,44 +817,44 @@
         <!-- Data AI 탭 -->
         <div class="tab-content" data-tab="dataai">
           <section class="panel">
-            <h2>Data AI</h2>
-            <p class="desc">원하는 데이터를 설명하면 AI가 CSV, JSON 등의 형식으로 생성합니다.</p>
+            <h2 data-i18n="dataai.title">Data AI</h2>
+            <p class="desc" data-i18n="dataai.desc">원하는 데이터를 설명하면 AI가 CSV, JSON 등의 형식으로 생성합니다.</p>
             <div class="dataai-form">
-              <textarea id="dataaiPrompt" class="dataai-prompt" rows="4" placeholder="예: 한국 시도별 인구수 데이터 10건, 가상의 사용자 목록 50건 (이름, 이메일, 나이, 도시)"></textarea>
+              <textarea id="dataaiPrompt" class="dataai-prompt" rows="4" data-i18n-placeholder="dataai.prompt_ph" placeholder="예: 한국 시도별 인구수 데이터 10건, 가상의 사용자 목록 50건 (이름, 이메일, 나이, 도시)"></textarea>
               <div class="dataai-options">
-                <label class="opt-label">출력 형식
+                <label class="opt-label"><span data-i18n="dataai.output_format">출력 형식</span>
                   <select id="dataaiFormat">
                     <option value="csv">CSV</option>
                     <option value="json">JSON</option>
                     <option value="tsv">TSV</option>
                   </select>
                 </label>
-                <label class="opt-label">건수
+                <label class="opt-label"><span data-i18n="dataai.count">건수</span>
                   <input type="number" id="dataaiCount" value="10" min="1" max="1000" style="width:70px">
                 </label>
-                <button type="button" id="dataaiGenerateBtn" class="primary-btn">생성</button>
+                <button type="button" id="dataaiGenerateBtn" class="primary-btn" data-i18n="dataai.generate">생성</button>
               </div>
             </div>
             <div id="dataaiStatus" class="dataai-status" style="display:none"></div>
             <div id="dataaiResultWrap" style="display:none">
               <div class="dataai-result-toolbar">
-                <button type="button" id="dataaiCopyBtn">복사</button>
-                <button type="button" id="dataaiDownloadBtn">다운로드</button>
-                <button type="button" id="dataaiToCsvBtn">CSV 편집기로 보내기</button>
-                <button type="button" id="dataaiToJsonBtn" style="display:none">JSON 정렬로 보내기</button>
-                <button type="button" id="dataaiSaveBtn">DB 저장</button>
+                <button type="button" id="dataaiCopyBtn" data-i18n="common.copy">복사</button>
+                <button type="button" id="dataaiDownloadBtn" data-i18n="common.download">다운로드</button>
+                <button type="button" id="dataaiToCsvBtn" data-i18n="dataai.send_csv">CSV 편집기로 보내기</button>
+                <button type="button" id="dataaiToJsonBtn" style="display:none" data-i18n="dataai.send_json">JSON 정렬로 보내기</button>
+                <button type="button" id="dataaiSaveBtn" data-i18n="dataai.save_db">DB 저장</button>
               </div>
               <div id="dataaiPreviewWrap" style="display:none"></div>
               <details>
-                <summary style="cursor:pointer;font-size:13px;color:var(--muted);margin:8px 0">원본 데이터 보기</summary>
+                <summary style="cursor:pointer;font-size:13px;color:var(--muted);margin:8px 0" data-i18n="dataai.raw_toggle">원본 데이터 보기</summary>
                 <pre id="dataaiResult" class="dataai-result"></pre>
               </details>
             </div>
           </section>
           <section class="panel">
-            <h2>저장 목록</h2>
+            <h2 data-i18n="dataai.saved_list">저장 목록</h2>
             <table class="dev-table" id="dataaiSavesTable">
-              <thead><tr><th>ID</th><th>요청</th><th>형식</th><th>생성일</th><th></th></tr></thead>
+              <thead><tr><th>ID</th><th data-i18n="dataai.col_request">요청</th><th data-i18n="dataai.col_format">형식</th><th data-i18n="dataai.col_date">생성일</th><th></th></tr></thead>
               <tbody></tbody>
             </table>
           </section>
@@ -863,28 +863,36 @@
         <!-- 개발자 모드 탭 -->
         <div class="tab-content" data-tab="devmode">
           <section class="panel">
-            <h2>개발자 모드 <span id="devAuthBadge" class="dev-auth-badge"></span> <button type="button" id="devLockBtn" class="dev-lock-btn" style="display:none;" title="잠금 (로그아웃)">잠금</button></h2>
+            <h2><span data-i18n="dev.title">개발자 모드</span> <span id="devAuthBadge" class="dev-auth-badge"></span> <button type="button" id="devLockBtn" class="dev-lock-btn" style="display:none;" data-i18n-title="dev.lock_title" title="잠금 (로그아웃)" data-i18n="dev.lock">잠금</button></h2>
             <div class="dev-section-tabs">
-              <button class="dev-sec-btn active" data-sec="general">일반</button>
-              <button class="dev-sec-btn" data-sec="db">DB 탐색기</button>
-              <button class="dev-sec-btn" data-sec="tabs">탭 관리</button>
-              <button class="dev-sec-btn" data-sec="modules">모듈 설정</button>
-              <button class="dev-sec-btn" data-sec="cdn">CDN 관리</button>
+              <button class="dev-sec-btn active" data-sec="general" data-i18n="dev.sec_general">일반</button>
+              <button class="dev-sec-btn" data-sec="db" data-i18n="dev.sec_db">DB 탐색기</button>
+              <button class="dev-sec-btn" data-sec="tabs" data-i18n="dev.sec_tabs">탭 관리</button>
+              <button class="dev-sec-btn" data-sec="modules" data-i18n="dev.sec_modules">모듈 설정</button>
+              <button class="dev-sec-btn" data-sec="cdn" data-i18n="dev.sec_cdn">CDN 관리</button>
             </div>
             <div class="dev-body">
               <!-- 일반 설정 -->
               <div class="dev-section active" data-sec="general">
-                <p class="desc">사이트 기본 설정을 변경합니다.</p>
+                <p class="desc" data-i18n="dev.general_desc">사이트 기본 설정을 변경합니다.</p>
                 <div class="dev-module-card">
-                  <h4>사이트 정보</h4>
+                  <h4 data-i18n="dev.site_info">사이트 정보</h4>
                   <div class="dev-module-fields">
                     <label class="dev-field">
-                      <span>툴킷 이름</span>
+                      <span data-i18n="dev.site_name">툴킷 이름</span>
                       <input type="text" id="devSiteName" class="dev-input" placeholder="My Dev Toolkit">
+                    </label>
+                    <label class="dev-field">
+                      <span data-i18n="dev.lang">언어</span>
+                      <select id="devSiteLang" class="dev-input">
+                        <option value="ko">한국어</option>
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                      </select>
                     </label>
                   </div>
                 </div>
-                <button id="devSiteConfigSave" class="dev-btn dev-btn-primary">저장</button>
+                <button id="devSiteConfigSave" class="dev-btn dev-btn-primary" data-i18n="common.save">저장</button>
               </div>
               <!-- DB 탐색기 -->
               <div class="dev-section" data-sec="db">
@@ -894,22 +902,22 @@
                 </div>
                 <div id="devDbContent">
                   <div class="dev-db-controls">
-                    <select id="devTableSelect"><option value="">테이블 선택...</option></select>
-                    <button id="devTableLoad" class="dev-btn">조회</button>
+                    <select id="devTableSelect"><option value="" data-i18n="dev.table_select">테이블 선택...</option></select>
+                    <button id="devTableLoad" class="dev-btn" data-i18n="dev.table_load">조회</button>
                   </div>
                   <div id="devTableResult"></div>
                   <hr>
-                  <h4>SQL 실행 (SELECT만)</h4>
+                  <h4 data-i18n="dev.sql_title">SQL 실행 (SELECT만)</h4>
                   <textarea id="devSqlInput" class="dev-sql-area" rows="3" placeholder="SELECT * FROM mocks LIMIT 10"></textarea>
-                  <button id="devSqlRun" class="dev-btn">실행</button>
+                  <button id="devSqlRun" class="dev-btn" data-i18n="json.run">실행</button>
                   <div id="devSqlResult"></div>
                 </div>
               </div>
               <!-- 탭 관리 -->
               <div class="dev-section" data-sec="tabs">
-                <p class="desc">사이드바 탭의 이름, 표시 여부, 순서를 변경할 수 있습니다. 변경 후 저장하면 즉시 반영됩니다.</p>
+                <p class="desc" data-i18n="dev.drag_reorder">사이드바 탭의 이름, 표시 여부, 순서를 변경할 수 있습니다. 변경 후 저장하면 즉시 반영됩니다.</p>
                 <div id="devTabsList"></div>
-                <button id="devTabsSave" class="dev-btn dev-btn-primary">탭 설정 저장</button>
+                <button id="devTabsSave" class="dev-btn dev-btn-primary" data-i18n="dev.tabs_save_btn">탭 설정 저장</button>
               </div>
               <!-- 모듈 설정 -->
               <div class="dev-section" data-sec="modules">
@@ -918,7 +926,7 @@
                   <div class="dev-auth-form" id="devModAuthForm"></div>
                 </div>
                 <div id="devModContent"></div>
-                <button id="devModSave" class="dev-btn dev-btn-primary" style="display:none">모듈 설정 저장</button>
+                <button id="devModSave" class="dev-btn dev-btn-primary" style="display:none" data-i18n="dev.modules_save_btn">모듈 설정 저장</button>
               </div>
               <!-- CDN 관리 -->
               <div class="dev-section" data-sec="cdn">
@@ -927,11 +935,11 @@
                   <div class="dev-auth-form" id="devCdnAuthForm"></div>
                 </div>
                 <div id="devCdnContent">
-                  <p class="desc">외부 CDN 라이브러리를 로컬(<code>static/vendor/</code>)로 다운로드합니다. 오프라인 환경에서도 도구를 사용할 수 있습니다.</p>
+                  <p class="desc" data-i18n-html="dev.cdn_desc">외부 CDN 라이브러리를 로컬(<code>static/vendor/</code>)로 다운로드합니다. 오프라인 환경에서도 도구를 사용할 수 있습니다.</p>
                   <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <button id="devCdnCheckLatest" class="dev-btn">최신 버전 확인</button>
-                    <button id="devCdnSync" class="dev-btn dev-btn-primary">현재 버전 다운로드</button>
-                    <button id="devCdnSyncLatest" class="dev-btn dev-btn-primary">최신 버전 다운로드</button>
+                    <button id="devCdnCheckLatest" class="dev-btn" data-i18n="dev.cdn_check">최신 버전 확인</button>
+                    <button id="devCdnSync" class="dev-btn dev-btn-primary" data-i18n="dev.cdn_sync">현재 버전 다운로드</button>
+                    <button id="devCdnSyncLatest" class="dev-btn dev-btn-primary" data-i18n="dev.cdn_sync_latest">최신 버전 다운로드</button>
                   </div>
                   <span id="devCdnStatus" style="display:block;margin-top:6px;"></span>
                   <div id="devCdnList" style="margin-top:12px;"></div>
@@ -964,6 +972,7 @@
     <script src="/diffcompare.js"></script>
     <script src="/gitmanager.js"></script>
     <script src="/dataai.js"></script>
+    <script src="/i18n.js"></script>
     <script src="/devmode.js"></script>
   </body>
 </html>

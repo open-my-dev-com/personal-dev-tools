@@ -80,7 +80,7 @@
         inputEl.value = data.path;
       }
     } catch (e) {
-      setStatus("파일 선택 실패: " + e.message, true);
+      setStatus(t("diff.file_select_fail", { msg: e.message }), true);
     }
   }
 
@@ -94,7 +94,7 @@
       var left = leftTextEl.value;
       var right = rightTextEl.value;
       if (!left && !right) {
-        setStatus("텍스트를 입력하세요", true);
+        setStatus(t("diff.input_required"), true);
         return;
       }
       runDiff(left, right);
@@ -213,7 +213,7 @@
     var showSave = currentMode === "file" || currentMode === "folder";
     saveLeftBtn.style.display = showSave ? "" : "none";
     saveRightBtn.style.display = showSave ? "" : "none";
-    setStatus("비교 완료", false);
+    setStatus(t("diff.done"), false);
   }
 
   // ── Render side-by-side ──
@@ -381,13 +381,13 @@
 
     var total = diffBlocks.length;
     statsEl.innerHTML =
-      "<strong>블록:</strong> " + total + " 개 &nbsp;|&nbsp; " +
-      '<span style="color:#16a34a">추가: ' + added + "</span> &nbsp;|&nbsp; " +
-      '<span style="color:#dc2626">삭제: ' + removed + "</span> &nbsp;|&nbsp; " +
-      '<span style="color:#d97706">변경: ' + changed + "</span>";
+      "<strong>" + t("diff.block") + "</strong> " + total + " &nbsp;|&nbsp; " +
+      '<span style="color:#16a34a">' + t("diff.added") + " " + added + "</span> &nbsp;|&nbsp; " +
+      '<span style="color:#dc2626">' + t("diff.deleted") + " " + removed + "</span> &nbsp;|&nbsp; " +
+      '<span style="color:#d97706">' + t("diff.changed") + " " + changed + "</span>";
 
     if (activeBlockIndex >= 0) {
-      statsEl.innerHTML += " &nbsp;|&nbsp; 현재: " + (activeBlockIndex + 1) + "/" + total;
+      statsEl.innerHTML += " &nbsp;|&nbsp; " + (activeBlockIndex + 1) + "/" + total;
     }
   }
 
@@ -435,7 +435,7 @@
 
   function mergeBlock(direction) {
     if (activeBlockIndex < 0 || activeBlockIndex >= diffBlocks.length) {
-      setStatus("반영할 블록을 먼저 선택하세요 (클릭 또는 Alt+↑/↓)", true);
+      setStatus(t("diff.select_block"), true);
       return;
     }
 
@@ -470,7 +470,7 @@
     renderDiff();
     renderStats();
     updateActiveHighlight();
-    setStatus(direction === "left" ? "오른쪽 → 왼쪽 반영 완료" : "왼쪽 → 오른쪽 반영 완료", false);
+    setStatus(direction === "left" ? t("diff.apply_rtl") : t("diff.apply_ltr"), false);
   }
 
   // ── Copy ──
@@ -485,13 +485,13 @@
 
   copyLeftBtn.addEventListener("click", function () {
     navigator.clipboard.writeText(getTextFromAligned(alignedLeft)).then(function () {
-      setStatus("왼쪽 텍스트 복사됨", false);
+      setStatus(t("diff.left_copied"), false);
     });
   });
 
   copyRightBtn.addEventListener("click", function () {
     navigator.clipboard.writeText(getTextFromAligned(alignedRight)).then(function () {
-      setStatus("오른쪽 텍스트 복사됨", false);
+      setStatus(t("diff.right_copied"), false);
     });
   });
 
@@ -512,7 +512,7 @@
   async function saveFile(side) {
     var filePath = getFilePath(side);
     if (!filePath) {
-      setStatus("저장할 파일 경로를 알 수 없습니다", true);
+      setStatus(t("diff.no_file_path"), true);
       return;
     }
     var aligned = side === "left" ? alignedLeft : alignedRight;
@@ -525,12 +525,12 @@
       });
       var data = await res.json();
       if (data.ok) {
-        setStatus((side === "left" ? "왼쪽" : "오른쪽") + " 파일 저장 완료: " + filePath, false);
+        setStatus(t("diff.file_saved", { path: filePath }), false);
       } else {
         setStatus(data.error, true);
       }
     } catch (e) {
-      setStatus("저장 실패: " + e.message, true);
+      setStatus(t("diff.file_save_fail", { msg: e.message }), true);
     }
   }
 
@@ -553,12 +553,12 @@
     var rightPath = rightFilePathEl.value.trim();
 
     if (!leftPath || !rightPath) {
-      setStatus("양쪽 파일 경로를 입력하거나 선택하세요", true);
+      setStatus(t("diff.both_path_required"), true);
       return;
     }
 
     try {
-      setStatus("파일 읽는 중...", false);
+      setStatus(t("diff.reading"), false);
       var lr = await fetchFileByPath(leftPath);
       if (!lr.ok) { setStatus(lr.error, true); return; }
       leftFileNameEl.textContent = lr.name;
@@ -569,7 +569,7 @@
 
       runDiff(lr.content, rr.content);
     } catch (e) {
-      setStatus("파일 읽기 실패: " + e.message, true);
+      setStatus(t("diff.read_fail", { msg: e.message }), true);
     }
   }
 
@@ -614,7 +614,7 @@
         inputEl.value = data.path;
       }
     } catch (e) {
-      setStatus("폴더 선택 실패: " + e.message, true);
+      setStatus(t("diff.folder_select_fail", { msg: e.message }), true);
     }
   }
 
@@ -627,11 +627,11 @@
     var rightPath = rightFolderEl.value.trim();
 
     if (!leftPath || !rightPath) {
-      setStatus("양쪽 폴더를 선택하거나 경로를 입력하세요", true);
+      setStatus(t("diff.both_folder_required"), true);
       return;
     }
 
-    setStatus("폴더 비교 중...", false);
+    setStatus(t("diff.comparing"), false);
 
     try {
       var res = await fetch("/api/diff/folder", {
@@ -642,14 +642,14 @@
       var data = await res.json();
 
       if (!data.ok) {
-        setStatus(data.error || "폴더 비교 실패", true);
+        setStatus(data.error || t("diff.folder_fail"), true);
         return;
       }
 
       renderFileTree(data.files, leftPath, rightPath);
-      setStatus("폴더 비교 완료: " + data.files.length + "개 파일", false);
+      setStatus(t("diff.folder_done", { count: data.files.length }), false);
     } catch (e) {
-      setStatus("폴더 비교 요청 실패: " + e.message, true);
+      setStatus(t("diff.folder_request_fail", { msg: e.message }), true);
     }
   }
 
@@ -667,16 +667,16 @@
 
       if (file.status === "modified") {
         statusSpan.classList.add("diff-ft-modified");
-        statusSpan.textContent = "변경";
+        statusSpan.textContent = t("diff.status_changed");
       } else if (file.status === "added") {
         statusSpan.classList.add("diff-ft-added");
-        statusSpan.textContent = "추가";
+        statusSpan.textContent = t("diff.status_added");
       } else if (file.status === "removed") {
         statusSpan.classList.add("diff-ft-removed");
-        statusSpan.textContent = "삭제";
+        statusSpan.textContent = t("diff.status_deleted");
       } else {
         statusSpan.classList.add("diff-ft-same");
-        statusSpan.textContent = "동일";
+        statusSpan.textContent = t("diff.status_same");
       }
 
       var nameSpan = document.createElement("span");

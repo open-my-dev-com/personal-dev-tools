@@ -135,12 +135,12 @@ function renderDataaiPreview() {
 // 생성
 dataaiGenerateBtn.addEventListener("click", async function () {
   var prompt = dataaiPrompt.value.trim();
-  if (!prompt) { setDataaiStatus("데이터 설명을 입력하세요.", "error"); return; }
+  if (!prompt) { setDataaiStatus(t("dataai.input_required"), "error"); return; }
 
   var fmt = dataaiFormat.value;
   var count = parseInt(dataaiCount.value) || 10;
 
-  startLoadingAnimation("AI가 데이터를 생성 중입니다");
+  startLoadingAnimation(t("dataai.generating"));
   dataaiGenerateBtn.disabled = true;
   dataaiResultWrap.style.display = "none";
   dataaiPreviewWrap.style.display = "none";
@@ -155,7 +155,7 @@ dataaiGenerateBtn.addEventListener("click", async function () {
     var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     var res = await r.json();
     if (!res.ok) {
-      setDataaiStatus(res.error || "생성 실패", "error");
+      setDataaiStatus(res.error || t("dataai.gen_fail"), "error");
       return;
     }
     _dataaiLastResult = res.result;
@@ -166,11 +166,11 @@ dataaiGenerateBtn.addEventListener("click", async function () {
     updateLinkButtons();
     renderDataaiPreview();
     var actualCount = res.count || count;
-    var savedMsg = res.saved_id ? " (DB 저장 ID: " + res.saved_id + ")" : "";
-    setDataaiStatus(fmt.toUpperCase() + " 형식으로 " + actualCount + "건 생성 완료 (" + elapsed + "초)" + savedMsg, "success");
+    var savedMsg = res.saved_id ? t("dataai.db_saved", {id: res.saved_id}) : "";
+    setDataaiStatus(fmt.toUpperCase() + " " + t("dataai.gen_done", {count: actualCount}) + " (" + elapsed + "s)" + savedMsg, "success");
     loadDataaiSaves();
   } catch (e) {
-    setDataaiStatus("요청 실패: " + e.message, "error");
+    setDataaiStatus(t("dataai.request_fail", {msg: e.message}), "error");
   } finally {
     dataaiGenerateBtn.disabled = false;
   }
@@ -179,7 +179,7 @@ dataaiGenerateBtn.addEventListener("click", async function () {
 // 복사
 dataaiCopyBtn.addEventListener("click", function () {
   navigator.clipboard.writeText(_dataaiLastResult).then(function () {
-    setDataaiStatus("클립보드에 복사 완료", "success");
+    setDataaiStatus(t("common.copy_done"), "success");
   });
 });
 
@@ -195,7 +195,7 @@ dataaiDownloadBtn.addEventListener("click", function () {
   a.download = "data-ai." + ext;
   a.click();
   URL.revokeObjectURL(url);
-  setDataaiStatus("다운로드 완료", "success");
+  setDataaiStatus(t("dataai.download_done"), "success");
 });
 
 // CSV 편집기로 보내기
@@ -206,7 +206,7 @@ dataaiToCsvBtn.addEventListener("click", function () {
   if (_dataaiLastFormat === "json") {
     try {
       var arr = JSON.parse(text);
-      if (!Array.isArray(arr) || arr.length === 0) { setDataaiStatus("빈 JSON 배열입니다.", "error"); return; }
+      if (!Array.isArray(arr) || arr.length === 0) { setDataaiStatus(t("dataai.empty_json"), "error"); return; }
       var keys = Object.keys(arr[0]);
       var lines = [keys.join(",")];
       for (var i = 0; i < arr.length; i++) {
@@ -220,7 +220,7 @@ dataaiToCsvBtn.addEventListener("click", function () {
       }
       text = lines.join("\n");
     } catch (e) {
-      setDataaiStatus("JSON 파싱 실패: " + e.message, "error");
+      setDataaiStatus(t("dataai.json_fail", {msg: e.message}), "error");
       return;
     }
   }
@@ -229,7 +229,7 @@ dataaiToCsvBtn.addEventListener("click", function () {
     switchToTab("csv");
     loadFromClipboardText(text);
   } else {
-    setDataaiStatus("CSV 편집기를 찾을 수 없습니다.", "error");
+    setDataaiStatus(t("dataai.no_csv_editor"), "error");
   }
 });
 
@@ -244,13 +244,13 @@ dataaiToJsonBtn.addEventListener("click", function () {
     var fmtBtn = document.getElementById("jsonFmtBtn");
     if (fmtBtn) fmtBtn.click();
   } else {
-    setDataaiStatus("JSON 정렬을 찾을 수 없습니다.", "error");
+    setDataaiStatus(t("dataai.no_json_editor"), "error");
   }
 });
 
 // DB 저장
 dataaiSaveBtn.addEventListener("click", async function () {
-  if (!_dataaiLastResult) { setDataaiStatus("저장할 데이터가 없습니다.", "error"); return; }
+  if (!_dataaiLastResult) { setDataaiStatus(t("dataai.no_data_save"), "error"); return; }
   try {
     var r = await fetch("/api/dataai/saves", {
       method: "POST",
@@ -263,11 +263,11 @@ dataaiSaveBtn.addEventListener("click", async function () {
       }),
     });
     var res = await r.json();
-    if (!res.ok) { setDataaiStatus(res.error || "저장 실패", "error"); return; }
-    setDataaiStatus("DB 저장 완료 (ID: " + res.id + ")", "success");
+    if (!res.ok) { setDataaiStatus(res.error || t("dataai.save_fail"), "error"); return; }
+    setDataaiStatus(t("dataai.save_done", {id: res.id}), "success");
     loadDataaiSaves();
   } catch (e) {
-    setDataaiStatus("저장 실패: " + e.message, "error");
+    setDataaiStatus(t("dataai.save_fail") + ": " + e.message, "error");
   }
 });
 
@@ -278,7 +278,7 @@ async function loadDataaiSaves() {
     var res = await r.json();
     dataaiSavesBody.innerHTML = "";
     if (!res.items || res.items.length === 0) {
-      dataaiSavesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">저장된 항목이 없습니다.</td></tr>';
+      dataaiSavesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">' + t("dataai.no_saved") + '</td></tr>';
       return;
     }
     for (var i = 0; i < res.items.length; i++) {
@@ -291,8 +291,8 @@ async function loadDataaiSaves() {
         "<td>" + item.format.toUpperCase() + "</td>" +
         "<td>" + item.created_at + "</td>" +
         '<td class="row-actions">' +
-        '<button class="dataai-load-btn" data-id="' + item.id + '">불러오기</button>' +
-        '<button class="dataai-del-btn" data-id="' + item.id + '">삭제</button>' +
+        '<button class="dataai-load-btn" data-id="' + item.id + '">' + t("common.load") + '</button>' +
+        '<button class="dataai-del-btn" data-id="' + item.id + '">' + t("common.delete") + '</button>' +
         "</td>";
       dataaiSavesBody.appendChild(tr);
     }
@@ -322,22 +322,22 @@ async function loadDataaiSave(id) {
     dataaiResultWrap.style.display = "block";
     updateLinkButtons();
     renderDataaiPreview();
-    setDataaiStatus("저장 #" + id + " 불러오기 완료", "success");
+    setDataaiStatus(t("dataai.load_done", {id: id}), "success");
   } catch (e) {
-    setDataaiStatus("불러오기 실패: " + e.message, "error");
+    setDataaiStatus(t("common.load_fail") + ": " + e.message, "error");
   }
 }
 
 async function deleteDataaiSave(id) {
-  if (!confirm("이 저장을 삭제하시겠습니까?")) return;
+  if (!confirm(t("dataai.confirm_delete"))) return;
   try {
     var r = await fetch("/api/dataai/saves/" + id, { method: "DELETE" });
     var res = await r.json();
-    if (!res.ok) { setDataaiStatus(res.error || "삭제 실패", "error"); return; }
-    setDataaiStatus("삭제 완료", "success");
+    if (!res.ok) { setDataaiStatus(res.error || t("common.delete_fail"), "error"); return; }
+    setDataaiStatus(t("common.delete_done"), "success");
     loadDataaiSaves();
   } catch (e) {
-    setDataaiStatus("삭제 실패: " + e.message, "error");
+    setDataaiStatus(t("common.delete_fail") + ": " + e.message, "error");
   }
 }
 
@@ -350,4 +350,5 @@ dataaiPrompt.addEventListener("keydown", function (e) {
 });
 
 // 초기 로드
-loadDataaiSaves();
+i18nReady(loadDataaiSaves);
+window.addEventListener("langchange", loadDataaiSaves);

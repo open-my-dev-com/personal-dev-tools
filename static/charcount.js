@@ -40,11 +40,11 @@
     var totalChars = data.reduce(function (s, d) { return s + d.count; }, 0);
     var totalLines = data.length;
 
-    var html = '<div class="char-count-summary">총 ' + totalLines + '줄 / ' + totalChars.toLocaleString() + '자</div>';
+    var html = '<div class="char-count-summary">' + t("charcount.summary", {lines: totalLines, chars: totalChars.toLocaleString()}) + '</div>';
     html += "<table><thead><tr>";
-    html += '<th class="line-num sortable" data-col="num">줄' + sortIcon("num") + "</th>";
-    html += '<th class="line-text sortable" data-col="text">내용' + sortIcon("text") + "</th>";
-    html += '<th class="line-count sortable" data-col="count">문자수' + sortIcon("count") + "</th>";
+    html += '<th class="line-num sortable" data-col="num">' + t("charcount.col_line") + sortIcon("num") + "</th>";
+    html += '<th class="line-text sortable" data-col="text">' + t("charcount.col_content") + sortIcon("text") + "</th>";
+    html += '<th class="line-count sortable" data-col="count">' + t("charcount.col_count") + sortIcon("count") + "</th>";
     html += "</tr></thead><tbody>";
 
     data.forEach(function (d) {

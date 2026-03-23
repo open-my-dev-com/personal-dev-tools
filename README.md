@@ -1,5 +1,7 @@
 # Personal Dev Tools
 
+[English](README.en.md) | [日本語](README.ja.md)
+
 로컬에서 실행하는 개인 개발 도구 모음. Python 단일 서버로 동작하며, 별도 빌드 과정 없이 브라우저에서 사용합니다.
 
 ## 기능

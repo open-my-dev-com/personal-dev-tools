@@ -25,7 +25,7 @@ let mdLastSavedContent = ""; // dirty 체크용
 function mdUpdateDirtyState() {
   const isDirty = mdCurrentSaveId && mdInput.value !== mdLastSavedContent;
   mdSaveBtn.disabled = mdCurrentSaveId ? !isDirty : !mdInput.value.trim();
-  mdSaveBtn.textContent = isDirty ? "저장 *" : "저장";
+  mdSaveBtn.textContent = isDirty ? t("md.save_modified") : t("md.save_unmodified");
 }
 
 function setMdStatus(text, isError = false) {
@@ -75,7 +75,7 @@ function startMdAutoSave() {
       var timeStr = now.getHours().toString().padStart(2, "0") + ":" +
                     now.getMinutes().toString().padStart(2, "0") + ":" +
                     now.getSeconds().toString().padStart(2, "0");
-      setMdStatus("자동 저장 완료 (" + timeStr + ")");
+      setMdStatus(t("md.autosave_done", { time: timeStr }));
     });
   }, interval);
 }
@@ -92,10 +92,10 @@ mdAutoSaveToggle.addEventListener("change", function () {
   localStorage.setItem(MD_AUTOSAVE_ENABLED_KEY, this.checked);
   if (this.checked) {
     startMdAutoSave();
-    setMdStatus("자동저장 ON (" + getMdAutoSaveInterval() + "초 간격)");
+    setMdStatus(t("md.autosave_on", { n: getMdAutoSaveInterval() }));
   } else {
     stopMdAutoSave();
-    setMdStatus("자동저장 OFF");
+    setMdStatus(t("md.autosave_off"));
   }
 });
 if (mdAutoSaveToggle.checked) startMdAutoSave();
@@ -106,7 +106,7 @@ window.getMdAutoSaveInterval = getMdAutoSaveInterval;
 
 // 새 문서
 document.getElementById("mdNewBtn").addEventListener("click", function () {
-  if (mdInput.value.trim() && !confirm("현재 내용을 버리고 새 문서를 시작하시겠습니까?")) return;
+  if (mdInput.value.trim() && !confirm(t("md.confirm_new"))) return;
   mdInput.value = "";
   mdCurrentSaveId = null;
   mdFilename = "document.md";
@@ -117,7 +117,7 @@ document.getElementById("mdNewBtn").addEventListener("click", function () {
   proofreadItems = [];
   proofreadResultId = null;
   if (mdProofreadPanel) { mdProofreadPanel.style.display = "none"; mdProofreadPanel.hidden = true; }
-  setMdStatus("새 문서");
+  setMdStatus(t("md.new_doc"));
 });
 
 // ── marked.js 설정 ──
@@ -203,15 +203,16 @@ marked.setOptions({
 
 // GitHub-style Alerts: > [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION]
 // marked.parse() 후 HTML 후처리 방식
-const alertLabels = { NOTE: "참고", TIP: "팁", IMPORTANT: "중요", WARNING: "경고", CAUTION: "주의" };
+function getAlertLabels() { return { NOTE: t("md.alert_note"), TIP: t("md.alert_tip"), IMPORTANT: t("md.alert_important"), WARNING: t("md.alert_warning"), CAUTION: t("md.alert_caution") }; }
 const alertIcons = { NOTE: "ℹ️", TIP: "💡", IMPORTANT: "❗", WARNING: "⚠️", CAUTION: "🔴" };
 function processAlerts(html) {
   return html.replace(
     /<blockquote>\s*<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:<br\s*\/?>|\n)?\s*([\s\S]*?)<\/blockquote>/gi,
     function (match, type, rest) {
       var t = type.toUpperCase();
+      var labels = getAlertLabels();
       return '<div class="md-alert md-alert-' + t.toLowerCase() + '">'
-        + '<p class="md-alert-title">' + alertIcons[t] + " " + alertLabels[t] + "</p>"
+        + '<p class="md-alert-title">' + alertIcons[t] + " " + labels[t] + "</p>"
         + "<p>" + rest + "</div>";
     }
   );
@@ -230,7 +231,7 @@ async function renderMermaidBlocks() {
       const { svg } = await mermaid.render("mermaid-svg-" + Date.now() + Math.random().toString(36).slice(2), code);
       el.innerHTML = svg;
     } catch (e) {
-      el.innerHTML = `<pre style="color:#bf233a;font-size:12px">Mermaid 오류: ${e.message || e}</pre>`;
+      el.innerHTML = `<pre style="color:#bf233a;font-size:12px">${t("md.mermaid_error", { msg: e.message || e })}</pre>`;
     }
   }
   // mermaid가 에러 시 body에 직접 삽입하는 요소 제거
@@ -250,7 +251,7 @@ function renderPreview() {
       mdPreview.querySelectorAll("pre").forEach(el => { el.style.maxWidth = maxW; });
       await renderMermaidBlocks();
     } catch (e) {
-      mdPreview.innerHTML = "<p style='color:red'>렌더링 오류: " + e.message + "</p>";
+      mdPreview.innerHTML = "<p style='color:red'>" + t("md.render_error", { msg: e.message }) + "</p>";
     }
   }, 300);
 }
@@ -280,11 +281,11 @@ mdLayoutToggle.addEventListener("click", () => {
   if (mdIsHorizontal) {
     mdEditorWrap.classList.remove("md-layout-vertical");
     mdEditorWrap.classList.add("md-layout-horizontal");
-    mdLayoutToggle.textContent = "가로 모드";
+    mdLayoutToggle.textContent = t("md.horizontal");
   } else {
     mdEditorWrap.classList.remove("md-layout-horizontal");
     mdEditorWrap.classList.add("md-layout-vertical");
-    mdLayoutToggle.textContent = "세로 모드";
+    mdLayoutToggle.textContent = t("md.vertical");
   }
 });
 
@@ -398,7 +399,7 @@ function mdInsert(before, after = "") {
   const start = mdInput.selectionStart;
   const end = mdInput.selectionEnd;
   const selected = mdInput.value.substring(start, end);
-  const text = selected || "텍스트";
+  const text = selected || t("md.link_text");
   const replacement = before + text + after;
   mdInput.focus();
   mdInput.selectionStart = start;
@@ -424,12 +425,12 @@ function mdInsertLine(prefix) {
 }
 
 function mdGenerateTable() {
-  const cols = parseInt(prompt("열(Column) 수:", "3"), 10);
+  const cols = parseInt(prompt(t("md.table_cols"), "3"), 10);
   if (!cols || cols < 1) return;
-  const rows = parseInt(prompt("행(Row) 수 (헤더 제외):", "2"), 10);
+  const rows = parseInt(prompt(t("md.table_rows"), "2"), 10);
   if (!rows || rows < 1) return;
 
-  const header = "| " + Array.from({ length: cols }, (_, i) => `헤더${i + 1}`).join(" | ") + " |";
+  const header = "| " + Array.from({ length: cols }, (_, i) => t("md.table_header", { n: i + 1 })).join(" | ") + " |";
   const separator = "| " + Array.from({ length: cols }, () => "---").join(" | ") + " |";
   const dataRows = Array.from({ length: rows }, () =>
     "| " + Array.from({ length: cols }, () => "   ").join(" | ") + " |"
@@ -458,35 +459,39 @@ function mdGenerateTOC() {
     }
   }
   if (tocLines.length === 0) {
-    setMdStatus("제목(#)이 없어 TOC를 생성할 수 없습니다.", true);
+    setMdStatus(t("md.toc_no_heading"), true);
     return;
   }
-  const toc = "\n## 목차\n\n" + tocLines.join("\n") + "\n\n";
+  const toc = "\n## " + t("md.toc_title") + "\n\n" + tocLines.join("\n") + "\n\n";
   mdExecInsert(toc);
-  setMdStatus("TOC가 삽입되었습니다.");
+  setMdStatus(t("md.toc_inserted"));
 }
 
 // ── 액션 정의 + 단축키 매핑 ──
 const MD_ACTIONS = {
-  bold:          { label: "굵게",       fn: () => mdInsert("**", "**"),          defaultKey: "Ctrl+B" },
-  italic:        { label: "기울임",     fn: () => mdInsert("*", "*"),            defaultKey: "Ctrl+I" },
-  strikethrough: { label: "취소선",     fn: () => mdInsert("~~", "~~"),          defaultKey: "Ctrl+D" },
-  h1:            { label: "제목1",      fn: () => mdInsertLine("# "),            defaultKey: "Ctrl+1" },
-  h2:            { label: "제목2",      fn: () => mdInsertLine("## "),           defaultKey: "Ctrl+2" },
-  h3:            { label: "제목3",      fn: () => mdInsertLine("### "),          defaultKey: "Ctrl+3" },
-  link:          { label: "링크",       fn: () => mdInsert("[", "](url)"),       defaultKey: "Ctrl+K" },
-  image:         { label: "이미지",     fn: () => mdInsert("![", "](url)"),      defaultKey: "Ctrl+Shift+I" },
-  code:          { label: "인라인코드", fn: () => mdInsert("`", "`"),            defaultKey: "Ctrl+E" },
-  codeblock:     { label: "코드블록",   fn: () => mdInsert("\n```\n", "\n```\n"), defaultKey: "Ctrl+Shift+K" },
-  quote:         { label: "인용",       fn: () => mdInsertLine("> "),            defaultKey: "Ctrl+Q" },
-  ul:            { label: "목록",       fn: () => mdInsertLine("- "),            defaultKey: "Ctrl+U" },
-  ol:            { label: "순서목록",   fn: () => mdInsertLine("1. "),           defaultKey: "Ctrl+Shift+O" },
-  checkbox:      { label: "체크박스",   fn: () => mdInsertLine("- [ ] "),        defaultKey: "Ctrl+Shift+C" },
-  hr:            { label: "구분선",     fn: () => mdExecInsert("\n---\n"),        defaultKey: "Ctrl+Shift+H" },
-  table:         { label: "테이블",     fn: () => mdGenerateTable(),             defaultKey: "Ctrl+Shift+T" },
-  toc:           { label: "목차",       fn: () => mdGenerateTOC(),               defaultKey: "Ctrl+Shift+G" },
-  save:          { label: "저장",       fn: () => mdDoSave(),                    defaultKey: "Ctrl+S" },
+  bold:          { labelKey: "md.tb_bold",      fn: () => mdInsert("**", "**"),          defaultKey: "Ctrl+B" },
+  italic:        { labelKey: "md.tb_italic",    fn: () => mdInsert("*", "*"),            defaultKey: "Ctrl+I" },
+  strikethrough: { labelKey: "md.tb_strike",    fn: () => mdInsert("~~", "~~"),          defaultKey: "Ctrl+D" },
+  h1:            { labelKey: "md.tb_h1",        fn: () => mdInsertLine("# "),            defaultKey: "Ctrl+1" },
+  h2:            { labelKey: "md.tb_h2",        fn: () => mdInsertLine("## "),           defaultKey: "Ctrl+2" },
+  h3:            { labelKey: "md.tb_h3",        fn: () => mdInsertLine("### "),          defaultKey: "Ctrl+3" },
+  link:          { labelKey: "md.tb_link",      fn: () => mdInsert("[", "](url)"),       defaultKey: "Ctrl+K" },
+  image:         { labelKey: "md.tb_image",     fn: () => mdInsert("![", "](url)"),      defaultKey: "Ctrl+Shift+I" },
+  code:          { labelKey: "md.tb_code",      fn: () => mdInsert("`", "`"),            defaultKey: "Ctrl+E" },
+  codeblock:     { labelKey: "md.tb_codeblock", fn: () => mdInsert("\n```\n", "\n```\n"), defaultKey: "Ctrl+Shift+K" },
+  quote:         { labelKey: "md.tb_quote",     fn: () => mdInsertLine("> "),            defaultKey: "Ctrl+Q" },
+  ul:            { labelKey: "md.tb_ul",        fn: () => mdInsertLine("- "),            defaultKey: "Ctrl+U" },
+  ol:            { labelKey: "md.tb_ol",        fn: () => mdInsertLine("1. "),           defaultKey: "Ctrl+Shift+O" },
+  checkbox:      { labelKey: "md.tb_checkbox",  fn: () => mdInsertLine("- [ ] "),        defaultKey: "Ctrl+Shift+C" },
+  hr:            { labelKey: "md.tb_hr",        fn: () => mdExecInsert("\n---\n"),        defaultKey: "Ctrl+Shift+H" },
+  table:         { labelKey: "md.tb_table_short", fn: () => mdGenerateTable(),           defaultKey: "Ctrl+Shift+T" },
+  toc:           { labelKey: "md.tb_toc",       fn: () => mdGenerateTOC(),               defaultKey: "Ctrl+Shift+G" },
+  save:          { labelKey: "md.save_unmodified", fn: () => mdDoSave(),                 defaultKey: "Ctrl+S" },
 };
+// label 접근 시 t() 동적 호출
+Object.values(MD_ACTIONS).forEach(function (def) {
+  Object.defineProperty(def, "label", { get: function () { return t(def.labelKey); } });
+});
 
 // localStorage에서 커스텀 키맵 불러오기
 const MD_KEYMAP_STORAGE = "md_keymap";
@@ -562,7 +567,7 @@ function mdRenderKeymapPanel() {
     lbl.textContent = def.label;
     const keyEl = document.createElement("span");
     keyEl.className = "md-keymap-key";
-    keyEl.textContent = mdKeymap[action] || "없음";
+    keyEl.textContent = mdKeymap[action] || t("md.keymap_none");
     keyEl.dataset.action = action;
     keyEl.tabIndex = 0;
     keyEl.addEventListener("click", () => mdStartRecording(keyEl, action));
@@ -581,7 +586,7 @@ function mdStartRecording(el, action) {
   mdRecordingEl = el;
   mdRecordingAction = action;
   el.classList.add("recording");
-  el.textContent = "키 입력 대기...";
+  el.textContent = t("md.keymap_waiting");
 }
 
 document.addEventListener("keydown", (e) => {
@@ -610,7 +615,7 @@ mdKeymapClose.addEventListener("click", () => {
   mdKeymapPanel.hidden = true;
   if (mdRecordingEl) {
     mdRecordingEl.classList.remove("recording");
-    mdRecordingEl.textContent = mdKeymap[mdRecordingAction] || "없음";
+    mdRecordingEl.textContent = mdKeymap[mdRecordingAction] || t("md.keymap_none");
     mdRecordingEl = null;
   }
 });
@@ -620,15 +625,22 @@ mdKeymapReset.addEventListener("click", () => {
   }
   mdSaveKeymap();
   mdRenderKeymapPanel();
-  setMdStatus("단축키가 기본값으로 복원되었습니다.");
+  setMdStatus(t("md.keymap_restored"));
 });
 
 // 툴바 버튼에 단축키 표시
-document.querySelectorAll(".md-tb").forEach((btn) => {
-  const action = btn.dataset.action;
-  if (mdKeymap[action]) {
-    btn.title = MD_ACTIONS[action].label + " (" + mdKeymap[action] + ")";
-  }
+function mdUpdateToolbarTitles() {
+  document.querySelectorAll(".md-tb").forEach((btn) => {
+    const action = btn.dataset.action;
+    if (mdKeymap[action]) {
+      btn.title = MD_ACTIONS[action].label + " (" + mdKeymap[action] + ")";
+    }
+  });
+}
+i18nReady(mdUpdateToolbarTitles);
+window.addEventListener("langchange", function () {
+  mdUpdateToolbarTitles();
+  mdRenderKeymapPanel();
 });
 
 // ── 파일 업로드 ──
@@ -660,7 +672,7 @@ function loadMdFile(file) {
     renderPreview();
     mdUpdateDirtyState();
     if (typeof updateCharCount === "function") updateCharCount();
-    setMdStatus(`"${file.name}" 로드 완료`);
+    setMdStatus(t("md.file_load_done", { name: file.name }));
   };
   reader.readAsText(file);
 }
@@ -669,7 +681,7 @@ function loadMdFile(file) {
 mdDownloadBtn.addEventListener("click", () => {
   const content = mdInput.value;
   if (!content.trim()) {
-    setMdStatus("다운로드할 내용이 없습니다.", true);
+    setMdStatus(t("md.no_content"), true);
     return;
   }
   const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
@@ -679,15 +691,15 @@ mdDownloadBtn.addEventListener("click", () => {
   a.download = mdFilename;
   a.click();
   URL.revokeObjectURL(url);
-  setMdStatus(`"${mdFilename}" 다운로드 완료`);
+  setMdStatus(t("md.download_done", { name: mdFilename }));
 });
 
 // ── PDF 내보내기 ──
 document.getElementById("mdExportPdfBtn").addEventListener("click", async () => {
   const previewHtml = mdPreview.innerHTML;
-  if (!previewHtml.trim()) { setMdStatus("내용이 없습니다.", true); return; }
-  if (typeof html2pdf === "undefined") { setMdStatus("html2pdf 라이브러리가 로드되지 않았습니다.", true); return; }
-  setMdStatus("PDF 생성 중...");
+  if (!previewHtml.trim()) { setMdStatus(t("md.pdf_no_content"), true); return; }
+  if (typeof html2pdf === "undefined") { setMdStatus(t("md.pdf_no_lib"), true); return; }
+  setMdStatus(t("md.pdf_generating"));
   try {
     const opt = {
       margin: 10,
@@ -697,9 +709,9 @@ document.getElementById("mdExportPdfBtn").addEventListener("click", async () => 
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     };
     await html2pdf().set(opt).from(mdPreview).save();
-    setMdStatus("PDF 내보내기 완료");
+    setMdStatus(t("md.pdf_done"));
   } catch (e) {
-    setMdStatus("PDF 생성 실패: " + e.message, true);
+    setMdStatus(t("md.pdf_fail", { msg: e.message }), true);
   }
 });
 
@@ -707,7 +719,7 @@ document.getElementById("mdExportPdfBtn").addEventListener("click", async () => 
 async function mdDoSave() {
   const content = mdInput.value;
   if (!content.trim()) {
-    setMdStatus("저장할 내용이 없습니다.", true);
+    setMdStatus(t("md.save_no_content"), true);
     return;
   }
 
@@ -724,7 +736,7 @@ async function mdDoSave() {
       if (!data.ok) throw new Error(data.error);
       mdLastSavedContent = content;
       mdUpdateDirtyState();
-      setMdStatus(`"${name}" 업데이트 완료 (ID: ${mdCurrentSaveId})`);
+      setMdStatus(t("md.update_done", { name: name, id: mdCurrentSaveId }));
     } else {
       // 신규 저장
       mdDoSaveAs();
@@ -736,17 +748,17 @@ async function mdDoSave() {
       showMdVersions(mdCurrentSaveId, mdFilename.replace(/\.md$/, ""));
     }
   } catch (e) {
-    setMdStatus("저장 실패: " + e.message, true);
+    setMdStatus(t("common.save_fail") + ": " + e.message, true);
   }
 }
 
 async function mdDoSaveAs() {
   const content = mdInput.value;
   if (!content.trim()) {
-    setMdStatus("저장할 내용이 없습니다.", true);
+    setMdStatus(t("md.save_no_content"), true);
     return;
   }
-  const name = prompt("저장 이름:", mdFilename.replace(/\.md$/, ""));
+  const name = prompt(t("md.enter_name"), mdFilename.replace(/\.md$/, ""));
   if (!name) return;
 
   try {
@@ -756,15 +768,15 @@ async function mdDoSaveAs() {
       body: JSON.stringify({ name, content }),
     });
     const data = await res.json();
-    if (!data.ok && !data.id) throw new Error(data.error || "저장 실패");
+    if (!data.ok && !data.id) throw new Error(data.error || t("common.save_fail"));
     mdCurrentSaveId = data.id;
     mdFilename = name + ".md";
     mdLastSavedContent = content;
     mdUpdateDirtyState();
-    setMdStatus(`"${name}" 저장 완료 (ID: ${data.id})`);
+    setMdStatus(t("md.save_done", { name: name, id: data.id }));
     loadMdSaves();
   } catch (e) {
-    setMdStatus("저장 실패: " + e.message, true);
+    setMdStatus(t("common.save_fail") + ": " + e.message, true);
   }
 }
 
@@ -786,10 +798,10 @@ async function loadMdSaves() {
         <td>${escMd(s.name)}</td>
         <td>${toJST(s.updated_at || s.created_at)}</td>
         <td>
-          <button class="md-load-btn" data-id="${s.id}">불러오기</button>
-          <a href="/api/md/saves/${s.id}/html" target="_blank" class="md-peek-btn" data-id="${s.id}">팝업보기</a>
-          <button class="md-ver-btn" data-id="${s.id}" data-name="${escMd(s.name)}">이력</button>
-          <button class="md-del-btn" data-id="${s.id}">삭제</button>
+          <button class="md-load-btn" data-id="${s.id}">${t("common.load")}</button>
+          <a href="/api/md/saves/${s.id}/html" target="_blank" class="md-peek-btn" data-id="${s.id}">${t("md.popup_view")}</a>
+          <button class="md-ver-btn" data-id="${s.id}" data-name="${escMd(s.name)}">${t("md.history")}</button>
+          <button class="md-del-btn" data-id="${s.id}">${t("common.delete")}</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -812,7 +824,7 @@ async function loadMdSaves() {
       btn.addEventListener("click", () => deleteMdSave(parseInt(btn.dataset.id)));
     });
   } catch (e) {
-    setMdStatus("목록 로드 실패: " + e.message, true);
+    setMdStatus(t("common.load_fail") + ": " + e.message, true);
   }
 }
 
@@ -837,11 +849,11 @@ function peekMdSave(id) {
   var newWinLink = document.createElement("a");
   newWinLink.href = url;
   newWinLink.target = "_blank";
-  newWinLink.textContent = "새 창으로 열기 (⌘⌥+클릭)";
+  newWinLink.textContent = t("md.popup_new_window");
   newWinLink.style.cssText = "font-size:12px;color:#64748b;text-decoration:none";
 
   var closeBtn = document.createElement("button");
-  closeBtn.textContent = "✕ 닫기";
+  closeBtn.textContent = t("md.popup_close");
   closeBtn.style.cssText = "border:none;background:#e2e8f0;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:13px";
   closeBtn.addEventListener("click", function () { overlay.remove(); });
 
@@ -882,24 +894,24 @@ async function loadMdSave(id) {
     renderPreview();
     if (typeof updateCharCount === "function") updateCharCount();
     mdUpdateDirtyState();
-    setMdStatus(`"${data.name}" 불러오기 완료`);
+    setMdStatus(t("md.load_done", { name: data.name }));
     loadProofreadFromDB(data.id);
   } catch (e) {
-    setMdStatus("불러오기 실패: " + e.message, true);
+    setMdStatus(t("common.load_fail") + ": " + e.message, true);
   }
 }
 
 async function deleteMdSave(id) {
-  if (!confirm("정말 삭제하시겠습니까?")) return;
+  if (!confirm(t("md.confirm_delete"))) return;
   try {
     const res = await fetch(`/api/md/saves/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error);
     if (mdCurrentSaveId === id) mdCurrentSaveId = null;
-    setMdStatus("삭제 완료");
+    setMdStatus(t("common.delete_done"));
     loadMdSaves();
   } catch (e) {
-    setMdStatus("삭제 실패: " + e.message, true);
+    setMdStatus(t("common.delete_fail") + ": " + e.message, true);
   }
 }
 
@@ -923,7 +935,7 @@ async function showMdVersions(saveId, saveName) {
     const tbody = mdVersionTable.querySelector("tbody");
     tbody.innerHTML = "";
     if (versions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">버전 이력이 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">' + t("md.no_versions") + '</td></tr>';
     } else {
       versions.forEach((v, idx) => {
         const tr = document.createElement("tr");
@@ -931,16 +943,16 @@ async function showMdVersions(saveId, saveName) {
         const comment = v.comment || "";
         const commentEsc = comment.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
         tr.innerHTML = `
-          <td>v${v.version_num || (versions.length - idx)}${isArchived ? ' <span class="md-archived-badge">보관</span>' : ''}</td>
+          <td>v${v.version_num || (versions.length - idx)}${isArchived ? ' <span class="md-archived-badge">' + t("md.version_archived") + '</span>' : ''}</td>
           <td class="md-ver-comment-cell">
             <span class="md-ver-comment-text" title="${commentEsc}">${commentEsc || '<span style="color:#666">—</span>'}</span>
-            <button class="md-ver-comment-btn" data-id="${v.id}" title="코멘트 편집">✎</button>
+            <button class="md-ver-comment-btn" data-id="${v.id}" title="${t("md.version_comment")}">✎</button>
           </td>
           <td>${toJST(v.created_at)}</td>
           <td>
-            <button class="md-ver-preview-btn" data-id="${v.id}">미리보기</button>
-            <button class="md-ver-rollback-btn" data-id="${v.id}" data-save-id="${v.save_id}">롤백</button>
-            <button class="md-ver-archive-btn${isArchived ? ' archived' : ''}" data-id="${v.id}" data-save-id="${v.save_id}">${isArchived ? '보관 해제' : '보관'}</button>
+            <button class="md-ver-preview-btn" data-id="${v.id}">${t("md.version_preview")}</button>
+            <button class="md-ver-rollback-btn" data-id="${v.id}" data-save-id="${v.save_id}">${t("md.version_rollback")}</button>
+            <button class="md-ver-archive-btn${isArchived ? ' archived' : ''}" data-id="${v.id}" data-save-id="${v.save_id}">${isArchived ? t("md.version_unarchive") : t("md.version_archive")}</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -968,7 +980,7 @@ async function showMdVersions(saveId, saveName) {
           input.type = "text";
           input.value = current;
           input.className = "md-ver-comment-input";
-          input.placeholder = "코멘트 입력...";
+          input.placeholder = t("md.version_comment_ph");
           cell.replaceChild(input, textSpan);
           btn.style.display = "none";
           input.focus();
@@ -1000,7 +1012,7 @@ async function showMdVersions(saveId, saveName) {
     mdVersionPanel.hidden = false;
     mdVersionPanel.scrollIntoView({ behavior: "smooth" });
   } catch (e) {
-    setMdStatus("버전 목록 로드 실패: " + e.message, true);
+    setMdStatus(t("common.load_fail") + ": " + e.message, true);
   }
 }
 
@@ -1012,9 +1024,9 @@ async function previewMdVersion(versionId) {
     // 미리보기 패널에 해당 버전 내용 표시
     mdPreview.innerHTML = marked.parse(data.content);
     await renderMermaidBlocks();
-    setMdStatus(`버전 미리보기 (v${versionId}) — 편집기에 반영하려면 롤백하세요.`);
+    setMdStatus(t("md.version_preview_title", { id: versionId }));
   } catch (e) {
-    setMdStatus("버전 미리보기 실패: " + e.message, true);
+    setMdStatus(t("common.load_fail") + ": " + e.message, true);
   }
 }
 
@@ -1023,15 +1035,15 @@ async function toggleMdVersionArchive(versionId, saveId, saveName) {
     const res = await fetch(`/api/md/versions/${versionId}/archive`, { method: "PUT" });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error);
-    setMdStatus(data.archived ? "버전이 보관되었습니다." : "보관이 해제되었습니다.");
+    setMdStatus(data.archived ? t("md.archived_done") : t("md.unarchived_done"));
     showMdVersions(saveId, saveName);
   } catch (e) {
-    setMdStatus("보관 처리 실패: " + e.message, true);
+    setMdStatus(t("common.error") + ": " + e.message, true);
   }
 }
 
 async function rollbackMdVersion(saveId, versionId) {
-  if (!confirm("이 버전으로 롤백하시겠습니까?\n현재 내용은 새 버전으로 자동 저장됩니다.")) return;
+  if (!confirm(t("md.confirm_rollback"))) return;
   try {
     const res = await fetch(`/api/md/saves/${saveId}/rollback/${versionId}`, {
       method: "POST",
@@ -1042,11 +1054,11 @@ async function rollbackMdVersion(saveId, versionId) {
     mdCurrentSaveId = saveId;
     renderPreview();
     if (typeof updateCharCount === "function") updateCharCount();
-    setMdStatus("롤백 완료");
+    setMdStatus(t("md.rollback_done"));
     loadMdSaves();
     showMdVersions(saveId, mdFilename.replace(/\.md$/, ""));
   } catch (e) {
-    setMdStatus("롤백 실패: " + e.message, true);
+    setMdStatus(t("common.error") + ": " + e.message, true);
   }
 }
 
@@ -1124,10 +1136,10 @@ function updateCharCount() {
   }
   if (len > 50000) {
     charEl.className = "md-char-count over-limit";
-    charEl.textContent = formatted + "자 (제한 초과)";
+    charEl.textContent = t("md.char_over", { count: formatted });
   } else {
     charEl.className = "md-char-count";
-    charEl.textContent = formatted + "자";
+    charEl.textContent = t("md.char_count", { count: formatted });
   }
 }
 mdInput.addEventListener("input", updateCharCount);
@@ -1156,12 +1168,12 @@ mdProofreadHeader.addEventListener("click", function (e) {
 mdProofreadBtn.addEventListener("click", async function () {
   var text = mdInput.value.trim();
   if (!text) {
-    setMdStatus("검수할 텍스트가 없습니다.", true);
+    setMdStatus(t("md.review_no_content"), true);
     return;
   }
   mdProofreadBtn.disabled = true;
-  mdProofreadBtn.textContent = "검수 중...";
-  setMdStatus("AI 검수 중...");
+  mdProofreadBtn.textContent = t("md.review_loading");
+  setMdStatus(t("md.review_ai_loading"));
   try {
     var resp = await fetch("/api/md/proofread", {
       method: "POST",
@@ -1170,22 +1182,22 @@ mdProofreadBtn.addEventListener("click", async function () {
     });
     var data = await resp.json();
     if (!data.ok) {
-      setMdStatus(data.error || "검수 실패", true);
+      setMdStatus(data.error || t("md.review_fail"), true);
       return;
     }
     proofreadItems = data.items || [];
     renderProofreadResults();
     if (proofreadItems.length === 0) {
-      setMdStatus("검수 완료 — 수정 사항 없음");
+      setMdStatus(t("md.review_no_changes"));
     } else {
-      setMdStatus("검수 완료 — " + proofreadItems.length + "건 발견");
+      setMdStatus(t("md.review_found", { count: proofreadItems.length }));
       saveProofreadToDB();
     }
   } catch (e) {
-    setMdStatus("검수 실패: " + e.message, true);
+    setMdStatus(t("md.review_fail") + ": " + e.message, true);
   } finally {
     mdProofreadBtn.disabled = false;
-    mdProofreadBtn.textContent = "AI 검수";
+    mdProofreadBtn.textContent = t("md.ai_review");
   }
 });
 
@@ -1226,7 +1238,7 @@ function renderProofreadResults() {
   tbody.innerHTML = "";
 
   if (proofreadItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="md-proofread-empty">수정 사항이 없습니다</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="md-proofread-empty">' + t("md.review_no_items") + '</td></tr>';
     mdProofreadApplyAll.hidden = true;
     return;
   }
@@ -1240,7 +1252,7 @@ function renderProofreadResults() {
       "<td>" + escapeHtmlPr(item.before || "") + "</td>" +
       "<td>" + escapeHtmlPr(item.after || "") + "</td>" +
       "<td>" + escapeHtmlPr(item.reason || "") + "</td>" +
-      '<td><button class="pr-apply-btn" data-idx="' + idx + '">적용</button></td>';
+      '<td><button class="pr-apply-btn" data-idx="' + idx + '">' + t("common.apply") + '</button></td>';
     tbody.appendChild(tr);
   });
 
@@ -1340,7 +1352,7 @@ function applyProofreadItem(idx) {
     console.warn("[AI검수] before:", JSON.stringify(before));
     console.warn("[AI검수] 문서 전체:", JSON.stringify(text));
     var snippet = before.length > 20 ? before.substring(0, 20) + "…" : before;
-    setMdStatus('적용 실패: "' + snippet + '"을(를) 문서에서 찾을 수 없습니다.', true);
+    setMdStatus(t("md.review_apply_fail", { text: snippet }), true);
     return;
   }
 
@@ -1371,7 +1383,7 @@ function applyProofreadItem(idx) {
     if (btn) btn.disabled = true;
   }
 
-  setMdStatus("적용 완료 (줄 " + item.line + ")");
+  setMdStatus(t("md.review_apply_done", { line: item.line }));
   updateCharCount();
 
   // DB 동기화: 미적용 항목이 남아있으면 업데이트, 모두 적용됐으면 삭제
@@ -1421,8 +1433,8 @@ mdProofreadApplyAll.addEventListener("click", function () {
     updateCharCount();
   }
 
-  var msg = appliedCount + "건 적용 완료";
-  if (failedCount > 0) msg += " / " + failedCount + "건 적용 불가";
+  var msg = t("md.review_apply_all_done", { done: appliedCount });
+  if (failedCount > 0) msg += " / " + t("md.review_apply_all_fail", { fail: failedCount });
   setMdStatus(msg, failedCount > 0);
 
   // DB 동기화
@@ -1435,4 +1447,5 @@ mdProofreadApplyAll.addEventListener("click", function () {
 });
 
 // 초기 로드
-loadMdSaves();
+i18nReady(loadMdSaves);
+window.addEventListener("langchange", loadMdSaves);

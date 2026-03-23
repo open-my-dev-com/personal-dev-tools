@@ -26,7 +26,7 @@ function applyFilters() {
     csvVisibleRows = null;
     renderGrid();
     const total = csvData.length > 1 ? csvData.length - 1 : 0;
-    setCsvStatus(`전체 ${total}개 행 표시`);
+    setCsvStatus(t("csv.total_rows", {total}));
     return;
   }
   csvVisibleRows = [];
@@ -41,7 +41,7 @@ function applyFilters() {
   }
   renderGrid();
   const total = csvData.length > 1 ? csvData.length - 1 : 0;
-  setCsvStatus(`${total}개 중 ${csvVisibleRows.length}개 행 표시 (필터 적용)`);
+  setCsvStatus(t("csv.filtered_rows", {total, count: csvVisibleRows.length}));
 }
 
 function clearAllFilters() {
@@ -313,11 +313,11 @@ function openFilterMenu(colIndex, anchorEl) {
   sortSection.className = "csv-filter-sort";
   const sortAsc = document.createElement("div");
   sortAsc.className = "csv-filter-sort-item";
-  sortAsc.textContent = "▲ 오름차순 정렬";
+  sortAsc.textContent = t("csv.sort_asc");
   sortAsc.addEventListener("click", () => { sortColumn(colIndex, true); closeFilterMenu(); });
   const sortDesc = document.createElement("div");
   sortDesc.className = "csv-filter-sort-item";
-  sortDesc.textContent = "▼ 내림차순 정렬";
+  sortDesc.textContent = t("csv.sort_desc");
   sortDesc.addEventListener("click", () => { sortColumn(colIndex, false); closeFilterMenu(); });
   sortSection.appendChild(sortAsc);
   sortSection.appendChild(sortDesc);
@@ -330,7 +330,7 @@ function openFilterMenu(colIndex, anchorEl) {
   const searchInput = document.createElement("input");
   searchInput.type = "text";
   searchInput.className = "csv-filter-search";
-  searchInput.placeholder = "값 검색...";
+  searchInput.placeholder = t("csv.filter_search");
   menu.appendChild(searchInput);
 
   // -- 구분선 --
@@ -347,7 +347,7 @@ function openFilterMenu(colIndex, anchorEl) {
   allCb.type = "checkbox";
   allCb.checked = checkedSet.size === uniqueValues.length;
   allItem.appendChild(allCb);
-  allItem.appendChild(document.createTextNode("(모두 선택)"));
+  allItem.appendChild(document.createTextNode(t("csv.filter_all")));
   listWrap.appendChild(allItem);
 
   // 개별 값
@@ -360,7 +360,7 @@ function openFilterMenu(colIndex, anchorEl) {
     cb.checked = checkedSet.has(val);
     cb.dataset.val = val;
     item.appendChild(cb);
-    item.appendChild(document.createTextNode(val === "" ? "(빈 값)" : val));
+    item.appendChild(document.createTextNode(val === "" ? t("csv.filter_empty") : val));
     listWrap.appendChild(item);
     itemElements.push({ el: item, cb, val });
   }
@@ -397,7 +397,7 @@ function openFilterMenu(colIndex, anchorEl) {
   const actions = document.createElement("div");
   actions.className = "csv-filter-actions";
   const applyBtn = document.createElement("button");
-  applyBtn.textContent = "적용";
+  applyBtn.textContent = t("common.apply");
   applyBtn.className = "csv-filter-apply-btn";
   applyBtn.addEventListener("click", () => {
     const selected = new Set(itemElements.filter(it => it.cb.checked).map(it => it.val));
@@ -410,7 +410,7 @@ function openFilterMenu(colIndex, anchorEl) {
     applyFilters();
   });
   const resetBtn = document.createElement("button");
-  resetBtn.textContent = "초기화";
+  resetBtn.textContent = t("common.reset");
   resetBtn.addEventListener("click", () => {
     delete csvFilters[colIndex];
     closeFilterMenu();
@@ -461,7 +461,7 @@ function sortColumn(colIndex, ascending) {
   });
   csvData = [header, ...rows];
   applyFilters();
-  setCsvStatus(`열 ${colIndex + 1} ${ascending ? "오름차순" : "내림차순"} 정렬 완료`);
+  setCsvStatus(t("csv.sort_done", {col: colIndex + 1, dir: ascending ? t("csv.sort_asc_label") : t("csv.sort_desc_label")}));
 }
 
 // --- 열 자동 맞춤 (더블클릭) ---
@@ -546,7 +546,7 @@ function loadFile(file) {
     csvCurrentSaveId = null;
     clearAllFilters();
     renderGrid();
-    setCsvStatus(`${csvFilename} 로드 완료 (${csvData.length}행 × ${csvData[0]?.length || 0}열, 감지: ${csvDetectedEncoding})`);
+    setCsvStatus(t("csv.load_done", {name: csvFilename, rows: csvData.length, cols: csvData[0]?.length || 0, detected: csvDetectedEncoding}));
     csvUploadZone.style.display = "none";
     loadCsvSaves();
   };
@@ -555,7 +555,7 @@ function loadFile(file) {
 
 // --- 다운로드 ---
 async function downloadCsv() {
-  if (csvData.length === 0) { setCsvStatus("데이터가 없습니다.", true); return; }
+  if (csvData.length === 0) { setCsvStatus(t("common.no_data"), true); return; }
 
   const text = serializeCsv(csvData, csvDelimiter.value);
   const encoding = csvEncoding.value;
@@ -574,16 +574,16 @@ async function downloadCsv() {
       });
       if (!r.ok) {
         const err = await r.json();
-        setCsvStatus(err.error || "인코딩 변환 실패", true);
+        setCsvStatus(err.error || t("csv.encoding_fail"), true);
         return;
       }
       downloadBlob(await r.blob());
     } catch (e) {
-      setCsvStatus(`다운로드 실패: ${e.message}`, true);
+      setCsvStatus(t("csv.download_fail", {msg: e.message}), true);
       return;
     }
   }
-  setCsvStatus(`${csvFilename} 다운로드 완료 (${encoding})`);
+  setCsvStatus(t("csv.download_done", {name: csvFilename, encoding}));
 }
 
 function downloadBlob(blob) {
@@ -597,40 +597,39 @@ function downloadBlob(blob) {
 
 // --- 행/열 조작 ---
 function addRow(dir) {
-  if (csvData.length === 0) { csvData.push([""]); renderGrid(); setCsvStatus("행 추가됨"); return; }
+  if (csvData.length === 0) { csvData.push([""]); renderGrid(); setCsvStatus(t("csv.row_added")); return; }
   var newRow = new Array(csvData[0].length).fill("");
   if (dir === "above" && csvFocusRow >= 0) {
     csvData.splice(csvFocusRow, 0, newRow);
-    setCsvStatus("행 " + (csvFocusRow + 1) + " 위에 추가됨");
+    setCsvStatus(t("csv.row_added_above", {n: csvFocusRow + 1}));
   } else if (dir === "below" && csvFocusRow >= 0) {
     csvData.splice(csvFocusRow + 1, 0, newRow);
-    setCsvStatus("행 " + (csvFocusRow + 1) + " 아래에 추가됨");
+    setCsvStatus(t("csv.row_added_below", {n: csvFocusRow + 1}));
   } else {
     csvData.push(newRow);
-    setCsvStatus("행 추가됨 (맨 아래)");
+    setCsvStatus(t("csv.row_added_bottom"));
   }
   if (Object.keys(csvFilters).length > 0) applyFilters();
   else renderGrid();
 }
 
 function addCol(dir) {
-  if (csvData.length === 0) { csvData.push([""]); renderGrid(); setCsvStatus("열 추가됨"); return; }
+  if (csvData.length === 0) { csvData.push([""]); renderGrid(); setCsvStatus(t("csv.col_added")); return; }
   if (dir === "left" && csvFocusCol >= 0) {
     csvData.forEach(row => row.splice(csvFocusCol, 0, ""));
-    // 필터 인덱스 조정
     var nf = {};
     for (var k in csvFilters) { var ki = parseInt(k); nf[ki >= csvFocusCol ? ki + 1 : ki] = csvFilters[k]; }
     csvFilters = nf;
-    setCsvStatus("열 " + (csvFocusCol + 1) + " 왼쪽에 추가됨");
+    setCsvStatus(t("csv.col_added_left", {n: csvFocusCol + 1}));
   } else if (dir === "right" && csvFocusCol >= 0) {
     csvData.forEach(row => row.splice(csvFocusCol + 1, 0, ""));
     var nf2 = {};
     for (var k2 in csvFilters) { var ki2 = parseInt(k2); nf2[ki2 > csvFocusCol ? ki2 + 1 : ki2] = csvFilters[k2]; }
     csvFilters = nf2;
-    setCsvStatus("열 " + (csvFocusCol + 1) + " 오른쪽에 추가됨");
+    setCsvStatus(t("csv.col_added_right", {n: csvFocusCol + 1}));
   } else {
     csvData.forEach(row => row.push(""));
-    setCsvStatus("열 추가됨 (맨 오른쪽)");
+    setCsvStatus(t("csv.col_added_end"));
   }
   csvColWidths = [];
   renderGrid();
@@ -667,16 +666,16 @@ document.addEventListener("click", function () {
 });
 
 csvDelRowBtn.addEventListener("click", () => {
-  if (csvData.length === 0 || csvFocusRow < 0) { setCsvStatus("삭제할 행을 선택하세요.", true); return; }
+  if (csvData.length === 0 || csvFocusRow < 0) { setCsvStatus(t("csv.select_row_delete"), true); return; }
   csvData.splice(csvFocusRow, 1);
   csvFocusRow = Math.min(csvFocusRow, csvData.length - 1);
   if (Object.keys(csvFilters).length > 0) applyFilters();
   else renderGrid();
-  setCsvStatus("행 삭제됨");
+  setCsvStatus(t("csv.row_deleted"));
 });
 
 csvDelColBtn.addEventListener("click", () => {
-  if (csvData.length === 0 || csvFocusCol < 0) { setCsvStatus("삭제할 열을 선택하세요.", true); return; }
+  if (csvData.length === 0 || csvFocusCol < 0) { setCsvStatus(t("csv.select_col_delete"), true); return; }
   // 해당 열의 필터 제거
   delete csvFilters[csvFocusCol];
   // 필터 인덱스 재정렬 (삭제된 열 이후의 필터 인덱스 조정)
@@ -692,7 +691,7 @@ csvDelColBtn.addEventListener("click", () => {
   csvFocusCol = Math.min(csvFocusCol, (csvData[0]?.length || 0) - 1);
   if (Object.keys(csvFilters).length > 0) applyFilters();
   else { csvVisibleRows = null; renderGrid(); }
-  setCsvStatus("열 삭제됨");
+  setCsvStatus(t("csv.col_deleted"));
 });
 
 csvDownloadBtn.addEventListener("click", downloadCsv);
@@ -703,10 +702,10 @@ const csvSavesBody = document.querySelector("#csvSavesTable tbody");
 let csvCurrentSaveId = null;
 
 async function saveCsv() {
-  if (csvData.length === 0) { setCsvStatus("저장할 데이터가 없습니다.", true); return; }
+  if (csvData.length === 0) { setCsvStatus(t("csv.no_data_save"), true); return; }
 
   const defaultName = csvCurrentSaveId ? csvFilename : csvFilename.replace(/\.[^.]+$/, "");
-  const name = prompt("저장 이름을 입력하세요:", defaultName);
+  const name = prompt(t("csv.enter_name"), defaultName);
   if (!name) return;
 
   const payload = {
@@ -733,12 +732,12 @@ async function saveCsv() {
       });
     }
     const res = await r.json();
-    if (!r.ok) { setCsvStatus(res.error || "저장 실패", true); return; }
+    if (!r.ok) { setCsvStatus(res.error || t("common.save_fail"), true); return; }
     if (res.id) csvCurrentSaveId = res.id;
-    setCsvStatus(`"${name}" 저장 완료`);
+    setCsvStatus(t("csv.save_done", {name}));
     loadCsvSaves();
   } catch (e) {
-    setCsvStatus(`저장 실패: ${e.message}`, true);
+    setCsvStatus(t("common.save_fail") + `: ${e.message}`, true);
   }
 }
 
@@ -748,10 +747,10 @@ async function loadCsvSaves() {
     const res = await r.json();
     csvSavesBody.innerHTML = "";
     if (!res.items || res.items.length === 0) {
-      csvSavesBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">저장된 항목이 없습니다.</td></tr>';
+      csvSavesBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);">${t("csv.no_saved")}</td></tr>`;
       return;
     }
-    const delimLabel = (d) => d === "\t" ? "탭" : "콤마";
+    const delimLabel = (d) => d === "\t" ? t("csv.tab_label") : t("csv.comma_label");
     for (const item of res.items) {
       const tr = document.createElement("tr");
       if (csvCurrentSaveId === item.id) tr.classList.add("csv-save-active");
@@ -762,8 +761,8 @@ async function loadCsvSaves() {
         <td>${escapeHtml(item.encoding)}</td>
         <td>${item.updated_at}</td>
         <td class="row-actions">
-          <button class="csv-load-btn" data-id="${item.id}">불러오기</button>
-          <button class="csv-delete-btn" data-id="${item.id}">삭제</button>
+          <button class="csv-load-btn" data-id="${item.id}">${t("common.load")}</button>
+          <button class="csv-delete-btn" data-id="${item.id}">${t("common.delete")}</button>
         </td>
       `;
       csvSavesBody.appendChild(tr);
@@ -775,7 +774,7 @@ async function loadCsvSaves() {
       btn.addEventListener("click", () => deleteCsvSave(parseInt(btn.dataset.id)));
     });
   } catch (e) {
-    setCsvStatus(`목록 로드 실패: ${e.message}`, true);
+    setCsvStatus(t("common.load_fail") + `: ${e.message}`, true);
   }
 }
 
@@ -783,7 +782,7 @@ async function loadCsvSave(id) {
   try {
     const r = await fetch(`/api/csv/saves/${id}`);
     const res = await r.json();
-    if (!r.ok) { setCsvStatus(res.error || "불러오기 실패", true); return; }
+    if (!r.ok) { setCsvStatus(res.error || t("common.load_fail"), true); return; }
     csvData = res.data;
     csvFilename = res.name;
     csvDelimiter.value = res.delimiter;
@@ -794,29 +793,30 @@ async function loadCsvSave(id) {
     clearAllFilters();
     csvUploadZone.style.display = "none";
     renderGrid();
-    setCsvStatus(`"${res.name}" 불러오기 완료 (${csvData.length}행 × ${csvData[0]?.length || 0}열)`);
+    setCsvStatus(t("csv.load_item_done", {name: res.name, rows: csvData.length, cols: csvData[0]?.length || 0}));
     loadCsvSaves();
   } catch (e) {
-    setCsvStatus(`불러오기 실패: ${e.message}`, true);
+    setCsvStatus(t("common.load_fail") + `: ${e.message}`, true);
   }
 }
 
 async function deleteCsvSave(id) {
-  if (!confirm("이 저장을 삭제하시겠습니까?")) return;
+  if (!confirm(t("csv.confirm_delete"))) return;
   try {
     const r = await fetch(`/api/csv/saves/${id}`, { method: "DELETE" });
     const res = await r.json();
-    if (!r.ok) { setCsvStatus(res.error || "삭제 실패", true); return; }
+    if (!r.ok) { setCsvStatus(res.error || t("common.delete_fail"), true); return; }
     if (csvCurrentSaveId === id) csvCurrentSaveId = null;
-    setCsvStatus("저장 삭제됨");
+    setCsvStatus(t("csv.save_deleted"));
     loadCsvSaves();
   } catch (e) {
-    setCsvStatus(`삭제 실패: ${e.message}`, true);
+    setCsvStatus(t("common.delete_fail") + `: ${e.message}`, true);
   }
 }
 
 csvSaveBtn.addEventListener("click", saveCsv);
-loadCsvSaves();
+i18nReady(loadCsvSaves);
+window.addEventListener("langchange", loadCsvSaves);
 
 // --- 셀 선택 & 복사 ---
 function clearCsvSelection() {
@@ -836,7 +836,7 @@ function selectColumn(colIndex) {
   csvSelectedCells = csvData.map((_, ri) => ({ row: ri, col: colIndex }));
   csvSelAnchor = { row: 0, col: colIndex };
   applyCsvSelection();
-  setCsvStatus(`열 ${colIndex + 1} 선택됨 (${csvData.length}셀) — Ctrl+C로 복사`);
+  setCsvStatus(t("csv.col_selected", {n: colIndex + 1, count: csvData.length}));
 }
 
 function selectRow(rowIndex, extend) {
@@ -849,7 +849,7 @@ function selectRow(rowIndex, extend) {
   }
   csvSelAnchor = { row: rowIndex, col: 0 };
   applyCsvSelection();
-  setCsvStatus(`행 ${rowIndex + 1} 선택됨 — Ctrl+C로 복사`);
+  setCsvStatus(t("csv.row_selected", {n: rowIndex + 1}));
 }
 
 function selectRange(r1, c1, r2, c2) {
@@ -863,7 +863,7 @@ function selectRange(r1, c1, r2, c2) {
   }
   applyCsvSelection();
   const count = csvSelectedCells.length;
-  setCsvStatus(`${maxR - minR + 1}행 × ${maxC - minC + 1}열 (${count}셀) 선택됨 — Ctrl+C로 복사`);
+  setCsvStatus(t("csv.range_selected", {rows: maxR - minR + 1, cols: maxC - minC + 1, count}));
 }
 
 function toggleCellSelection(row, col) {
@@ -875,7 +875,7 @@ function toggleCellSelection(row, col) {
   }
   csvSelAnchor = { row, col };
   applyCsvSelection();
-  setCsvStatus(`${csvSelectedCells.length}셀 선택됨 — Ctrl+C로 복사`);
+  setCsvStatus(t("csv.cells_selected", {count: csvSelectedCells.length}));
 }
 
 csvGridWrap.addEventListener("keydown", (e) => {
@@ -891,7 +891,7 @@ csvGridWrap.addEventListener("keydown", (e) => {
     const allCols = [...new Set(csvSelectedCells.map((s) => s.col))].sort((a, b) => a - b);
     const text = sortedRows.map((ri) => allCols.map((ci) => rows[ri]?.[ci] ?? "").join("\t")).join("\n");
     navigator.clipboard.writeText(text).then(() => {
-      setCsvStatus(`${csvSelectedCells.length}셀 복사 완료`);
+      setCsvStatus(t("csv.cells_copied", {count: csvSelectedCells.length}));
     });
   }
 });
@@ -921,7 +921,7 @@ csvUploadZone.addEventListener("drop", (e) => {
 
 // --- 초기화 ---
 document.getElementById("csvResetBtn").addEventListener("click", function () {
-  if (csvData.length > 0 && !confirm("현재 데이터를 모두 지우시겠습니까?")) return;
+  if (csvData.length > 0 && !confirm(t("csv.confirm_reset"))) return;
   csvData = [];
   csvFilename = "data.csv";
   csvColWidths = [];
@@ -933,7 +933,7 @@ document.getElementById("csvResetBtn").addEventListener("click", function () {
   clearAllFilters();
   csvGridWrap.innerHTML = "";
   csvUploadZone.style.display = "";
-  setCsvStatus("초기화 완료");
+  setCsvStatus(t("csv.reset_done"));
 });
 
 // --- 클립보드 붙여넣기 ---
@@ -952,25 +952,25 @@ function loadFromClipboardText(text) {
   csvFilename = "clipboard.csv";
   clearAllFilters();
   renderGrid();
-  setCsvStatus(`클립보드에서 붙여넣기 완료 (${csvData.length}행 × ${csvData[0]?.length || 0}열)`);
+  setCsvStatus(t("csv.paste_done", {rows: csvData.length, cols: csvData[0]?.length || 0}));
   csvUploadZone.style.display = "none";
   loadCsvSaves();
 }
 
 // --- 중복 분석 ---
 document.getElementById("csvDupCheckBtn").addEventListener("click", function () {
-  if (csvData.length <= 1) { setCsvStatus("분석할 데이터가 없습니다.", true); return; }
+  if (csvData.length <= 1) { setCsvStatus(t("csv.no_data_analysis"), true); return; }
 
   // 선택된 열 추출 (선택된 셀의 고유 열 인덱스)
   var selectedCols = [...new Set(csvSelectedCells.map(s => s.col))].sort((a, b) => a - b);
   if (selectedCols.length === 0) {
-    setCsvStatus("분석할 열을 먼저 선택하세요. (헤더 더블클릭 또는 셀 선택)", true);
+    setCsvStatus(t("csv.select_col_analysis"), true);
     return;
   }
 
   // 헤더 구성: 선택 열 이름 + 갯수
-  var header = selectedCols.map(ci => csvData[0][ci] || ("열" + (ci + 1)));
-  header.push("갯수");
+  var header = selectedCols.map(ci => csvData[0][ci] || (t("csv.col_label") + (ci + 1)));
+  header.push(t("csv.count_label"));
 
   // 데이터 행에서 선택 열 값 조합별 카운트
   var countMap = {};
@@ -999,7 +999,7 @@ document.getElementById("csvDupCheckBtn").addEventListener("click", function () 
   csvCurrentSaveId = null;
   clearAllFilters();
   renderGrid();
-  setCsvStatus("중복 분석 완료: " + header.slice(0, -1).join(", ") + " 기준 — " + entries.length + "개 고유값, 총 " + dataRows.length + "행");
+  setCsvStatus(t("csv.dup_done", {desc: header.slice(0, -1).join(", ") + " — " + entries.length + "/" + dataRows.length}));
 });
 
 document.addEventListener("paste", function (e) {
