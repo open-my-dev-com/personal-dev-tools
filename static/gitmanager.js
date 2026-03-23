@@ -59,7 +59,7 @@
         loadStatus();
       }
     } catch (e) {
-      alert("폴더 선택 실패: " + e.message);
+      alert(t("git.folder_select_fail", { msg: e.message }));
     }
   });
 
@@ -110,12 +110,12 @@
       if (files.length > 0) {
         selectFile(files[0].file);
       } else {
-        diffHeader.textContent = "변경된 파일이 없습니다";
+        diffHeader.textContent = t("git.no_changes");
         diffLeft.innerHTML = "";
         diffRight.innerHTML = "";
       }
     } catch (e) {
-      alert("상태 조회 실패: " + e.message);
+      alert(t("git.status_fail", { msg: e.message }));
     }
   }
 
@@ -165,7 +165,7 @@
     selectedFile = fname;
     renderFileList();
     diffHeader.textContent = fname;
-    diffLeft.innerHTML = "<div style='padding:12px;color:var(--muted)'>로딩 중...</div>";
+    diffLeft.innerHTML = "<div style='padding:12px;color:var(--muted)'>" + t("common.load") + "...</div>";
     diffRight.innerHTML = "";
     try {
       const res = await fetch(`/api/git/diff?repo=${encodeURIComponent(repoPath)}&file=${encodeURIComponent(fname)}`);
@@ -299,10 +299,10 @@
   discardBtn.addEventListener("click", async () => {
     var checked = files.filter((f) => f.checked);
     if (checked.length === 0) {
-      alert("파일을 선택하세요");
+      alert(t("git.select_files"));
       return;
     }
-    if (!confirm("선택한 " + checked.length + "개 파일의 변경사항을 버리시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
+    if (!confirm(t("git.confirm_discard", { count: checked.length }))) {
       return;
     }
     try {
@@ -316,11 +316,11 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert("Discard 실패: " + data.error);
+        alert(t("git.discard_fail", { msg: data.error }));
       }
       loadStatus();
     } catch (e) {
-      alert("Discard 실패: " + e.message);
+      alert(t("git.discard_fail", { msg: e.message }));
     }
   });
 
@@ -328,12 +328,12 @@
   commitBtn.addEventListener("click", async () => {
     var checked = files.filter((f) => f.checked);
     if (checked.length === 0) {
-      alert("커밋할 파일을 선택하세요");
+      alert(t("git.select_commit_files"));
       return;
     }
     var msg = commitMsg.value.trim();
     if (!msg) {
-      alert("커밋 메시지를 입력하세요");
+      alert(t("git.commit_msg_required"));
       commitMsg.focus();
       return;
     }
@@ -349,13 +349,13 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert("커밋 실패: " + data.error);
+        alert(t("git.commit_fail", { msg: data.error }));
         return;
       }
       commitMsg.value = "";
       loadStatus();
     } catch (e) {
-      alert("커밋 실패: " + e.message);
+      alert(t("git.commit_fail", { msg: e.message }));
     }
   });
 
@@ -375,7 +375,7 @@
       });
       if (data.remote.length > 0) {
         var og = document.createElement("optgroup");
-        og.label = "리모트";
+        og.label = t("git.remote");
         data.remote.forEach((b) => {
           var opt = document.createElement("option");
           opt.value = b;
@@ -398,17 +398,17 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert("브랜치 전환 실패: " + data.error);
+        alert(t("git.switch_fail", { msg: data.error }));
         return;
       }
       loadStatus();
     } catch (e) {
-      alert("브랜치 전환 실패: " + e.message);
+      alert(t("git.switch_fail", { msg: e.message }));
     }
   });
 
   newBranchBtn.addEventListener("click", async () => {
-    var name = prompt("새 브랜치 이름:");
+    var name = prompt(t("git.new_branch_name"));
     if (!name || !name.trim()) return;
     try {
       var res = await fetch("/api/git/create-branch", {
@@ -418,12 +418,12 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert("브랜치 생성 실패: " + data.error);
+        alert(t("git.create_fail", { msg: data.error }));
         return;
       }
       loadStatus();
     } catch (e) {
-      alert("브랜치 생성 실패: " + e.message);
+      alert(t("git.create_fail", { msg: e.message }));
     }
   });
 
@@ -458,7 +458,7 @@
   }
 
   function renderTemplateSelect() {
-    templateSelect.innerHTML = '<option value="">템플릿 선택...</option>';
+    templateSelect.innerHTML = '<option value="">' + t("git.template_select") + '</option>';
     templates.forEach((t) => {
       var opt = document.createElement("option");
       opt.value = t.id;
@@ -494,7 +494,7 @@
       item.innerHTML =
         '<span class="git-template-item-name">' + esc(t.name) + "</span>" +
         '<span class="git-template-item-content">' + esc(t.template) + "</span>" +
-        '<button class="git-btn-sm git-btn-danger" data-id="' + t.id + '">삭제</button>';
+        '<button class="git-btn-sm git-btn-danger" data-id="' + t.id + '">' + window.t("common.delete") + '</button>';
       item.querySelector("button").addEventListener("click", async () => {
         await fetch("/api/git/templates/" + t.id, { method: "DELETE" });
         loadTemplates();
@@ -508,7 +508,7 @@
     var name = templateNameInput.value.trim();
     var content = templateContentInput.value;
     if (!name) {
-      alert("템플릿 이름을 입력하세요");
+      alert(t("git.template_name_required"));
       return;
     }
     try {
@@ -522,7 +522,7 @@
       loadTemplates();
       renderTemplateList();
     } catch (e) {
-      alert("템플릿 추가 실패: " + e.message);
+      alert(t("git.template_add_fail", { msg: e.message }));
     }
   });
 
@@ -572,4 +572,8 @@
     if (!s) return "";
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+
+  window.addEventListener("langchange", function () {
+    if (templates.length) renderTemplateSelect();
+  });
 })();

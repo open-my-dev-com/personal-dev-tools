@@ -17,14 +17,14 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-# ── 로깅 설정 ──
+# ── Logging configuration ──
 _LOG_DIR = Path(__file__).parent / "logs"
 _LOG_DIR.mkdir(exist_ok=True)
 
 logger = logging.getLogger("dev-tools")
 logger.setLevel(logging.DEBUG)
 
-# 파일 핸들러 (10MB, 최대 5개 백업)
+# File handler (10MB, max 5 backups)
 _fh = RotatingFileHandler(
     _LOG_DIR / "server.log", maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
 )
@@ -32,7 +32,7 @@ _fh.setLevel(logging.DEBUG)
 _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
 logger.addHandler(_fh)
 
-# 에러 전용 파일
+# Error-only file handler
 _eh = RotatingFileHandler(
     _LOG_DIR / "error.log", maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
 )
@@ -43,7 +43,7 @@ logger.addHandler(_eh)
 import subprocess, sys
 import urllib.request
 
-# ── CDN 라이브러리 정의 ──
+# ── CDN library definitions ──
 _VENDOR_DIR = Path(__file__).parent / "static" / "vendor"
 
 CDN_LIBS = [
@@ -70,7 +70,7 @@ CDN_LIBS = [
 _VENDOR_META_FILE = _VENDOR_DIR / "_meta.json"
 
 def _load_vendor_meta():
-    """로컬에 저장된 라이브러리 버전 메타 정보"""
+    """Local vendor library version metadata"""
     if _VENDOR_META_FILE.exists():
         try:
             return json.loads(_VENDOR_META_FILE.read_text("utf-8"))
@@ -83,7 +83,7 @@ def _save_vendor_meta(meta):
     _VENDOR_META_FILE.write_text(json.dumps(meta, indent=2, ensure_ascii=False), "utf-8")
 
 def _check_npm_latest(package_name):
-    """npm registry에서 최신 버전 조회"""
+    """Query latest version from npm registry"""
     try:
         url = f"https://registry.npmjs.org/{package_name}/latest"
         req = urllib.request.Request(url, headers={"User-Agent": "dev-tools/1.0", "Accept": "application/json"})
@@ -94,7 +94,7 @@ def _check_npm_latest(package_name):
         return None
 
 def _auto_install(package):
-    """패키지가 없으면 자동 설치"""
+    """Auto-install package if not available"""
     cmds = [
         [sys.executable, "-m", "pip", "install", package],
         [sys.executable, "-m", "pip", "install", "--break-system-packages", package],
@@ -105,7 +105,7 @@ def _auto_install(package):
             return True
         except subprocess.CalledProcessError:
             continue
-    print(f"[경고] {package} 자동 설치 실패. 수동으로 설치하세요: pip install {package}")
+    print(f"[Warning] Auto-install failed for {package}. Please install manually: pip install {package}")
     return False
 
 try:
@@ -124,7 +124,7 @@ except ImportError:
     else:
         OpenAI = None
 
-# ── 개발자 모드: 세션 저장소 ──
+# ── Developer mode: session store ──
 _dev_sessions = {}  # {token: True}
 
 
@@ -171,7 +171,7 @@ def get_conn():
 
 
 def init_db():
-    # 기존 mock_server.db → dev-tool.db 자동 마이그레이션
+    # Auto migration: mock_server.db → dev-tool.db
     conn = get_conn()
     conn.execute(
         """
@@ -264,39 +264,39 @@ def init_db():
         )
         """
     )
-    # archived 컬럼이 없으면 추가 (기존 DB 마이그레이션)
+    # Add archived column if missing (existing DB migration)
     try:
         conn.execute("SELECT archived FROM md_versions LIMIT 1")
     except sqlite3.OperationalError:
         conn.execute("ALTER TABLE md_versions ADD COLUMN archived INTEGER NOT NULL DEFAULT 0")
-    # version_num 컬럼이 없으면 추가 (기존 DB 마이그레이션)
+    # Add version_num column if missing (existing DB migration)
     try:
         conn.execute("SELECT version_num FROM md_versions LIMIT 1")
     except sqlite3.OperationalError:
         conn.execute("ALTER TABLE md_versions ADD COLUMN version_num INTEGER NOT NULL DEFAULT 0")
-        # 기존 데이터에 version_num 부여 (save_id별 id 순서대로)
+        # Assign version_num to existing data (ordered by id per save_id)
         rows = conn.execute("SELECT id, save_id FROM md_versions ORDER BY save_id, id").fetchall()
         counters = {}
         for r in rows:
             sid = r["save_id"]
             counters[sid] = counters.get(sid, 0) + 1
             conn.execute("UPDATE md_versions SET version_num=? WHERE id=?", (counters[sid], r["id"]))
-    # md_saves에 next_version 컬럼 추가 (버전 번호 단조 증가 보장)
+    # Add next_version column to md_saves (ensures monotonically increasing version numbers)
     try:
         conn.execute("SELECT next_version FROM md_saves LIMIT 1")
     except sqlite3.OperationalError:
         conn.execute("ALTER TABLE md_saves ADD COLUMN next_version INTEGER NOT NULL DEFAULT 1")
-        # 기존 데이터: 각 save의 MAX(version_num) + 1로 초기화
+        # Initialize existing data: set to MAX(version_num) + 1 per save
         for row in conn.execute(
             "SELECT save_id, MAX(version_num) as mv FROM md_versions GROUP BY save_id"
         ).fetchall():
             conn.execute("UPDATE md_saves SET next_version=? WHERE id=?", (row["mv"] + 1, row["save_id"]))
-    # md_versions에 comment 컬럼 추가
+    # Add comment column to md_versions
     try:
         conn.execute("SELECT comment FROM md_versions LIMIT 1")
     except sqlite3.OperationalError:
         conn.execute("ALTER TABLE md_versions ADD COLUMN comment TEXT NOT NULL DEFAULT ''")
-    # ── git_commit_templates 테이블 ──
+    # ── git_commit_templates table ──
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS md_proofread_results (
@@ -330,8 +330,43 @@ def init_db():
         )
         """
     )
+    # ── i18n translations table ──
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS i18n (
+            lang TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            PRIMARY KEY (lang, key)
+        )
+        """
+    )
+    # Seed i18n from JSON files if table is empty
+    if conn.execute("SELECT COUNT(*) FROM i18n").fetchone()[0] == 0:
+        _seed_i18n(conn)
     conn.commit()
     conn.close()
+
+
+def _seed_i18n(conn):
+    """Load seed translations from static/lang/*.json into DB."""
+    lang_dir = os.path.join(os.path.dirname(__file__), "static", "lang")
+    for filename in os.listdir(lang_dir):
+        if not filename.endswith(".json"):
+            continue
+        lang_code = filename[:-5]  # e.g. "ko", "en", "ja"
+        filepath = os.path.join(lang_dir, filename)
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for key, value in data.items():
+                conn.execute(
+                    "INSERT OR IGNORE INTO i18n (lang, key, value) VALUES (?, ?, ?)",
+                    (lang_code, key, value),
+                )
+            logger.info("[i18n] Seeded %d keys for lang '%s'", len(data), lang_code)
+        except Exception as e:
+            logger.error("[i18n] Failed to seed '%s': %s", filename, e)
 
 
 def parse_json_or_none(raw):
@@ -364,7 +399,7 @@ class MockHandler(BaseHTTPRequestHandler):
         return self.rfile.read(length)
 
     def _parse_multipart(self):
-        """multipart/form-data에서 첫 번째 파일 데이터를 추출"""
+        """Extract first file data from multipart/form-data"""
         content_type = self.headers.get("Content-Type", "")
         if "boundary=" not in content_type:
             return None
@@ -374,12 +409,12 @@ class MockHandler(BaseHTTPRequestHandler):
         parts = body.split(boundary_bytes)
         for part in parts:
             if b"filename=" in part:
-                # 헤더와 본문 분리 (빈 줄로 구분)
+                # Separate header and body (delimited by blank line)
                 header_end = part.find(b"\r\n\r\n")
                 if header_end == -1:
                     continue
                 file_data = part[header_end + 4:]
-                # 끝의 \r\n 제거
+                # Strip trailing \r\n
                 if file_data.endswith(b"\r\n"):
                     file_data = file_data[:-2]
                 if file_data.endswith(b"--\r\n"):
@@ -644,7 +679,7 @@ class MockHandler(BaseHTTPRequestHandler):
     def _dataai_generate(self):
         api_key = os.getenv("OPENAI_API_KEY", "").strip()
         if not api_key:
-            logger.warning("[DataAI] OPENAI_API_KEY 미설정")
+            logger.warning("[DataAI] OPENAI_API_KEY not configured")
             self._send_json({"ok": False, "error": "OPENAI_API_KEY가 .env에 설정되지 않았습니다."}, status=500)
             return
         raw = self._read_body()
@@ -660,7 +695,7 @@ class MockHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "건수는 1~1000 사이여야 합니다."}, status=400)
                 return
 
-            logger.info(f"[DataAI] 생성 요청: prompt={prompt!r}, format={fmt}, count={count}")
+            logger.info(f"[DataAI] Generation request: prompt={prompt!r}, format={fmt}, count={count}")
             _t0 = time.time()
 
             system_prompt = "You are a data generator. Output ONLY a valid JSON array. No explanations, no markdown, no code blocks."
@@ -683,17 +718,17 @@ IMPORTANT rules:
                 input=user_prompt,
             )
             elapsed = time.time() - _t0
-            logger.info(f"[DataAI] AI 응답 수신: {elapsed:.1f}초, 응답 길이={len(resp.output_text)}")
+            logger.info(f"[DataAI] AI response received: {elapsed:.1f}s, response length={len(resp.output_text)}")
             all_items = self._parse_dataai_json(resp.output_text)
 
             if not all_items:
-                logger.error(f"[DataAI] JSON 파싱 실패. 원본 응답(앞 500자): {resp.output_text[:500]!r}")
+                logger.error(f"[DataAI] JSON parsing failed. Raw response (first 500 chars): {resp.output_text[:500]!r}")
                 self._send_json({"ok": False, "error": "AI가 유효한 데이터를 생성하지 못했습니다."}, status=500)
                 return
 
-            logger.info(f"[DataAI] 파싱 완료: 요청={count}건, 실제={len(all_items)}건")
+            logger.info(f"[DataAI] Parsing complete: requested={count}, actual={len(all_items)}")
 
-            # 요청 형식으로 변환
+            # Convert to requested format
             if fmt == "json":
                 result = json.dumps(all_items, ensure_ascii=False, indent=2)
             elif fmt == "tsv":
@@ -701,7 +736,7 @@ IMPORTANT rules:
             else:  # csv
                 result = self._json_to_sv(all_items, ",")
 
-            # 자동 DB 저장
+            # Auto-save to DB
             conn = get_conn()
             cur = conn.execute(
                 "INSERT INTO dataai_saves (prompt, format, count, result) VALUES (?, ?, ?, ?)",
@@ -710,23 +745,23 @@ IMPORTANT rules:
             conn.commit()
             save_id = cur.lastrowid
             conn.close()
-            logger.info(f"[DataAI] DB 저장 완료: id={save_id}")
+            logger.info(f"[DataAI] Saved to DB: id={save_id}")
 
             self._send_json({"ok": True, "result": result, "count": len(all_items), "saved_id": save_id})
         except json.JSONDecodeError:
-            logger.error("[DataAI] 요청 JSON 파싱 실패")
+            logger.error("[DataAI] Request JSON parsing failed")
             self._send_json({"ok": False, "error": "잘못된 JSON 요청입니다."}, status=400)
         except BrokenPipeError:
-            logger.warning("[DataAI] 클라이언트 연결 끊김 (BrokenPipe)")
+            logger.warning("[DataAI] Client connection lost (BrokenPipe)")
         except Exception as e:
-            logger.error(f"[DataAI] 생성 실패: {e}", exc_info=True)
+            logger.error(f"[DataAI] Generation failed: {e}", exc_info=True)
             try:
                 self._send_json({"ok": False, "error": f"생성 실패: {e}"}, status=500)
             except BrokenPipeError:
                 pass
 
     def _parse_dataai_json(self, text):
-        """AI 응답에서 JSON 배열 파싱"""
+        """Parse JSON array from AI response"""
         text = text.strip()
         if text.startswith("```"):
             lines = text.split("\n")
@@ -736,7 +771,7 @@ IMPORTANT rules:
             if isinstance(data, list):
                 return data
         except json.JSONDecodeError:
-            # JSON 배열 부분만 추출 시도
+            # Try extracting only the JSON array portion
             m = re.search(r'\[[\s\S]*\]', text)
             if m:
                 try:
@@ -746,7 +781,7 @@ IMPORTANT rules:
         return []
 
     def _json_to_sv(self, items, delimiter):
-        """JSON 배열을 CSV/TSV 문자열로 변환"""
+        """Convert JSON array to CSV/TSV string"""
         if not items:
             return ""
         keys = list(items[0].keys())
@@ -811,7 +846,7 @@ IMPORTANT rules:
     def _translate(self):
         api_key = os.getenv("OPENAI_API_KEY", "").strip()
         if not api_key:
-            logger.warning("[Translate] OPENAI_API_KEY 미설정")
+            logger.warning("[Translate] OPENAI_API_KEY not configured")
             self._send_json({"ok": False, "error": "OPENAI_API_KEY가 .env에 설정되지 않았습니다."}, status=500)
             return
         raw = self._read_body()
@@ -823,7 +858,7 @@ IMPORTANT rules:
             if not text:
                 self._send_json({"ok": False, "error": "번역할 텍스트를 입력하세요."}, status=400)
                 return
-            logger.info(f"[Translate] 요청: {source or 'auto'}→{target}, 길이={len(text)}")
+            logger.info(f"[Translate] Request: {source or 'auto'}→{target}, length={len(text)}")
             src_name = self.LANG_NAMES.get(source, "")
             tgt_name = self.LANG_NAMES.get(target, target)
             src_hint = f" The source language is {src_name}." if src_name else ""
@@ -834,20 +869,20 @@ IMPORTANT rules:
                 instructions=f"You are a translator.{src_hint} Translate the user's text into {tgt_name}. Output ONLY the translated text, nothing else.",
                 input=text,
             )
-            logger.info(f"[Translate] 완료: {time.time()-_t0:.1f}초")
+            logger.info(f"[Translate] Complete: {time.time()-_t0:.1f}s")
             result = resp.output_text.strip()
             self._send_json({"ok": True, "result": result})
         except json.JSONDecodeError:
             self._send_json({"ok": False, "error": "잘못된 JSON 요청입니다."}, status=400)
         except Exception as e:
-            logger.error(f"[Translate] 실패: {e}", exc_info=True)
+            logger.error(f"[Translate] Failed: {e}", exc_info=True)
             self._send_json({"ok": False, "error": f"번역 실패: {e}"}, status=500)
 
-    # --- Markdown AI 검수 ---
+    # --- Markdown AI proofreading ---
     def _md_proofread(self):
         api_key = os.getenv("OPENAI_API_KEY", "").strip()
         if not api_key:
-            logger.warning("[Proofread] OPENAI_API_KEY 미설정")
+            logger.warning("[Proofread] OPENAI_API_KEY not configured")
             self._send_json({"ok": False, "error": "OPENAI_API_KEY가 .env에 설정되지 않았습니다."}, status=500)
             return
         raw = self._read_body()
@@ -862,17 +897,17 @@ IMPORTANT rules:
                 self._send_json({"ok": False, "error": f"문서가 너무 깁니다. ({len(text):,}자 / 제한 50,000자)"}, status=400)
                 return
 
-            logger.info(f"[Proofread] 요청: 길이={len(text)}, 스타일검수={include_style}")
+            logger.info(f"[Proofread] Request: length={len(text)}, style_check={include_style}")
             _t0 = time.time()
 
-            # 코드 블록 제거 (fenced)
+            # Remove fenced code blocks
             code_block_pattern = re.compile(r"```[\s\S]*?```", re.MULTILINE)
             cleaned = code_block_pattern.sub("[CODE_BLOCK]", text)
-            # 인라인 코드 제거
+            # Remove inline code
             inline_code_pattern = re.compile(r"`[^`]+`")
             cleaned = inline_code_pattern.sub("[CODE]", cleaned)
 
-            # 줄번호 포함 텍스트 생성
+            # Generate text with line numbers
             lines = cleaned.split("\n")
             numbered = "\n".join(f"{i+1}: {line}" for i, line in enumerate(lines))
 
@@ -906,26 +941,26 @@ Return ONLY the JSON array, no other text."""
                 instructions=prompt,
                 input=numbered,
             )
-            logger.info(f"[Proofread] AI 응답: {time.time()-_t0:.1f}초")
+            logger.info(f"[Proofread] AI response: {time.time()-_t0:.1f}s")
             result_text = resp.output_text.strip()
-            # JSON 파싱
+            # Parse JSON
             try:
                 items = json.loads(result_text)
                 if not isinstance(items, list):
                     items = []
             except json.JSONDecodeError:
-                logger.error(f"[Proofread] AI 응답 파싱 실패. 원본(앞 500자): {result_text[:500]!r}")
+                logger.error(f"[Proofread] AI response parsing failed. Raw (first 500 chars): {result_text[:500]!r}")
                 self._send_json({"ok": False, "error": "AI 응답 파싱 실패. 다시 시도해주세요."}, status=500)
                 return
-            logger.info(f"[Proofread] 완료: {len(items)}건 교정")
+            logger.info(f"[Proofread] Complete: {len(items)} corrections")
             self._send_json({"ok": True, "items": items})
         except json.JSONDecodeError:
             self._send_json({"ok": False, "error": "잘못된 JSON 요청입니다."}, status=400)
         except Exception as e:
-            logger.error(f"[Proofread] 실패: {e}", exc_info=True)
+            logger.error(f"[Proofread] Failed: {e}", exc_info=True)
             self._send_json({"ok": False, "error": f"검수 실패: {e}"}, status=500)
 
-    # --- 검수 결과 저장/조회/삭제 ---
+    # --- Proofread result save/get/delete ---
     def _save_proofread_result(self):
         raw = self._read_body()
         try:
@@ -933,7 +968,7 @@ Return ONLY the JSON array, no other text."""
             save_id = payload.get("save_id")  # nullable
             items = payload.get("items", [])
             conn = get_conn()
-            # 같은 save_id의 기존 결과 삭제 (1개만 유지)
+            # Delete existing result for the same save_id (keep only 1)
             if save_id is not None:
                 conn.execute("DELETE FROM md_proofread_results WHERE save_id=?", (save_id,))
             cur = conn.execute(
@@ -970,7 +1005,7 @@ Return ONLY the JSON array, no other text."""
         conn.commit()
         self._send_json({"ok": True})
 
-    # --- CSV 임시저장 CRUD ---
+    # --- CSV saves CRUD ---
     def _list_csv_saves(self):
         conn = get_conn()
         rows = conn.execute(
@@ -1201,7 +1236,7 @@ Return ONLY the JSON array, no other text."""
         self._send_json(dict(row))
 
     def _get_md_save_html(self, save_id):
-        """마크다운 저장본을 렌더링된 HTML 페이지로 반환 (팝업보기용, marked.js로 클라이언트 렌더링)"""
+        """Return saved markdown as rendered HTML page (for popup view, client-side rendering via marked.js)"""
         conn = get_conn()
         row = conn.execute(
             "SELECT * FROM md_saves WHERE id=?", (save_id,)
@@ -1216,7 +1251,7 @@ Return ONLY the JSON array, no other text."""
 
         import html as html_mod
         title = html_mod.escape(row["name"])
-        # JS 문자열에 안전하게 삽입하기 위해 JSON 인코딩
+        # JSON encode for safe insertion into JS string
         content_json = json.dumps(row["content"] or "")
 
         page = f"""<!DOCTYPE html>
@@ -1236,7 +1271,7 @@ body {{
   max-width: 760px; margin: 0 auto; padding: 32px 24px;
   color: #1e293b; line-height: 1.7;
 }}
-/* 에디터 미리보기와 동일한 스타일 (.md-preview-pane) */
+/* Same styles as editor preview (.md-preview-pane) */
 h1 {{ font-size: 1.8em; margin: 0.6em 0 0.4em; padding-bottom: 0.3em; border-bottom: 1px solid var(--line); }}
 h2 {{ font-size: 1.5em; margin: 0.5em 0 0.3em; padding-bottom: 0.2em; border-bottom: 1px solid var(--line); }}
 h3 {{ font-size: 1.25em; margin: 0.5em 0 0.3em; }}
@@ -1289,7 +1324,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
 (function() {{
   var raw = {content_json};
 
-  // frontmatter 파싱
+  // frontmatter parsing
   function parseFrontmatter(src) {{
     var match = src.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n?([\\s\\S]*)$/);
     if (!match) return {{ meta: null, body: src }};
@@ -1312,7 +1347,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
     return html + "</table></div>";
   }}
 
-  // GitHub-style alerts 후처리
+  // GitHub-style alerts post-processing
   var alertLabels = {{ NOTE: "참고", TIP: "팁", IMPORTANT: "중요", WARNING: "경고", CAUTION: "주의" }};
   var alertIcons = {{ NOTE: "ℹ️", TIP: "💡", IMPORTANT: "❗", WARNING: "⚠️", CAUTION: "🔴" }};
   function processAlerts(html) {{
@@ -1327,7 +1362,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
     );
   }}
 
-  // marked 커스텀 렌더러 (hljs 코드 하이라이팅 + mermaid)
+  // marked custom renderer (hljs code highlighting + mermaid)
   var mermaidId = 0;
   var renderer = new marked.Renderer();
   var origCode = renderer.code.bind(renderer);
@@ -1361,12 +1396,12 @@ input[type="checkbox"] {{ margin-right: 6px; }}
 
   marked.setOptions({{ renderer: renderer, breaks: true, gfm: true }});
 
-  // 렌더링
+  // rendering
   var parsed = parseFrontmatter(raw);
   var fmHtml = renderFrontmatterHtml(parsed.meta);
   document.getElementById("content").innerHTML = fmHtml + processAlerts(marked.parse(parsed.body));
 
-  // mermaid 렌더링
+  // mermaid rendering
   mermaid.initialize({{ startOnLoad: false, theme: "default" }});
   document.querySelectorAll(".mermaid").forEach(function(el) {{
     var code = el.textContent;
@@ -1419,7 +1454,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 self._send_json({"ok": False, "error": "이름을 입력하세요."}, status=400)
                 return
             conn = get_conn()
-            # 업데이트 전 현재 내용을 버전으로 저장
+            # Save current content as a version before updating
             old = conn.execute(
                 "SELECT content FROM md_saves WHERE id=?", (save_id,)
             ).fetchone()
@@ -1438,7 +1473,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 "UPDATE md_saves SET name=?, content=?, next_version=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
                 (name, content, next_vn + 1, save_id),
             )
-            # 최대 30개만 유지 (archived 제외)
+            # Keep max 30 versions only (excluding archived)
             conn.execute(
                 "DELETE FROM md_versions WHERE save_id=? AND archived=0 AND id NOT IN "
                 "(SELECT id FROM md_versions WHERE save_id=? AND archived=0 ORDER BY id DESC LIMIT 30)",
@@ -1525,7 +1560,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             conn.close()
             self._send_json({"ok": False, "error": "version not found"}, status=404)
             return
-        # 현재 내용을 버전으로 저장 후 롤백
+        # Save current content as a version before rollback
         current = conn.execute(
             "SELECT content FROM md_saves WHERE id=?", (save_id,)
         ).fetchone()
@@ -1541,7 +1576,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 "UPDATE md_saves SET next_version=? WHERE id=?",
                 (next_vn + 1, save_id),
             )
-            # 최대 30개만 유지 (archived 제외)
+            # Keep max 30 versions only (excluding archived)
             conn.execute(
                 "DELETE FROM md_versions WHERE save_id=? AND archived=0 AND id NOT IN "
                 "(SELECT id FROM md_versions WHERE save_id=? AND archived=0 ORDER BY id DESC LIMIT 30)",
@@ -1710,7 +1745,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/md/saves":
             self._list_md_saves()
             return
-        # /api/md/saves/:id/html (팝업 미리보기용 HTML)
+        # /api/md/saves/:id/html (HTML for popup preview)
         m_html = re.match(r"^/api/md/saves/(\d+)/html$", path)
         if m_html:
             self._get_md_save_html(int(m_html.group(1)))
@@ -1720,7 +1755,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if m_ver:
             self._list_md_versions(int(m_ver.group(1)))
             return
-        # /api/md/versions/:id (단일 버전 조회)
+        # /api/md/versions/:id (single version detail)
         m_ver_detail = re.match(r"^/api/md/versions/(\d+)$", path)
         if m_ver_detail:
             self._get_md_version(int(m_ver_detail.group(1)))
@@ -1751,7 +1786,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._dataai_get(int(m_dataai.group(1)))
             return
 
-        # ── Git 관리 GET ──
+        # ── Git management GET ──
         if path == "/api/git/status":
             self._git_status(query)
             return
@@ -1768,7 +1803,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._git_list_templates(query)
             return
 
-        # ── 개발자 모드 GET ──
+        # ── Developer mode GET ──
         if path == "/api/dev/auth/status":
             self._dev_auth_status()
             return
@@ -1793,6 +1828,11 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             return
         if path == "/api/dev/cdn/check-latest":
             self._dev_cdn_check_latest()
+            return
+        # ── i18n API ──
+        m_lang = re.match(r"^/api/lang/([a-z]{2})$", path)
+        if m_lang:
+            self._get_translations(m_lang.group(1))
             return
 
         if path.startswith("/api/"):
@@ -1842,7 +1882,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if m_rb:
             self._rollback_md_version(int(m_rb.group(1)), int(m_rb.group(2)))
             return
-        # ── 개발자 모드 POST ──
+        # ── Developer mode POST ──
         if path == "/api/dev/auth/register":
             self._dev_auth_register()
             return
@@ -1855,7 +1895,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/cdn/sync":
             self._dev_cdn_sync()
             return
-        # ── PDF 변환 ──
+        # ── PDF conversion ──
         if path == "/api/pdf/convert/xlsx":
             self._pdf_convert_xlsx()
             return
@@ -1863,7 +1903,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._pdf_convert_pptx()
             return
 
-        # ── Git 관리 POST ──
+        # ── Git management POST ──
         if path == "/api/git/pick-repo":
             self._diff_pick_folder()
             return
@@ -1932,12 +1972,12 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             except ValueError:
                 self._send_json({"ok": False, "error": "invalid id"}, status=400)
                 return
-        # /api/md/versions/:id/comment (코멘트 수정)
+        # /api/md/versions/:id/comment (edit comment)
         m_comment = re.match(r"^/api/md/versions/(\d+)/comment$", path)
         if m_comment:
             self._update_md_version_comment(int(m_comment.group(1)))
             return
-        # /api/md/versions/:id/archive (아카이브 토글)
+        # /api/md/versions/:id/archive (toggle archive)
         m_arch = re.match(r"^/api/md/versions/(\d+)/archive$", path)
         if m_arch:
             self._toggle_md_version_archive(int(m_arch.group(1)))
@@ -1950,7 +1990,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             except ValueError:
                 self._send_json({"ok": False, "error": "invalid id"}, status=400)
                 return
-        # ── 개발자 모드 PUT ──
+        # ── Developer mode PUT ──
         m_dev_row = re.match(r"^/api/dev/tables/([a-zA-Z_]\w*)/(\d+)$", path)
         if m_dev_row:
             self._dev_update_row(m_dev_row.group(1), int(m_dev_row.group(2)))
@@ -2012,12 +2052,12 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if m_dataai_del:
             self._dataai_delete(int(m_dataai_del.group(1)))
             return
-        # ── Git 템플릿 DELETE ──
+        # ── Git template DELETE ──
         m_git_tpl = re.match(r"^/api/git/templates/(\d+)$", path)
         if m_git_tpl:
             self._git_delete_template(int(m_git_tpl.group(1)))
             return
-        # ── 개발자 모드 DELETE ──
+        # ── Developer mode DELETE ──
         m_dev_del = re.match(r"^/api/dev/tables/([a-zA-Z_]\w*)/(\d+)$", path)
         if m_dev_del:
             self._dev_delete_row(m_dev_del.group(1), int(m_dev_del.group(2)))
@@ -2039,10 +2079,10 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         path = parsed.path
         self._proxy_mock("HEAD", path)
 
-    # ── 개발자 모드 API ──
+    # ── Developer mode API ──
 
     def _dev_check_auth(self):
-        """인증 토큰 검증. 실패 시 401 응답 후 False 반환."""
+        """Verify auth token. Returns False after sending 401 on failure."""
         token = self.headers.get("X-Dev-Token", "")
         if token and token in _dev_sessions:
             return True
@@ -2116,16 +2156,16 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if not self._dev_check_auth():
             return
         conn = get_conn()
-        # 테이블 존재 확인
+        # Verify table exists
         exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,)).fetchone()
         if not exists:
             conn.close()
             self._send_json({"ok": False, "error": "table not found"}, status=404)
             return
-        # 컬럼 정보
+        # Column info
         columns = conn.execute(f"PRAGMA table_info([{table_name}])").fetchall()
         col_info = [{"cid": c[0], "name": c[1], "type": c[2], "notnull": c[3], "default": c[4], "pk": c[5]} for c in columns]
-        # 데이터
+        # Data
         rows = conn.execute(f"SELECT * FROM [{table_name}] ORDER BY rowid DESC LIMIT 500").fetchall()
         col_names = [c[1] for c in columns]
         data = [dict(zip(col_names, row)) for row in rows]
@@ -2143,7 +2183,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             conn.close()
             self._send_json({"ok": False, "error": "table not found"}, status=404)
             return
-        # PK 컬럼 찾기
+        # Find PK column
         columns = conn.execute(f"PRAGMA table_info([{table_name}])").fetchall()
         pk_col = next((c[1] for c in columns if c[5] == 1), "id")
         sets = ", ".join(f"[{k}] = ?" for k in data.keys())
@@ -2178,18 +2218,18 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if not sql:
             self._send_json({"ok": False, "error": "sql required"}, status=400)
             return
-        # SELECT만 허용
+        # Allow only SELECT
         first_word = sql.split()[0].upper() if sql.split() else ""
         if first_word not in ("SELECT", "PRAGMA"):
             self._send_json({"ok": False, "error": "only SELECT/PRAGMA allowed"}, status=403)
             return
         conn = get_conn()
         try:
-            # row_factory를 해제하여 tuple로 받음 (중복 컬럼명 보존)
+            # Unset row_factory to get tuples (preserves duplicate column names)
             conn.row_factory = None
             cursor = conn.execute(sql)
             raw_names = [d[0] for d in cursor.description] if cursor.description else []
-            # 중복 컬럼명에 접미어 붙이기 (id, id → id, id_2)
+            # Append suffix to duplicate column names (id, id → id, id_2)
             col_names = []
             seen = {}
             for name in raw_names:
@@ -2213,16 +2253,16 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         row = conn.execute("SELECT value FROM dev_settings WHERE key='tabs_config'").fetchone()
         conn.close()
         default_tabs = [
-            {"id": "mock", "label": "Mock 서버", "visible": True, "order": 0},
-            {"id": "charcount", "label": "문자수 체크", "visible": True, "order": 1},
-            {"id": "mybatis", "label": "MyBatis 로그", "visible": True, "order": 2},
-            {"id": "jsonformat", "label": "JSON 정렬", "visible": True, "order": 3},
-            {"id": "translate", "label": "번역", "visible": True, "order": 4},
-            {"id": "csv", "label": "CSV 편집", "visible": True, "order": 5},
+            {"id": "mock", "label": "Mock Server", "visible": True, "order": 0},
+            {"id": "charcount", "label": "Char Count", "visible": True, "order": 1},
+            {"id": "mybatis", "label": "MyBatis Log", "visible": True, "order": 2},
+            {"id": "jsonformat", "label": "JSON Format", "visible": True, "order": 3},
+            {"id": "translate", "label": "Translate", "visible": True, "order": 4},
+            {"id": "csv", "label": "CSV Editor", "visible": True, "order": 5},
             {"id": "markdown", "label": "Markdown", "visible": True, "order": 6},
-            {"id": "paramchanger", "label": "파라미터 변환", "visible": True, "order": 7},
-            {"id": "pdfconvert", "label": "PDF 변환", "visible": True, "order": 8},
-            {"id": "diffcompare", "label": "Diff 비교", "visible": True, "order": 9},
+            {"id": "paramchanger", "label": "Param Convert", "visible": True, "order": 7},
+            {"id": "pdfconvert", "label": "PDF Convert", "visible": True, "order": 8},
+            {"id": "diffcompare", "label": "Diff Compare", "visible": True, "order": 9},
             {"id": "git", "label": "Git", "visible": True, "order": 10},
         ]
         if row:
@@ -2252,10 +2292,10 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         self._send_json({"ok": True})
 
     # ══════════════════════════════════
-    # Diff 비교 API
+    # Diff comparison API
     # ══════════════════════════════════
     def _diff_pick_file(self):
-        """osascript로 네이티브 파일 선택 다이얼로그"""
+        """Native file picker dialog via osascript"""
         import subprocess
         try:
             result = subprocess.run(
@@ -2273,7 +2313,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._send_json({"ok": False, "error": str(e)})
 
     def _diff_pick_folder(self):
-        """osascript로 네이티브 폴더 선택 다이얼로그"""
+        """Native folder picker dialog via osascript"""
         import subprocess
         try:
             result = subprocess.run(
@@ -2291,7 +2331,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._send_json({"ok": False, "error": str(e)})
 
     def _diff_save_file(self):
-        """파일 경로에 내용을 저장"""
+        """Save content to file path"""
         import os
         body = json.loads(self._read_body())
         file_path = body.get("path", "").strip()
@@ -2311,7 +2351,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._send_json({"ok": False, "error": str(e)})
 
     def _diff_read_file(self):
-        """파일 경로를 받아 내용을 반환"""
+        """Read file content from given path"""
         import os
         body = json.loads(self._read_body())
         file_path = body.get("path", "").strip()
@@ -2334,7 +2374,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._send_json({"ok": False, "error": str(e)})
 
     def _diff_compare_folder(self):
-        """두 폴더의 파일을 재귀적으로 비교하여 결과를 반환"""
+        """Recursively compare files in two folders and return results"""
         import os
 
         body = json.loads(self._read_body())
@@ -2419,10 +2459,10 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         self._send_json({"ok": True, "files": files})
 
     # ══════════════════════════════════
-    # Git 관리 API
+    # Git management API
     # ══════════════════════════════════
     def _git_run(self, repo_path, args):
-        """git 명령 실행, (ok, stdout, stderr) 반환"""
+        """Execute git command, returns (ok, stdout, stderr)"""
         result = subprocess.run(
             ["git"] + args, cwd=repo_path,
             capture_output=True, text=True, timeout=30
@@ -2430,7 +2470,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         return result.returncode == 0, result.stdout, result.stderr.strip()
 
     def _git_validate_repo(self, path):
-        """git 저장소인지 검증. 유효하면 True, 아니면 에러 응답 후 False"""
+        """Validate git repository. Returns True if valid, sends error response and returns False otherwise"""
         if not path or not os.path.isdir(path):
             self._send_json({"ok": False, "error": "유효하지 않은 경로입니다"}, 400)
             return False
@@ -2444,7 +2484,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         repo = query.get("repo", [""])[0]
         if not self._git_validate_repo(repo):
             return
-        # 현재 브랜치
+        # Current branch
         ok, branch, _ = self._git_run(repo, ["branch", "--show-current"])
         branch = branch.strip() if ok else "(detached)"
         # status --porcelain
@@ -2459,7 +2499,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             index_st = line[0]
             work_st = line[1]
             fname = line[3:]
-            # 폴더는 건너뛰기 (untracked 디렉토리는 "/" 로 끝남)
+            # Skip directories (untracked dirs end with "/")
             if fname.endswith("/"):
                 continue
             # renamed: "R  old -> new"
@@ -2469,7 +2509,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 if len(parts) == 2:
                     old_name = parts[0]
                     fname = parts[1]
-            # 상태 결정
+            # Determine status
             if index_st == "?" and work_st == "?":
                 status = "untracked"
             elif index_st == "A":
@@ -2527,17 +2567,17 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if not file_path:
             self._send_json({"ok": False, "error": "file 파라미터가 필요합니다"}, 400)
             return
-        # 바이너리 체크
+        # Binary check
         ok, numstat, _ = self._git_run(repo, ["diff", "--numstat", "--", file_path])
         if ok and numstat.strip().startswith("-\t-"):
             self._send_json({"ok": True, "binary": True, "left": "", "right": ""})
             return
-        # left = HEAD 버전
+        # left = HEAD version
         left = ""
         ok_head, head_content, _ = self._git_run(repo, ["show", "HEAD:" + file_path])
         if ok_head:
             left = head_content
-        # right = 작업 디렉터리 버전
+        # right = working directory version
         right = ""
         full_path = os.path.join(repo, file_path)
         if os.path.isfile(full_path):
@@ -2566,7 +2606,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             "--pretty=format:%h\t%s\t%an\t%ai"
         ])
         if not ok:
-            # 빈 저장소일 수도 있음
+            # Could be an empty repository
             self._send_json({"ok": True, "logs": []})
             return
         logs = []
@@ -2589,20 +2629,20 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if not message:
             self._send_json({"ok": False, "error": "커밋 메시지를 입력하세요"}, 400)
             return
-        logger.info(f"[Git] 커밋: repo={repo}, files={len(files)}개, msg={message!r}")
+        logger.info(f"[Git] Commit: repo={repo}, files={len(files)}, msg={message!r}")
         # reset staging area → add selected files → commit
         self._git_run(repo, ["reset", "HEAD"])
         ok, _, err = self._git_run(repo, ["add", "--"] + files)
         if not ok:
-            logger.error(f"[Git] Stage 실패: {err}")
-            self._send_json({"ok": False, "error": "Stage 실패: " + err}, 500)
+            logger.error(f"[Git] Stage failed: {err}")
+            self._send_json({"ok": False, "error": "Stage failed: " + err}, 500)
             return
         ok, out, err = self._git_run(repo, ["commit", "-m", message])
         if not ok:
-            logger.error(f"[Git] 커밋 실패: {err}")
-            self._send_json({"ok": False, "error": "커밋 실패: " + err}, 500)
+            logger.error(f"[Git] Commit failed: {err}")
+            self._send_json({"ok": False, "error": "Commit failed: " + err}, 500)
             return
-        logger.info(f"[Git] 커밋 완료")
+        logger.info("[Git] Commit complete")
         self._send_json({"ok": True, "message": out.strip()})
 
     def _git_discard(self):
@@ -2660,7 +2700,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             return
         self._send_json({"ok": True})
 
-    # ── Git 템플릿 CRUD ──
+    # ── Git template CRUD ──
     def _git_list_templates(self, query):
         repo = query.get("repo", [""])[0]
         conn = get_conn()
@@ -2696,7 +2736,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         self._send_json({"ok": True})
 
     # ══════════════════════════════════
-    # PDF 변환 API
+    # PDF conversion API
     # ══════════════════════════════════
     def _pdf_convert_xlsx(self):
         try:
@@ -2751,6 +2791,14 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         except Exception as e:
             self._send_json({"ok": False, "error": str(e)}, 500)
 
+    def _get_translations(self, lang_code):
+        """Return all translations for a given language code."""
+        conn = get_conn()
+        rows = conn.execute("SELECT key, value FROM i18n WHERE lang=?", (lang_code,)).fetchall()
+        conn.close()
+        translations = {r["key"]: r["value"] for r in rows}
+        self._send_json({"ok": True, "lang": lang_code, "translations": translations})
+
     def _dev_get_site_config(self):
         conn = get_conn()
         row = conn.execute("SELECT value FROM dev_settings WHERE key='site_config'").fetchone()
@@ -2764,7 +2812,8 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         body = self._read_body()
         data = json.loads(body)
         site_name = data.get("siteName", "").strip()
-        config = {"siteName": site_name}
+        lang = data.get("lang", "").strip() or "ko"
+        config = {"siteName": site_name, "lang": lang}
         conn = get_conn()
         conn.execute(
             "INSERT OR REPLACE INTO dev_settings (key, value, encrypted) VALUES ('site_config', ?, 0)",
@@ -2772,18 +2821,18 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         )
         conn.commit()
         conn.close()
-        logger.info("사이트 설정 변경: %s", site_name)
+        logger.info("Site config changed: name=%s, lang=%s", site_name, lang)
         self._send_json({"ok": True})
 
     def _dev_get_modules(self):
-        # 모듈 설정 읽기는 인증 불필요
+        # Reading module config does not require auth
         conn = get_conn()
         row = conn.execute("SELECT value, encrypted FROM dev_settings WHERE key='modules_config'").fetchone()
         conn.close()
         if row:
             value = row[0]
             if row[1] == 1:
-                # 암호화된 상태 — 복호화 필요하지만 세션에서 키를 모르므로 평문 저장 방식 사용
+                # Encrypted state — decryption needed but key is unknown in session, so use plaintext storage
                 pass
             self._send_json({"ok": True, "modules": json.loads(value)})
         else:
@@ -2810,9 +2859,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         conn.close()
         self._send_json({"ok": True})
 
-    # ── CDN 라이브러리 동기화 ──
+    # ── CDN library sync ──
     def _dev_cdn_status(self):
-        """각 CDN 라이브러리의 로컬 존재 여부 + 버전 정보"""
+        """Check local existence and version info for each CDN library"""
         if not self._dev_check_auth():
             return
         meta = _load_vendor_meta()
@@ -2831,10 +2880,10 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         self._send_json({"ok": True, "libs": items})
 
     def _dev_cdn_check_latest(self):
-        """npm registry에서 각 라이브러리의 최신 버전 조회"""
+        """Query latest version of each library from npm registry"""
         if not self._dev_check_auth():
             return
-        logger.info("[CDN] 최신 버전 확인 시작")
+        logger.info("[CDN] Starting latest version check")
         meta = _load_vendor_meta()
         checked = set()
         results = []
@@ -2848,13 +2897,13 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             results.append({
                 "npm": npm_name,
                 "current": saved_ver or lib["version"],
-                "latest": latest or "조회실패",
+                "latest": latest or "lookup failed",
             })
-        logger.info(f"[CDN] 최신 버전 확인 완료: {len(results)}개 패키지")
+        logger.info(f"[CDN] Latest version check complete: {len(results)} packages")
         self._send_json({"ok": True, "results": results})
 
     def _dev_cdn_sync(self):
-        """CDN 라이브러리를 로컬로 다운로드 (최신 버전 또는 현재 설정 버전)"""
+        """Download CDN libraries locally (latest or currently configured version)"""
         if not self._dev_check_auth():
             return
         raw = self._read_body()
@@ -2868,7 +2917,7 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         meta = _load_vendor_meta()
         results = []
 
-        # 최신 버전 조회 (use_latest인 경우)
+        # Query latest versions (if use_latest)
         latest_versions = {}
         if use_latest:
             checked = set()
@@ -2888,21 +2937,21 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 version = latest_versions[lib["npm"]]
             url = lib["url_tpl"].format(v=version)
             try:
-                logger.info(f"[CDN] 다운로드: {lib['name']} v{version} ({url})")
+                logger.info(f"[CDN] Downloading: {lib['name']} v{version} ({url})")
                 req = urllib.request.Request(url, headers={"User-Agent": "dev-tools/1.0"})
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     data = resp.read()
                 local_path.write_bytes(data)
                 meta[lib["name"]] = {"version": version, "file": lib["file"], "size": len(data)}
-                logger.info(f"[CDN] 완료: {lib['name']} v{version} ({len(data):,} bytes)")
+                logger.info(f"[CDN] Done: {lib['name']} v{version} ({len(data):,} bytes)")
                 results.append({"name": lib["name"], "file": lib["file"], "ok": True, "size": len(data), "version": version})
             except Exception as e:
-                logger.error(f"[CDN] 실패: {lib['name']} - {e}")
+                logger.error(f"[CDN] Failed: {lib['name']} - {e}")
                 results.append({"name": lib["name"], "file": lib["file"], "ok": False, "error": str(e)})
 
         _save_vendor_meta(meta)
         success = sum(1 for r in results if r["ok"])
-        self._send_json({"ok": True, "results": results, "summary": f"{success}/{len(results)} 완료"})
+        self._send_json({"ok": True, "results": results, "summary": f"{success}/{len(results)} complete"})
 
 
 if __name__ == "__main__":
@@ -2927,7 +2976,7 @@ if __name__ == "__main__":
             print("Or run with another port, e.g.: python3 server.py --port 9090")
         raise
     ui_url = f"http://{args.host}:{args.port}"
-    logger.info(f"서버 시작: {ui_url}")
+    logger.info(f"Server started: {ui_url}")
     print(f"Mock server running at {ui_url}")
     print("UI: /")
     print("Dynamic mock endpoints: any path except /api/*")

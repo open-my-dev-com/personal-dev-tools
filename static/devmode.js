@@ -45,6 +45,7 @@ function applySiteName(name) {
   // 일반 설정 (사이트 이름 등)
   // ══════════════════════════════════
   const siteNameInput = document.getElementById("devSiteName");
+  const siteLangSelect = document.getElementById("devSiteLang");
   const siteConfigSaveBtn = document.getElementById("devSiteConfigSave");
 
   async function loadSiteConfig() {
@@ -53,9 +54,10 @@ function applySiteName(name) {
       const data = await res.json();
       if (data.ok) {
         siteNameInput.value = data.config.siteName || "";
+        if (data.config.lang) siteLangSelect.value = data.config.lang;
       }
     } catch (e) {
-      console.error("사이트 설정 로드 실패:", e);
+      console.error("Site config load failed:", e);
     }
   }
 
@@ -64,17 +66,22 @@ function applySiteName(name) {
       const res = await fetch("/api/dev/site-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteName: siteNameInput.value.trim() }),
+        body: JSON.stringify({
+          siteName: siteNameInput.value.trim(),
+          lang: siteLangSelect.value,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
         applySiteName(siteNameInput.value.trim());
-        alert("사이트 설정이 저장되었습니다.");
+        // Apply language change
+        if (typeof i18nSetLang === "function") i18nSetLang(siteLangSelect.value);
+        alert(t("dev.site_saved"));
       } else {
-        alert("저장 실패: " + data.error);
+        alert(t("common.save_fail") + ": " + data.error);
       }
     } catch (e) {
-      alert("저장 실패: " + e.message);
+      alert(t("common.save_fail") + ": " + e.message);
     }
   });
 
@@ -110,11 +117,11 @@ function applySiteName(name) {
       lockBtn.style.display = "none";
     } else if (devToken) {
       authBadge.textContent = "\uD83D\uDD12";
-      authBadge.title = "인증됨";
+      authBadge.title = t("dev.auth_badge_on");
       lockBtn.style.display = "inline-block";
     } else {
       authBadge.textContent = "\uD83D\uDD13";
-      authBadge.title = "미인증";
+      authBadge.title = t("dev.auth_badge_off");
       lockBtn.style.display = "none";
     }
   }
@@ -135,12 +142,12 @@ function applySiteName(name) {
     const formEl = gateEl.querySelector(".dev-auth-form");
 
     if (!authRegistered) {
-      msgEl.textContent = "보안을 위해 계정을 등록하세요.";
+      msgEl.textContent = t("dev.register_msg");
       formEl.innerHTML = `
-        <input type="text" id="devRegUser" placeholder="아이디" class="dev-input">
-        <input type="password" id="devRegPass" placeholder="비밀번호" class="dev-input">
-        <input type="password" id="devRegPass2" placeholder="비밀번호 확인" class="dev-input">
-        <button class="dev-btn dev-btn-primary" id="devRegBtn">등록</button>
+        <input type="text" id="devRegUser" placeholder="${t("dev.register_id_ph")}" class="dev-input">
+        <input type="password" id="devRegPass" placeholder="${t("dev.register_pw_ph")}" class="dev-input">
+        <input type="password" id="devRegPass2" placeholder="${t("dev.register_pw2_ph")}" class="dev-input">
+        <button class="dev-btn dev-btn-primary" id="devRegBtn">${t("dev.register_btn")}</button>
         <span class="dev-auth-error" id="devRegError"></span>
       `;
       const doRegister = async () => {
@@ -148,8 +155,8 @@ function applySiteName(name) {
         const pass = formEl.querySelector("#devRegPass").value;
         const pass2 = formEl.querySelector("#devRegPass2").value;
         const errEl = formEl.querySelector("#devRegError");
-        if (!user || !pass) { errEl.textContent = "아이디와 비밀번호를 입력하세요."; return; }
-        if (pass !== pass2) { errEl.textContent = "비밀번호가 일치하지 않습니다."; return; }
+        if (!user || !pass) { errEl.textContent = t("dev.id_pw_required"); return; }
+        if (pass !== pass2) { errEl.textContent = t("dev.pw_mismatch"); return; }
         try {
           const res = await fetch("/api/dev/auth/register", {
             method: "POST",
@@ -168,24 +175,24 @@ function applySiteName(name) {
             errEl.textContent = data.error;
           }
         } catch (e) {
-          errEl.textContent = "등록 실패: " + e.message;
+          errEl.textContent = t("dev.register_fail", { msg: e.message });
         }
       };
       formEl.querySelector("#devRegBtn").addEventListener("click", doRegister);
       formEl.querySelectorAll("input").forEach((inp) => inp.addEventListener("keydown", (e) => { if (e.key === "Enter") doRegister(); }));
     } else {
-      msgEl.textContent = "인증이 필요합니다.";
+      msgEl.textContent = t("dev.login_msg");
       formEl.innerHTML = `
-        <input type="text" id="devLoginUser" placeholder="아이디" class="dev-input">
-        <input type="password" id="devLoginPass" placeholder="비밀번호" class="dev-input">
-        <button class="dev-btn dev-btn-primary" id="devLoginBtn">로그인</button>
+        <input type="text" id="devLoginUser" placeholder="${t("dev.register_id_ph")}" class="dev-input">
+        <input type="password" id="devLoginPass" placeholder="${t("dev.register_pw_ph")}" class="dev-input">
+        <button class="dev-btn dev-btn-primary" id="devLoginBtn">${t("dev.login_btn")}</button>
         <span class="dev-auth-error" id="devLoginError"></span>
       `;
       const doLogin = async () => {
         const user = formEl.querySelector("#devLoginUser").value.trim();
         const pass = formEl.querySelector("#devLoginPass").value;
         const errEl = formEl.querySelector("#devLoginError");
-        if (!user || !pass) { errEl.textContent = "아이디와 비밀번호를 입력하세요."; return; }
+        if (!user || !pass) { errEl.textContent = t("dev.id_pw_required"); return; }
         try {
           const res = await fetch("/api/dev/auth/login", {
             method: "POST",
@@ -203,7 +210,7 @@ function applySiteName(name) {
             errEl.textContent = data.error;
           }
         } catch (e) {
-          errEl.textContent = "로그인 실패: " + e.message;
+          errEl.textContent = t("dev.login_fail", { msg: e.message });
         }
       };
       formEl.querySelector("#devLoginBtn").addEventListener("click", doLogin);
@@ -263,7 +270,7 @@ function applySiteName(name) {
       }
       const data = await res.json();
       if (data.ok) {
-        tableSelect.innerHTML = '<option value="">테이블 선택...</option>';
+        tableSelect.innerHTML = '<option value="">' + t("dev.table_select") + '</option>';
         data.tables.forEach((t) => {
           const opt = document.createElement("option");
           opt.value = t;
@@ -272,7 +279,7 @@ function applySiteName(name) {
         });
       }
     } catch (e) {
-      tableResult.innerHTML = `<p class="dev-error">테이블 목록 로드 실패: ${e.message}</p>`;
+      tableResult.innerHTML = `<p class="dev-error">${t("dev.table_fail")}: ${e.message}</p>`;
     }
   }
 
@@ -320,11 +327,11 @@ function applySiteName(name) {
   // ── 테이블 스키마 아코디언 ──
   function renderSchemaAccordion(container, columns, tableName) {
     let html = `<details class="dev-schema-accordion">
-      <summary>테이블 정보: <strong>${esc(tableName)}</strong> (${columns.length}개 컬럼)</summary>
+      <summary>${t("dev.table_info", { name: esc(tableName), count: columns.length })}</summary>
       <div class="dev-schema-content">
         <table class="dev-table dev-schema-table">
           <thead><tr>
-            <th>순서</th><th>컬럼명</th><th>타입</th><th>NOT NULL</th><th>기본값</th><th>PK</th>
+            <th>${t("dev.col_order")}</th><th>${t("dev.col_name")}</th><th>${t("dev.col_type")}</th><th>${t("dev.col_notnull")}</th><th>${t("dev.col_default")}</th><th>${t("dev.col_pk")}</th>
           </tr></thead><tbody>`;
     columns.forEach((c) => {
       html += `<tr>
@@ -342,7 +349,7 @@ function applySiteName(name) {
 
   function renderTable(container, columns, data, tableName, append) {
     if (!data.length) {
-      const msg = "<p>데이터 없음</p>";
+      const msg = "<p>" + t("dev.no_data") + "</p>";
       if (append) container.insertAdjacentHTML("beforeend", msg);
       else container.innerHTML = msg;
       return;
@@ -351,7 +358,7 @@ function applySiteName(name) {
     const pkCol = columns.find((c) => c.pk === 1)?.name || "id";
     let html = '<div class="dev-table-wrap"><table class="dev-table"><thead><tr>';
     colNames.forEach((c) => (html += `<th>${esc(c)}</th>`));
-    html += "<th>작업</th></tr></thead><tbody>";
+    html += "<th>" + t("common.action") + "</th></tr></thead><tbody>";
     data.forEach((row) => {
       const rid = row[pkCol];
       html += `<tr data-id="${rid}">`;
@@ -361,8 +368,8 @@ function applySiteName(name) {
         html += `<td class="dev-cell" data-col="${esc(c)}" data-full="${esc(JSON.stringify(val))}">${esc(displayVal)}</td>`;
       });
       html += `<td class="dev-actions">
-        <button class="dev-btn-sm dev-edit-btn" data-table="${esc(tableName)}" data-id="${rid}">수정</button>
-        <button class="dev-btn-sm dev-btn-danger dev-del-btn" data-table="${esc(tableName)}" data-id="${rid}">삭제</button>
+        <button class="dev-btn-sm dev-edit-btn" data-table="${esc(tableName)}" data-id="${rid}">${t("common.edit")}</button>
+        <button class="dev-btn-sm dev-btn-danger dev-del-btn" data-table="${esc(tableName)}" data-id="${rid}">${t("common.delete")}</button>
       </td></tr>`;
     });
     html += "</tbody></table></div>";
@@ -406,9 +413,9 @@ function applySiteName(name) {
       });
       detailHtml += `<div class="dev-detail-actions">`;
       if (editMode) {
-        detailHtml += `<button class="dev-btn dev-btn-primary dev-detail-save" data-table="${esc(tableName)}" data-id="${esc(String(rowId))}">저장</button>`;
+        detailHtml += `<button class="dev-btn dev-btn-primary dev-detail-save" data-table="${esc(tableName)}" data-id="${esc(String(rowId))}">${t("common.save")}</button>`;
       }
-      detailHtml += `<button class="dev-btn dev-detail-cancel">닫기</button></div>`;
+      detailHtml += `<button class="dev-btn dev-detail-cancel">${t("common.close")}</button></div>`;
       detailHtml += '</div></td>';
       const detailRow = document.createElement("tr");
       detailRow.className = "dev-row-detail";
@@ -431,7 +438,7 @@ function applySiteName(name) {
           });
           const d = await res.json();
           if (d.ok) tableLoadBtn.click();
-          else alert("수정 실패: " + d.error);
+          else alert(t("dev.edit_fail", { msg: d.error }));
         });
       }
 
@@ -461,17 +468,17 @@ function applySiteName(name) {
     // 삭제 버튼
     container.querySelectorAll(".dev-del-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm(`정말 삭제하시겠습니까? (ID: ${btn.dataset.id})`)) return;
+        if (!confirm(t("dev.confirm_delete", { id: btn.dataset.id }))) return;
         const res = await devFetch(`/api/dev/tables/${btn.dataset.table}/${btn.dataset.id}`, { method: "DELETE" });
         const d = await res.json();
         if (d.ok) tableLoadBtn.click();
-        else alert("삭제 실패: " + d.error);
+        else alert(t("dev.delete_fail", { msg: d.error }));
       });
     });
   }
 
   function renderReadonlyTable(container, columns, data) {
-    if (!data.length) { container.innerHTML = "<p>결과 없음</p>"; return; }
+    if (!data.length) { container.innerHTML = "<p>" + t("dev.no_result") + "</p>"; return; }
     let html = '<div class="dev-table-wrap"><table class="dev-table"><thead><tr>';
     columns.forEach((c) => (html += `<th>${esc(c)}</th>`));
     html += "</tr></thead><tbody>";
@@ -539,8 +546,8 @@ function applySiteName(name) {
       let html = '<div class="dev-tabs-list">';
       tabs.forEach((tab, i) => {
         html += `<div class="dev-tab-row" data-id="${esc(tab.id)}" draggable="true">
-          <span class="dev-tab-drag" title="드래그하여 순서 변경">☰</span>
-          <input type="checkbox" class="dev-tab-visible" ${tab.visible ? "checked" : ""} title="표시 여부">
+          <span class="dev-tab-drag" title="${t("dev.drag_reorder")}">☰</span>
+          <input type="checkbox" class="dev-tab-visible" ${tab.visible ? "checked" : ""} title="${t("dev.visibility")}">
           <input type="text" class="dev-input dev-tab-label" value="${esc(tab.label)}">
           <span class="dev-tab-id">(${esc(tab.id)})</span>
           <button class="dev-btn-sm dev-tab-up" ${i === 0 ? "disabled" : ""}>▲</button>
@@ -635,13 +642,13 @@ function applySiteName(name) {
       });
       const data = await res.json();
       if (data.ok) {
-        alert("탭 설정이 저장되었습니다.");
+        alert(t("dev.tabs_saved"));
         if (typeof applyTabConfig === "function") applyTabConfig();
       } else {
-        alert("저장 실패: " + data.error);
+        alert(t("common.save_fail") + ": " + data.error);
       }
     } catch (e) {
-      alert("저장 실패: " + e.message);
+      alert(t("common.save_fail") + ": " + e.message);
     }
   });
 
@@ -652,25 +659,27 @@ function applySiteName(name) {
   const modSaveBtn = document.getElementById("devModSave");
   const modAuthGate = document.getElementById("devModAuthGate");
 
-  const MODULE_META = {
-    mock: { label: "Mock 서버", fields: {
-      log_fetch_limit: { label: "로그 조회 수", type: "number" },
-      log_max_limit: { label: "로그 최대 수", type: "number" },
-    }},
-    translate: { label: "번역", fields: {
-      openai_model: { label: "OpenAI 모델", type: "text" },
-    }},
-    csv: { label: "CSV 편집", fields: {
-      default_col_width: { label: "기본 열 너비(px)", type: "number" },
-      min_col_width: { label: "최소 열 너비(px)", type: "number" },
-    }},
-    markdown: { label: "Markdown", fields: {
-      debounce_ms: { label: "미리보기 지연(ms)", type: "number" },
-      min_pane_px: { label: "최소 패널 크기(px)", type: "number" },
-      max_versions: { label: "최대 버전 수", type: "number" },
-      autosave_interval: { label: "자동저장 간격(초)", type: "number", step: "1" },
-    }},
-  };
+  function getModuleMeta() {
+    return {
+      mock: { label: t("dev.mod_mock"), fields: {
+        log_fetch_limit: { label: t("dev.mod_log_fetch"), type: "number" },
+        log_max_limit: { label: t("dev.mod_log_max"), type: "number" },
+      }},
+      translate: { label: t("dev.mod_translate"), fields: {
+        openai_model: { label: t("dev.mod_openai_model"), type: "text" },
+      }},
+      csv: { label: t("dev.mod_csv"), fields: {
+        default_col_width: { label: t("dev.mod_col_width"), type: "number" },
+        min_col_width: { label: t("dev.mod_col_min_width"), type: "number" },
+      }},
+      markdown: { label: t("dev.mod_markdown"), fields: {
+        debounce_ms: { label: t("dev.mod_debounce"), type: "number" },
+        min_pane_px: { label: t("dev.mod_min_pane"), type: "number" },
+        max_versions: { label: t("dev.mod_max_versions"), type: "number" },
+        autosave_interval: { label: t("dev.mod_autosave"), type: "number", step: "1" },
+      }},
+    };
+  }
 
   async function loadModuleSettings() {
     // 먼저 인증 상태 재확인 (탭 전환 시 최신 상태 반영)
@@ -702,12 +711,12 @@ function applySiteName(name) {
       }
       const data = await res.json();
       if (!data.ok) {
-        modContent.innerHTML = `<p class="dev-error">${data.error || "모듈 설정을 불러올 수 없습니다."}</p>`;
+        modContent.innerHTML = `<p class="dev-error">${data.error || t("dev.modules_fail")}</p>`;
         return;
       }
       const modules = data.modules || {};
       let html = "";
-      for (const [modId, meta] of Object.entries(MODULE_META)) {
+      for (const [modId, meta] of Object.entries(getModuleMeta())) {
         const vals = modules[modId] || {};
         html += `<div class="dev-module-card"><h4>${esc(meta.label)}</h4><div class="dev-module-fields">`;
         for (const [key, field] of Object.entries(meta.fields)) {
@@ -745,10 +754,10 @@ function applySiteName(name) {
         body: JSON.stringify({ modules }),
       });
       const data = await res.json();
-      if (data.ok) alert("모듈 설정이 저장되었습니다.");
-      else alert("저장 실패: " + data.error);
+      if (data.ok) alert(t("dev.modules_saved"));
+      else alert(t("common.save_fail") + ": " + data.error);
     } catch (e) {
-      alert("저장 실패: " + e.message);
+      alert(t("common.save_fail") + ": " + e.message);
     }
   });
 
@@ -782,7 +791,7 @@ function applySiteName(name) {
         return;
       }
       var data = await res.json();
-      if (!data.ok) { cdnList.innerHTML = '<p class="dev-error">상태 조회 실패</p>'; return; }
+      if (!data.ok) { cdnList.innerHTML = '<p class="dev-error">' + t("dev.cdn_status_fail") + '</p>'; return; }
       renderCdnList(data.libs);
     } catch (e) {
       cdnList.innerHTML = '<p class="dev-error">' + e.message + '</p>';
@@ -790,9 +799,9 @@ function applySiteName(name) {
   }
 
   function renderCdnList(libs) {
-    var html = '<table class="dev-table"><thead><tr><th>라이브러리</th><th>파일</th><th>저장 버전</th><th>상태</th><th>크기</th></tr></thead><tbody>';
+    var html = '<table class="dev-table"><thead><tr><th>' + t("dev.cdn_col_lib") + '</th><th>' + t("dev.cdn_col_file") + '</th><th>' + t("dev.cdn_col_version") + '</th><th>' + t("dev.cdn_col_status") + '</th><th>' + t("dev.cdn_col_size") + '</th></tr></thead><tbody>';
     libs.forEach(function(lib) {
-      var statusText = lib.exists ? '<span style="color:#22c55e">저장됨</span>' : '<span style="color:#ef4444">미다운로드</span>';
+      var statusText = lib.exists ? '<span style="color:#22c55e">' + t("dev.cdn_saved") + '</span>' : '<span style="color:#ef4444">' + t("dev.cdn_not_downloaded") + '</span>';
       var sizeText = lib.exists ? (lib.size > 1024 ? (lib.size / 1024).toFixed(1) + " KB" : lib.size + " B") : "-";
       var verText = lib.currentVersion || lib.configVersion || "-";
       html += '<tr><td>' + esc(lib.name) + '</td><td><code>' + esc(lib.file) + '</code></td><td>' + esc(verText) + '</td><td>' + statusText + '</td><td>' + sizeText + '</td></tr>';
@@ -810,30 +819,30 @@ function applySiteName(name) {
   // 최신 버전 확인
   cdnCheckLatestBtn.addEventListener("click", async function() {
     setCdnButtonsDisabled(true);
-    cdnStatus.textContent = "npm registry에서 최신 버전 확인 중...";
+    cdnStatus.textContent = t("dev.cdn_checking");
     cdnStatus.style.color = "#f59e0b";
     try {
       var res = await devFetch("/api/dev/cdn/check-latest");
       var data = await res.json();
       if (data.ok) {
-        var html = '<table class="dev-table"><thead><tr><th>패키지</th><th>현재 버전</th><th>최신 버전</th><th>상태</th></tr></thead><tbody>';
+        var html = '<table class="dev-table"><thead><tr><th>' + t("dev.cdn_col_package") + '</th><th>' + t("dev.cdn_col_current") + '</th><th>' + t("dev.cdn_col_latest") + '</th><th>' + t("dev.cdn_col_status") + '</th></tr></thead><tbody>';
         data.results.forEach(function(r) {
-          var isNew = r.latest !== "조회실패" && r.current !== r.latest;
-          var stText = r.latest === "조회실패" ? '<span style="color:#f59e0b">조회실패</span>'
-            : isNew ? '<span style="color:#3b82f6">업데이트 가능</span>'
-            : '<span style="color:#22c55e">최신</span>';
+          var isNew = r.latest !== t("dev.cdn_check_fail") && r.current !== r.latest;
+          var stText = r.latest === t("dev.cdn_check_fail") ? '<span style="color:#f59e0b">' + t("dev.cdn_check_fail") + '</span>'
+            : isNew ? '<span style="color:#3b82f6">' + t("dev.cdn_updatable") + '</span>'
+            : '<span style="color:#22c55e">' + t("dev.cdn_up_to_date") + '</span>';
           html += '<tr><td>' + esc(r.npm) + '</td><td>' + esc(r.current) + '</td><td>' + esc(r.latest) + '</td><td>' + stText + '</td></tr>';
         });
         html += '</tbody></table>';
         cdnList.innerHTML = html;
-        cdnStatus.textContent = "버전 확인 완료";
+        cdnStatus.textContent = t("dev.cdn_check_done");
         cdnStatus.style.color = "#22c55e";
       } else {
-        cdnStatus.textContent = "확인 실패";
+        cdnStatus.textContent = t("dev.cdn_check_error");
         cdnStatus.style.color = "#ef4444";
       }
     } catch (e) {
-      cdnStatus.textContent = "오류: " + e.message;
+      cdnStatus.textContent = t("common.error") + ": " + e.message;
       cdnStatus.style.color = "#ef4444";
     }
     setCdnButtonsDisabled(false);
@@ -842,7 +851,7 @@ function applySiteName(name) {
   // 현재 버전 다운로드
   async function doSync(useLatest) {
     setCdnButtonsDisabled(true);
-    cdnStatus.textContent = (useLatest ? "최신 버전" : "현재 설정 버전") + " 다운로드 중...";
+    cdnStatus.textContent = (useLatest ? t("dev.cdn_latest_ver") : t("dev.cdn_config_ver")) + " " + t("dev.cdn_downloading");
     cdnStatus.style.color = "#f59e0b";
     try {
       var res = await devFetch("/api/dev/cdn/sync", {
@@ -860,15 +869,15 @@ function applySiteName(name) {
         renderCdnList(libs);
         var failed = data.results.filter(function(r) { return !r.ok; });
         if (failed.length > 0) {
-          cdnStatus.textContent += " (실패: " + failed.map(function(f) { return f.name; }).join(", ") + ")";
+          cdnStatus.textContent += t("dev.cdn_fail_count", { count: failed.map(function(f) { return f.name; }).join(", ") });
           cdnStatus.style.color = "#ef4444";
         }
       } else {
-        cdnStatus.textContent = "동기화 실패";
+        cdnStatus.textContent = t("dev.cdn_sync_fail");
         cdnStatus.style.color = "#ef4444";
       }
     } catch (e) {
-      cdnStatus.textContent = "오류: " + e.message;
+      cdnStatus.textContent = t("common.error") + ": " + e.message;
       cdnStatus.style.color = "#ef4444";
     }
     setCdnButtonsDisabled(false);

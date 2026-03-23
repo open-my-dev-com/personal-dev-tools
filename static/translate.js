@@ -6,7 +6,7 @@ const translateResultsWrap = document.getElementById("translateResults");
 const translateTargetChecks = document.querySelectorAll(".translate-target");
 const translateSelectAll = document.getElementById("translateSelectAll");
 
-const LANG_LABELS = { ko: "한국어", en: "영어", ja: "일본어" };
+function getLangLabel(code) { return t("translate." + code) || code; }
 
 function setTranslateStatus(text, isError = false) {
   translateStatus.textContent = text;
@@ -43,17 +43,17 @@ function getSelectedTargets() {
 async function doTranslate() {
   const text = translateInput.value.trim();
   if (!text) {
-    setTranslateStatus("텍스트를 입력하세요.", true);
+    setTranslateStatus(t("translate.input_required"), true);
     return;
   }
   const targets = getSelectedTargets();
   if (targets.length === 0) {
-    setTranslateStatus("대상 언어를 1개 이상 선택하세요.", true);
+    setTranslateStatus(t("translate.select_target"), true);
     return;
   }
 
   translateBtn.disabled = true;
-  setTranslateStatus(`번역 중... (${targets.length}개 언어)`);
+  setTranslateStatus(t("translate.translating", { count: targets.length }));
   translateResultsWrap.innerHTML = "";
 
   const results = await Promise.allSettled(
@@ -68,7 +68,7 @@ async function doTranslate() {
 
   let successCount = 0;
   for (const r of results) {
-    const data = r.status === "fulfilled" ? r.value : { target: "?", ok: false, error: r.reason?.message || "요청 실패" };
+    const data = r.status === "fulfilled" ? r.value : { target: "?", ok: false, error: r.reason?.message || t("translate.request_fail") };
     const block = document.createElement("div");
     block.className = "translate-block";
 
@@ -76,23 +76,23 @@ async function doTranslate() {
       successCount++;
       block.innerHTML = `
         <div class="translate-block-header">
-          <span class="badge">${LANG_LABELS[data.target] || data.target}</span>
-          <button class="translate-copy-btn">복사</button>
+          <span class="badge">${getLangLabel(data.target)}</span>
+          <button class="translate-copy-btn">${t("common.copy")}</button>
         </div>
         <textarea readonly rows="6">${escapeHtml(data.result)}</textarea>
       `;
       block.querySelector(".translate-copy-btn").addEventListener("click", (e) => {
         navigator.clipboard.writeText(data.result).then(() => {
           e.target.textContent = "OK!";
-          setTimeout(() => { e.target.textContent = "복사"; }, 1000);
+          setTimeout(() => { e.target.textContent = t("common.copy"); }, 1000);
         });
       });
     } else {
       block.innerHTML = `
         <div class="translate-block-header">
-          <span class="badge">${LANG_LABELS[data.target] || data.target}</span>
+          <span class="badge">${getLangLabel(data.target)}</span>
         </div>
-        <div class="translate-error">${escapeHtml(data.error || "번역 실패")}</div>
+        <div class="translate-error">${escapeHtml(data.error || t("translate.fail"))}</div>
       `;
     }
     translateResultsWrap.appendChild(block);
@@ -100,9 +100,9 @@ async function doTranslate() {
 
   translateBtn.disabled = false;
   if (successCount === targets.length) {
-    setTranslateStatus(`${successCount}개 언어 번역 완료`);
+    setTranslateStatus(t("translate.done", { count: successCount }));
   } else {
-    setTranslateStatus(`${successCount}/${targets.length} 완료 (일부 실패)`, true);
+    setTranslateStatus(t("translate.partial", { done: successCount, total: targets.length }), true);
   }
 }
 

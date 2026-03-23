@@ -1,3 +1,14 @@
+// i18n stub — i18n.js가 뒤에 로드되므로 다른 스크립트에서 t(), i18nReady() 호출 가능하도록
+(function () {
+  if (!window.t) window.t = function (key) { return key; };
+  if (!window.i18nReady) {
+    var q = [];
+    window.i18nReady = function (fn) { q.push(fn); };
+    window._i18nStubQueue = q;
+  }
+  if (!window.i18nLang) window.i18nLang = function () { return "ko"; };
+})();
+
 // Lucide 아이콘 초기화
 lucide.createIcons();
 
@@ -63,15 +74,19 @@ async function applyTabConfig() {
       const navLabel = btn.querySelector(".nav-label");
       if (navLabel) {
         navLabel.textContent = tab.label;
+        navLabel.removeAttribute("data-i18n");
         btn.setAttribute("data-tooltip", tab.label);
+        btn.removeAttribute("data-i18n-tooltip");
       } else {
         btn.textContent = tab.label;
+        btn.removeAttribute("data-i18n");
       }
       btn.style.display = tab.visible ? "" : "none";
       if (content) {
         content.style.display = tab.visible ? "" : "none";
         const h2 = content.querySelector("section.panel > h2");
         if (h2) {
+          h2.removeAttribute("data-i18n");
           const textNode = [...h2.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
           if (textNode) textNode.textContent = tab.label + " ";
           else if (!h2.querySelector("span, button")) h2.textContent = tab.label;

@@ -60,13 +60,13 @@
       tbody.innerHTML = "";
 
       if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888">등록된 Mock이 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888">' + t("mock.no_mocks") + '</td></tr>';
         return;
       }
 
       items.forEach(function (m) {
         var tr = document.createElement("tr");
-        var reqSummary = m.request_json ? truncate(JSON.stringify(m.request_json), 40) : "(전체 매칭)";
+        var reqSummary = m.request_json ? truncate(JSON.stringify(m.request_json), 40) : t("mock.all_match");
         var resSummary = m.response_body ? truncate(JSON.stringify(m.response_body), 40) : "";
         tr.innerHTML =
           "<td>" + m.id + "</td>" +
@@ -75,8 +75,8 @@
           "<td><code>" + esc(m.path) + "</code></td>" +
           '<td class="text-sm">' + esc(reqSummary) + "</td>" +
           '<td class="text-sm">' + m.response_status + " / " + esc(resSummary) + "</td>" +
-          '<td><button class="mock-edit-btn" data-id="' + m.id + '">수정</button> ' +
-          '<button class="mock-del-btn" data-id="' + m.id + '">삭제</button></td>';
+          '<td><button class="mock-edit-btn" data-id="' + m.id + '">' + t("common.edit") + '</button> ' +
+          '<button class="mock-del-btn" data-id="' + m.id + '">' + t("common.delete") + '</button></td>';
         tbody.appendChild(tr);
       });
 
@@ -93,24 +93,24 @@
       tbody.querySelectorAll(".mock-del-btn").forEach(function (btn) {
         btn.addEventListener("click", async function () {
           var id = parseInt(this.dataset.id);
-          if (!confirm("Mock #" + id + "을(를) 삭제하시겠습니까?")) return;
+          if (!confirm(t("mock.confirm_delete", {id: id}))) return;
           try {
             var res = await fetch("/api/mocks/" + id, { method: "DELETE" });
             var data = await res.json();
             if (data.ok) {
-              setStatus("삭제 완료");
+              setStatus(t("common.delete_done"));
               loadMocks();
               if (editingId === id) resetForm();
             } else {
-              setStatus(data.error || "삭제 실패", true);
+              setStatus(data.error || t("common.delete_fail"), true);
             }
           } catch (e) {
-            setStatus("삭제 실패: " + e.message, true);
+            setStatus(t("common.delete_fail") + ": " + e.message, true);
           }
         });
       });
     } catch (e) {
-      setStatus("목록 로드 실패: " + e.message, true);
+      setStatus(t("common.load_fail") + ": " + e.message, true);
     }
   }
 
@@ -123,8 +123,8 @@
     requestJsonInput.value = mock.request_json ? prettyJson(mock.request_json) : "";
     responseHeadersInput.value = prettyJson(mock.response_headers || {});
     responseBodyInput.value = mock.response_body ? prettyJson(mock.response_body) : "";
-    saveBtn.textContent = "수정 저장";
-    setStatus("Mock #" + mock.id + " 수정 모드");
+    saveBtn.textContent = t("mock.edit_save");
+    setStatus(t("mock.edit_mode", {id: mock.id}));
     mockForm.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -132,7 +132,7 @@
     editingId = null;
     mockForm.reset();
     responseHeadersInput.value = "{}";
-    saveBtn.textContent = "저장";
+    saveBtn.textContent = t("common.save");
     jsonTableWrap.innerHTML = "";
     setStatus("");
   }
@@ -150,21 +150,21 @@
       response_body: responseBodyInput.value.trim() || null,
     };
 
-    if (!payload.name) { setStatus("이름을 입력하세요.", true); return; }
-    if (!payload.path) { setStatus("경로를 입력하세요.", true); return; }
+    if (!payload.name) { setStatus(t("mock.name_required"), true); return; }
+    if (!payload.path) { setStatus(t("mock.path_required"), true); return; }
 
     // JSON 유효성 검사
     if (payload.request_json) {
       try { JSON.parse(payload.request_json); } catch (e) {
-        setStatus("요청 JSON이 유효하지 않습니다.", true); return;
+        setStatus(t("mock.invalid_request_json"), true); return;
       }
     }
     try { JSON.parse(payload.response_headers); } catch (e) {
-      setStatus("응답 헤더 JSON이 유효하지 않습니다.", true); return;
+      setStatus(t("mock.invalid_header_json"), true); return;
     }
     if (payload.response_body) {
       try { JSON.parse(payload.response_body); } catch (e) {
-        setStatus("응답 바디 JSON이 유효하지 않습니다.", true); return;
+        setStatus(t("mock.invalid_body_json"), true); return;
       }
     }
 
@@ -185,14 +185,14 @@
       });
       var data = await res.json();
       if (data.ok || data.id) {
-        setStatus(editingId ? "수정 완료" : "저장 완료 (ID: " + data.id + ")");
+        setStatus(editingId ? t("mock.edit_done") : t("mock.save_done_id", {id: data.id}));
         resetForm();
         loadMocks();
       } else {
-        setStatus(data.error || "저장 실패", true);
+        setStatus(data.error || t("common.save_fail"), true);
       }
     } catch (e) {
-      setStatus("저장 실패: " + e.message, true);
+      setStatus(t("common.save_fail") + ": " + e.message, true);
     }
   });
 
@@ -202,14 +202,14 @@
   previewBtn.addEventListener("click", function () {
     var raw = responseBodyInput.value.trim();
     if (!raw) {
-      jsonTableWrap.innerHTML = '<p style="color:#888">응답 바디를 입력하세요.</p>';
+      jsonTableWrap.innerHTML = '<p style="color:#888">' + t("mock.body_required") + '</p>';
       return;
     }
     var parsed;
     try {
       parsed = JSON.parse(raw);
     } catch (e) {
-      jsonTableWrap.innerHTML = '<p style="color:var(--danger)">JSON 파싱 오류: ' + esc(e.message) + "</p>";
+      jsonTableWrap.innerHTML = '<p style="color:var(--danger)">' + t("mock.json_parse_error", {msg: esc(e.message)}) + "</p>";
       return;
     }
     renderJsonTable(parsed);
@@ -227,7 +227,7 @@
 
   function renderArrayTable(arr) {
     if (arr.length === 0) {
-      jsonTableWrap.innerHTML = '<p style="color:#888">빈 배열입니다.</p>';
+      jsonTableWrap.innerHTML = '<p style="color:#888">' + t("mock.empty_array") + '</p>';
       return;
     }
     // 배열의 첫 항목에서 키 추출
@@ -248,7 +248,7 @@
     var html = '<table class="json-edit-table"><thead><tr>';
     html += "<th>#</th>";
     keys.forEach(function (k) { html += "<th>" + esc(k) + "</th>"; });
-    html += "<th>작업</th></tr></thead><tbody>";
+    html += "<th>" + t("common.action") + "</th></tr></thead><tbody>";
 
     arr.forEach(function (item, idx) {
       html += "<tr>";
@@ -259,11 +259,11 @@
           typeof val === "object" ? JSON.stringify(val) : String(val);
         html += '<td><input class="json-cell" data-idx="' + idx + '" data-key="' + esc(k) + '" value="' + esc(display) + '" /></td>';
       });
-      html += '<td><button class="json-clone-btn" data-idx="' + idx + '">+ 복제</button></td>';
+      html += '<td><button class="json-clone-btn" data-idx="' + idx + '">' + t("mock.clone") + '</button></td>';
       html += "</tr>";
     });
     html += "</tbody></table>";
-    html += '<button type="button" class="json-apply-btn" style="margin-top:8px">편집 내용 반영</button>';
+    html += '<button type="button" class="json-apply-btn" style="margin-top:8px">' + t("mock.apply_edit") + '</button>';
 
     jsonTableWrap.innerHTML = html;
 
@@ -296,14 +296,14 @@
           }
         });
         responseBodyInput.value = JSON.stringify(arr, null, 2);
-        setStatus("편집 내용이 응답 바디에 반영되었습니다.");
+        setStatus(t("mock.edit_applied"));
       });
     }
   }
 
   function renderObjectTable(obj) {
     var keys = Object.keys(obj);
-    var html = '<table class="json-edit-table"><thead><tr><th>키</th><th>값</th></tr></thead><tbody>';
+    var html = '<table class="json-edit-table"><thead><tr><th>' + t("json.key_ph") + '</th><th>' + t("json.value_ph") + '</th></tr></thead><tbody>';
     keys.forEach(function (k) {
       var val = obj[k];
       var display = val === null || val === undefined ? "" :
@@ -314,7 +314,7 @@
       html += "</tr>";
     });
     html += "</tbody></table>";
-    html += '<button type="button" class="json-apply-btn" style="margin-top:8px">편집 내용 반영</button>';
+    html += '<button type="button" class="json-apply-btn" style="margin-top:8px">' + t("mock.apply_edit") + '</button>';
     jsonTableWrap.innerHTML = html;
 
     var applyBtn = jsonTableWrap.querySelector(".json-apply-btn");
@@ -332,7 +332,7 @@
           }
         });
         responseBodyInput.value = JSON.stringify(obj, null, 2);
-        setStatus("편집 내용이 응답 바디에 반영되었습니다.");
+        setStatus(t("mock.edit_applied"));
       });
     }
   }
@@ -347,7 +347,7 @@
       tbody.innerHTML = "";
 
       if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888">로그가 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888">' + t("mock.no_logs") + '</td></tr>';
         return;
       }
 
@@ -366,23 +366,23 @@
         tbody.appendChild(tr);
       });
     } catch (e) {
-      setStatus("로그 로드 실패: " + e.message, true);
+      setStatus(t("common.load_fail") + ": " + e.message, true);
     }
   }
 
   refreshLogsBtn.addEventListener("click", loadLogs);
 
   clearLogsBtn.addEventListener("click", async function () {
-    if (!confirm("모든 로그를 삭제하시겠습니까?")) return;
+    if (!confirm(t("mock.confirm_clear_logs"))) return;
     try {
       var res = await fetch("/api/logs", { method: "DELETE" });
       var data = await res.json();
       if (data.ok) {
-        setStatus("로그 비우기 완료");
+        setStatus(t("mock.log_cleared"));
         loadLogs();
       }
     } catch (e) {
-      setStatus("로그 삭제 실패: " + e.message, true);
+      setStatus(t("common.delete_fail") + ": " + e.message, true);
     }
   });
 

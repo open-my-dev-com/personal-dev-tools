@@ -29,14 +29,14 @@ function formatJson(minify) {
     if (jsonSortKeys.checked) parsed = sortKeysDeep(parsed);
     if (minify) {
       jsonFmtInput.value = JSON.stringify(parsed);
-      setJsonFmtStatus("압축 완료");
+      setJsonFmtStatus(t("json.minify_done"));
     } else {
       const indentVal = jsonIndent.value === "tab" ? "\t" : Number(jsonIndent.value);
       jsonFmtInput.value = JSON.stringify(parsed, null, indentVal);
-      setJsonFmtStatus("정렬 완료");
+      setJsonFmtStatus(t("json.sort_done"));
     }
   } catch (e) {
-    setJsonFmtStatus(`JSON 파싱 실패: ${e.message}`, true);
+    setJsonFmtStatus(t("json.parse_fail", { msg: e.message }), true);
   }
 }
 
@@ -44,7 +44,7 @@ jsonFmtBtn.addEventListener("click", () => formatJson(false));
 jsonMinifyBtn.addEventListener("click", () => formatJson(true));
 jsonFmtCopyBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(jsonFmtInput.value).then(() => {
-    setJsonFmtStatus("복사 완료");
+    setJsonFmtStatus(t("json.copy_done"));
   });
 });
 jsonFmtInput.addEventListener("paste", () => setTimeout(() => formatJson(false), 0));
@@ -56,23 +56,23 @@ document.getElementById("jsonFileInput").addEventListener("change", (e) => {
   reader.onload = () => {
     jsonFmtInput.value = reader.result;
     formatJson(false);
-    setJsonFmtStatus(`${file.name} 불러오기 완료`);
+    setJsonFmtStatus(t("json.file_load_done", { name: file.name }));
   };
-  reader.onerror = () => setJsonFmtStatus("파일 읽기 실패", true);
+  reader.onerror = () => setJsonFmtStatus(t("json.file_read_fail"), true);
   reader.readAsText(file);
   e.target.value = "";
 });
 
 document.getElementById("jsonSaveFileBtn").addEventListener("click", () => {
   const text = jsonFmtInput.value.trim();
-  if (!text) { setJsonFmtStatus("저장할 내용이 없습니다", true); return; }
+  if (!text) { setJsonFmtStatus(t("json.no_content"), true); return; }
   const blob = new Blob([text], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "formatted.json";
   a.click();
   URL.revokeObjectURL(a.href);
-  setJsonFmtStatus("파일 저장 완료");
+  setJsonFmtStatus(t("json.file_save_done"));
 });
 
 // --- 임시저장 ---
@@ -81,11 +81,11 @@ let jsonCurrentSaveId = null;
 
 async function saveJsonToDb() {
   const data = jsonFmtInput.value.trim();
-  if (!data) { setJsonFmtStatus("저장할 내용이 없습니다", true); return; }
+  if (!data) { setJsonFmtStatus(t("json.no_content"), true); return; }
   const defaultName = jsonCurrentSaveId ? "" : new Date().toLocaleString("ko-KR");
-  const name = prompt("저장 이름을 입력하세요:", defaultName);
+  const name = prompt(t("json.enter_name"), defaultName);
   if (name === null) return;
-  if (!name.trim()) { setJsonFmtStatus("이름을 입력하세요", true); return; }
+  if (!name.trim()) { setJsonFmtStatus(t("json.name_required"), true); return; }
   try {
     let r;
     if (jsonCurrentSaveId) {
@@ -103,10 +103,10 @@ async function saveJsonToDb() {
     }
     const res = await r.json();
     if (res.id) jsonCurrentSaveId = res.id;
-    setJsonFmtStatus("임시저장 완료");
+    setJsonFmtStatus(t("json.temp_save_done"));
     loadJsonSaves();
   } catch (e) {
-    setJsonFmtStatus("임시저장 실패", true);
+    setJsonFmtStatus(t("json.temp_save_fail"), true);
   }
 }
 
@@ -116,7 +116,7 @@ async function loadJsonSaves() {
     const { items } = await r.json();
     jsonSavesBody.innerHTML = "";
     if (!items.length) {
-      jsonSavesBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);">저장된 항목이 없습니다.</td></tr>';
+      jsonSavesBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);">${t("json.no_saved")}</td></tr>`;
       return;
     }
     for (const item of items) {
@@ -127,8 +127,8 @@ async function loadJsonSaves() {
         <td>${item.name}</td>
         <td>${item.updated_at}</td>
         <td>
-          <button class="json-load-btn" data-id="${item.id}">불러오기</button>
-          <button class="json-delete-btn" data-id="${item.id}">삭제</button>
+          <button class="json-load-btn" data-id="${item.id}">${t("common.load")}</button>
+          <button class="json-delete-btn" data-id="${item.id}">${t("common.delete")}</button>
         </td>`;
       jsonSavesBody.appendChild(tr);
     }
@@ -150,27 +150,28 @@ async function loadJsonSave(id) {
     if (item.error) { setJsonFmtStatus(item.error, true); return; }
     jsonFmtInput.value = item.data;
     jsonCurrentSaveId = id;
-    setJsonFmtStatus(`"${item.name}" 불러오기 완료`);
+    setJsonFmtStatus(t("json.load_done", { name: item.name }));
     loadJsonSaves();
   } catch (e) {
-    setJsonFmtStatus("불러오기 실패", true);
+    setJsonFmtStatus(t("common.load_fail"), true);
   }
 }
 
 async function deleteJsonSave(id) {
-  if (!confirm("삭제하시겠습니까?")) return;
+  if (!confirm(t("json.confirm_delete"))) return;
   try {
     await fetch(`/api/json/saves/${id}`, { method: "DELETE" });
     if (jsonCurrentSaveId === id) jsonCurrentSaveId = null;
-    setJsonFmtStatus("삭제 완료");
+    setJsonFmtStatus(t("common.delete_done"));
     loadJsonSaves();
   } catch (e) {
-    setJsonFmtStatus("삭제 실패", true);
+    setJsonFmtStatus(t("common.delete_fail"), true);
   }
 }
 
 document.getElementById("jsonSaveDbBtn").addEventListener("click", saveJsonToDb);
-loadJsonSaves();
+i18nReady(loadJsonSaves);
+window.addEventListener("langchange", loadJsonSaves);
 
 // ── 유틸: 빈 값 제거 ──
 function removeEmptyValues(obj) {
@@ -198,7 +199,7 @@ function removeEmptyValues(obj) {
 
 document.getElementById("jsonRemoveEmptyBtn").addEventListener("click", () => {
   const raw = jsonFmtInput.value.trim();
-  if (!raw) { setJsonFmtStatus("입력값이 없습니다", true); return; }
+  if (!raw) { setJsonFmtStatus(t("common.no_input"), true); return; }
   try {
     const parsed = JSON.parse(raw);
     const cleaned = removeEmptyValues(parsed);
@@ -207,9 +208,9 @@ document.getElementById("jsonRemoveEmptyBtn").addEventListener("click", () => {
     const after = JSON.stringify(cleaned).length;
     jsonFmtInput.value = JSON.stringify(cleaned, null, indentVal);
     const diff = before - after;
-    setJsonFmtStatus(diff > 0 ? `빈 값 제거 완료 (${before - after}자 감소)` : "제거할 빈 값이 없습니다");
+    setJsonFmtStatus(diff > 0 ? t("json.empty_remove_done", { count: before - after }) : t("json.no_empty"));
   } catch (e) {
-    setJsonFmtStatus(`JSON 파싱 실패: ${e.message}`, true);
+    setJsonFmtStatus(t("json.parse_fail", { msg: e.message }), true);
   }
 });
 
@@ -263,14 +264,14 @@ function findDuplicateKeys(jsonStr) {
 
 document.getElementById("jsonFindDupKeysBtn").addEventListener("click", () => {
   const raw = jsonFmtInput.value.trim();
-  if (!raw) { setJsonFmtStatus("입력값이 없습니다", true); return; }
+  if (!raw) { setJsonFmtStatus(t("common.no_input"), true); return; }
   const dupes = findDuplicateKeys(raw);
   const keys = Object.keys(dupes);
   if (keys.length === 0) {
-    setJsonFmtStatus("중복 키 없음");
+    setJsonFmtStatus(t("json.no_dup"));
   } else {
-    const desc = keys.map(k => `${k} (${dupes[k]}회)`).join(", ");
-    setJsonFmtStatus(`중복 키 발견: ${desc}`, true);
+    const desc = keys.map(k => `${k} (${t("json.dup_count", { count: dupes[k] })})`).join(", ");
+    setJsonFmtStatus(t("json.dup_found", { desc }), true);
   }
 });
 
@@ -296,12 +297,12 @@ function refreshTreeView() {
   const container = document.getElementById("jsonTreeView");
   container.innerHTML = "";
   const raw = jsonFmtInput.value.trim();
-  if (!raw) { container.innerHTML = '<span style="color:var(--muted)">JSON을 입력하세요</span>'; return; }
+  if (!raw) { container.innerHTML = `<span style="color:var(--muted)">${t("json.input_required")}</span>`; return; }
   try {
     const parsed = JSON.parse(raw);
     container.appendChild(buildTreeNode(parsed, null, true));
   } catch (e) {
-    container.innerHTML = `<span style="color:#bf233a">JSON 파싱 실패: ${e.message}</span>`;
+    container.innerHTML = `<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`;
   }
 }
 
@@ -409,18 +410,18 @@ document.getElementById("jsonDiffRunBtn").addEventListener("click", () => {
   container.innerHTML = "";
   const rawA = jsonFmtInput.value.trim();
   const rawB = document.getElementById("jsonDiffTarget").value.trim();
-  if (!rawA || !rawB) { container.innerHTML = '<span style="color:var(--muted)">양쪽 모두 JSON을 입력하세요</span>'; return; }
+  if (!rawA || !rawB) { container.innerHTML = `<span style="color:var(--muted)">${t("json.both_required")}</span>`; return; }
   try {
     const a = JSON.parse(rawA);
     const b = JSON.parse(rawB);
     const diffs = deepDiff(a, b, "$");
     if (diffs.length === 0) {
-      container.innerHTML = '<div style="color:#0b7611;padding:8px">두 JSON이 동일합니다</div>';
+      container.innerHTML = `<div style="color:#0b7611;padding:8px">${t("json.identical")}</div>`;
       return;
     }
     const table = document.createElement("table");
     table.className = "json-diff-table";
-    table.innerHTML = "<thead><tr><th>경로</th><th>변경</th><th>내용</th></tr></thead>";
+    table.innerHTML = `<thead><tr><th>${t("json.diff_path")}</th><th>${t("json.diff_change")}</th><th>${t("json.diff_content")}</th></tr></thead>`;
     const tbody = document.createElement("tbody");
     for (const d of diffs) {
       const tr = document.createElement("tr");
@@ -428,7 +429,7 @@ document.getElementById("jsonDiffRunBtn").addEventListener("click", () => {
       const pathTd = document.createElement("td");
       pathTd.textContent = d.path;
       const typeTd = document.createElement("td");
-      typeTd.textContent = d.type === "added" ? "추가" : d.type === "removed" ? "삭제" : "변경";
+      typeTd.textContent = d.type === "added" ? t("json.diff_added") : d.type === "removed" ? t("json.diff_removed") : t("json.diff_changed");
       const valTd = document.createElement("td");
       if (d.type === "added") valTd.textContent = JSON.stringify(d.to);
       else if (d.type === "removed") valTd.textContent = JSON.stringify(d.from);
@@ -439,7 +440,7 @@ document.getElementById("jsonDiffRunBtn").addEventListener("click", () => {
     table.appendChild(tbody);
     container.appendChild(table);
   } catch (e) {
-    container.innerHTML = `<span style="color:#bf233a">JSON 파싱 실패: ${e.message}</span>`;
+    container.innerHTML = `<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`;
   }
 });
 
@@ -540,14 +541,14 @@ function runJsonPath() {
     const parsed = JSON.parse(raw);
     const results = evaluateJsonPath(parsed, pathStr);
     if (results.length === 0) {
-      container.innerHTML = '<span style="color:var(--muted)">매칭 결과 없음</span>';
+      container.innerHTML = `<span style="color:var(--muted)">${t("json.no_match")}</span>`;
     } else {
       container.innerHTML = results.map(r =>
         `<div class="json-path-match"><span class="json-path-match-path">${r.path}</span> <span class="json-path-match-value">${JSON.stringify(r.value, null, 2)}</span></div>`
       ).join("");
     }
   } catch (e) {
-    container.innerHTML = `<span style="color:#bf233a">JSON 파싱 실패: ${e.message}</span>`;
+    container.innerHTML = `<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`;
   }
 }
 
@@ -568,7 +569,7 @@ function createBuilderRow(key, type, value, depth) {
 
   const keyInput = document.createElement("input");
   keyInput.className = "json-builder-key";
-  keyInput.placeholder = "키";
+  keyInput.placeholder = t("json.key_ph");
   keyInput.value = key || "";
 
   const typeSelect = document.createElement("select");
@@ -582,7 +583,7 @@ function createBuilderRow(key, type, value, depth) {
 
   const valueInput = document.createElement("input");
   valueInput.className = "json-builder-value";
-  valueInput.placeholder = "값";
+  valueInput.placeholder = t("json.value_ph");
 
   const boolSelect = document.createElement("select");
   boolSelect.className = "json-builder-value-bool";
@@ -591,7 +592,7 @@ function createBuilderRow(key, type, value, depth) {
 
   const addChildBtn = document.createElement("button");
   addChildBtn.className = "json-builder-add-child";
-  addChildBtn.textContent = "+ 하위";
+  addChildBtn.textContent = t("json.add_child");
   addChildBtn.style.display = "none";
 
   const removeBtn = document.createElement("button");
@@ -698,23 +699,23 @@ document.getElementById("jsonBuilderInsertBtn").addEventListener("click", () => 
     const json = builderToJson();
     const indentVal = jsonIndent.value === "tab" ? "\t" : Number(jsonIndent.value);
     jsonFmtInput.value = JSON.stringify(json, null, indentVal);
-    setJsonFmtStatus("빌더에서 JSON 삽입 완료");
+    setJsonFmtStatus(t("json.builder_done"));
   } catch (e) {
-    setJsonFmtStatus("빌더 변환 실패: " + e.message, true);
+    setJsonFmtStatus(t("json.builder_fail", { msg: e.message }), true);
   }
 });
 
 document.getElementById("jsonBuilderFromJsonBtn").addEventListener("click", () => {
   const raw = jsonFmtInput.value.trim();
-  if (!raw) { setJsonFmtStatus("입력값이 없습니다", true); return; }
+  if (!raw) { setJsonFmtStatus(t("common.no_input"), true); return; }
   try {
     const parsed = JSON.parse(raw);
     jsonBuilderRows.innerHTML = "";
     if (typeof parsed === "object" && parsed !== null) {
       jsonToBuilderRows(parsed, 0);
     }
-    setJsonFmtStatus("JSON에서 빌더로 불러오기 완료");
+    setJsonFmtStatus(t("json.builder_load_done"));
   } catch (e) {
-    setJsonFmtStatus("JSON 파싱 실패: " + e.message, true);
+    setJsonFmtStatus(t("json.parse_fail", { msg: e.message }), true);
   }
 });
