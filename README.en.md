@@ -10,7 +10,7 @@ A collection of personal development tools running locally. Operates as a single
 | CSV Editor | CSV editing, encoding conversion, duplicate analysis, row/column management |
 | Markdown | Editor + live preview, AI proofreading, popup viewer, save/version management |
 | JSON Formatter | JSON sorting, formatting, tree view |
-| Translate | OpenAI-based multilingual translation |
+| Translate | AI-based multilingual translation (OpenAI, Gemini, Claude, Grok) |
 | MyBatis | MyBatis XML ↔ query conversion |
 | Character Count | Byte/character/word count, bytes per encoding |
 | Diff Compare | Text comparison (inline/side-by-side) |
@@ -18,7 +18,8 @@ A collection of personal development tools running locally. Operates as a single
 | Parameter Convert | URL parameter ↔ JSON conversion |
 | Git Manager | Local Git repository status, commit, branch management |
 | Data AI | AI-based mock data generation (CSV/JSON/TSV), DB storage |
-| Developer Mode | Tool name customization, DB explorer, tab management, module settings, CDN library management |
+| Tutorial | Step-by-step usage guide for each tool |
+| Developer Mode | Tool name customization, DB explorer, tab management, module settings, AI API key management, CDN library management |
 
 ## Getting Started
 
@@ -59,11 +60,6 @@ python3 -m venv .venv
 source .venv/bin/activate        # macOS / Linux
 .venv\Scripts\activate           # Windows
 
-# Set environment variables (for AI features)
-cp .env.example .env             # macOS / Linux
-copy .env.example .env           # Windows
-# Enter your OPENAI_API_KEY in the .env file
-
 # Start the server
 python3 server.py                # macOS / Linux
 python server.py                 # Windows
@@ -79,12 +75,13 @@ python3 server.py --no-open          # Disable auto browser open
 
 ### 3. AI Features Setup (Optional)
 
-An OpenAI API Key is required for translation, proofreading, and Data AI features.
+An AI API Key is required for translation, proofreading, and Data AI features.
 You can skip this step if you don't need AI features.
 
-1. Sign up and get an API Key at [OpenAI API Keys](https://platform.openai.com/api-keys).
-2. Copy `.env.example` to `.env` in the project folder.
-3. Open `.env` with a text editor and replace `sk-your-api-key-here` with your key.
+**Supported AI Providers**: OpenAI, Google Gemini, Anthropic Claude, xAI Grok
+
+Register your API key via the onboarding wizard on first run, or later in **DEV > Module Settings**.
+Environment variables (`.env`) are also supported as fallback: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `GROK_API_KEY`
 
 ### Offline Usage
 
@@ -94,7 +91,7 @@ Pre-download external libraries to use without internet.
 2. Click **Download Current Version** or **Download Latest Version**
 3. Files are saved to `static/vendor/` and will work offline
 
-> AI features (translate, proofreading, Data AI) require OpenAI API connection and cannot be used offline.
+> AI features (translate, proofreading, Data AI) require AI API connection and cannot be used offline.
 
 ## Package Dependencies
 
@@ -102,12 +99,15 @@ The following packages are auto-installed on first server run:
 
 | Package | Purpose | Required |
 |---------|---------|----------|
-| `openai` | AI translation, proofreading, Data AI | When using AI features |
+| `openai` | OpenAI AI integration | When using AI features |
+| `anthropic` | Claude AI integration | When using AI features |
+| `google-genai` | Gemini AI integration | When using AI features |
+| `xai-sdk` | Grok AI integration | When using AI features |
 | `cryptography` | Developer mode encryption | When using developer mode |
 | `openpyxl` | PDF → XLSX conversion | When using PDF conversion |
 | `python-pptx` | PDF → PPTX conversion | When using PDF conversion |
 
-> If auto-install fails, install manually: `pip install openai cryptography openpyxl python-pptx`
+> If auto-install fails, install manually: `pip install openai anthropic google-genai xai-sdk cryptography openpyxl python-pptx`
 
 ## Project Structure
 
@@ -115,13 +115,13 @@ The following packages are auto-installed on first server run:
 ├── server.py           # Python server (full backend)
 ├── start.sh            # macOS/Linux quick launcher
 ├── start.bat           # Windows quick launcher
-├── .env.example        # Environment variable example
 ├── static/
 │   ├── index.html      # Main page
 │   ├── styles.css      # Styles
 │   ├── app.js          # Common logic
 │   ├── *.js            # Per-tool client scripts
 │   └── vendor/         # CDN library local cache (gitignore)
+├── dev-tool.db         # SQLite database (auto-generated, gitignore)
 ├── logs/               # Server logs (gitignore)
 └── .env                # Environment variables (gitignore)
 ```

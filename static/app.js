@@ -12,6 +12,44 @@
 // Lucide 아이콘 초기화
 lucide.createIcons();
 
+// AI Provider 드롭다운 공통 로딩
+var _aiProvidersCache = null;
+function loadAiProviders(selectEl, callback) {
+  if (!selectEl) return;
+  function populate(providers) {
+    selectEl.innerHTML = "";
+    if (!providers || providers.length === 0) {
+      var opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No AI Key";
+      opt.disabled = true;
+      selectEl.appendChild(opt);
+    } else {
+      providers.forEach(function (p) {
+        var opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.label;
+        selectEl.appendChild(opt);
+      });
+    }
+    if (callback) callback(providers);
+  }
+  if (_aiProvidersCache) {
+    populate(_aiProvidersCache);
+    return;
+  }
+  fetch("/api/ai/providers").then(function (r) { return r.json(); }).then(function (data) {
+    _aiProvidersCache = data.ok ? data.providers : [];
+    populate(_aiProvidersCache);
+  }).catch(function () { populate([]); });
+}
+function refreshAiProviders() {
+  _aiProvidersCache = null;
+  document.querySelectorAll(".ai-provider-select").forEach(function (sel) {
+    loadAiProviders(sel);
+  });
+}
+
 // 사이드바 접기/펼기
 (function initSidebarToggle() {
   const sidebar = document.getElementById("sidebar");

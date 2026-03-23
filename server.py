@@ -15,7 +15,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 # ── Logging configuration ──
 _LOG_DIR = Path(__file__).parent / "logs"
@@ -123,6 +123,137 @@ except ImportError:
         from openai import OpenAI
     else:
         OpenAI = None
+
+try:
+    import anthropic as _anthropic_mod
+except ImportError:
+    if _auto_install("anthropic"):
+        import anthropic as _anthropic_mod
+    else:
+        _anthropic_mod = None
+
+try:
+    from google import genai as google_genai
+except ImportError:
+    if _auto_install("google-genai"):
+        from google import genai as google_genai
+    else:
+        google_genai = None
+
+try:
+    import xai_sdk
+except ImportError:
+    if _auto_install("xai-sdk"):
+        import xai_sdk
+    else:
+        xai_sdk = None
+
+
+# ── AI Provider abstraction ──
+AI_PROVIDERS = {
+    "openai":  {"label": "OpenAI",  "default_model": "gpt-4.1-nano"},
+    "gemini":  {"label": "Gemini",  "default_model": "gemini-2.0-flash-lite"},
+    "claude":  {"label": "Claude",  "default_model": "claude-haiku-4-5-20251001"},
+    "grok":    {"label": "Grok",    "default_model": "grok-3-mini-fast"},
+}
+
+
+def _get_ai_api_keys():
+    """Get all configured AI API keys from DB, fallback to env vars."""
+    keys = {}
+    try:
+        conn = get_conn()
+        row = conn.execute("SELECT value FROM dev_settings WHERE key='ai_api_keys'").fetchone()
+        conn.close()
+        if row:
+            keys = json.loads(row[0])
+    except Exception:
+        pass
+    # Fallback to env vars
+    env_map = {
+        "openai": "OPENAI_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+        "claude": "ANTHROPIC_API_KEY",
+        "grok": "GROK_API_KEY",
+    }
+    for provider, env_key in env_map.items():
+        if not keys.get(provider):
+            val = os.getenv(env_key, "").strip()
+            if val:
+                keys[provider] = val
+    return keys
+
+
+def _get_available_providers():
+    """Return list of providers that have API keys configured."""
+    keys = _get_ai_api_keys()
+    result = []
+    for pid, meta in AI_PROVIDERS.items():
+        if keys.get(pid):
+            result.append({"id": pid, "label": meta["label"], "default_model": meta["default_model"]})
+    return result
+
+
+def _ai_chat(provider, system_prompt, user_prompt, model=None):
+    """Unified AI chat call across providers. Returns response text."""
+    keys = _get_ai_api_keys()
+    api_key = keys.get(provider, "")
+    if not api_key:
+        raise ValueError(f"API key not configured for {provider}")
+
+    meta = AI_PROVIDERS.get(provider)
+    if not meta:
+        raise ValueError(f"Unknown provider: {provider}")
+    model = model or meta["default_model"]
+
+    if provider == "openai":
+        if OpenAI is None:
+            raise RuntimeError("openai package not installed")
+        client = OpenAI(api_key=api_key)
+        resp = client.responses.create(
+            model=model,
+            instructions=system_prompt,
+            input=user_prompt,
+        )
+        return resp.output_text.strip()
+
+    elif provider == "gemini":
+        if google_genai is None:
+            raise RuntimeError("google-genai package not installed")
+        client = google_genai.Client(api_key=api_key)
+        resp = client.models.generate_content(
+            model=model,
+            contents=user_prompt,
+            config=google_genai.types.GenerateContentConfig(
+                system_instruction=system_prompt,
+            ),
+        )
+        return resp.text.strip()
+
+    elif provider == "claude":
+        if _anthropic_mod is None:
+            raise RuntimeError("anthropic package not installed")
+        client = _anthropic_mod.Anthropic(api_key=api_key)
+        resp = client.messages.create(
+            model=model,
+            max_tokens=4096,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        return resp.content[0].text.strip()
+
+    elif provider == "grok":
+        if xai_sdk is None:
+            raise RuntimeError("xai-sdk package not installed")
+        client = xai_sdk.Client(api_key=api_key)
+        conversation = client.chat.create(model=model)
+        conversation.add_system(system_prompt)
+        resp = conversation.add_user(user_prompt)
+        return resp.text.strip()
+
+    else:
+        raise ValueError(f"Unsupported provider: {provider}")
+
 
 # ── Developer mode: session store ──
 _dev_sessions = {}  # {token: True}
@@ -676,17 +807,22 @@ class MockHandler(BaseHTTPRequestHandler):
 
     # --- Data AI ---
     def _dataai_generate(self):
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key:
-            logger.warning("[DataAI] OPENAI_API_KEY not configured")
-            self._send_json({"ok": False, "error": "OPENAI_API_KEY가 .env에 설정되지 않았습니다."}, status=500)
-            return
         raw = self._read_body()
         try:
             payload = json.loads(raw)
+            provider = payload.get("provider", "").strip()
             prompt = payload.get("prompt", "").strip()
             fmt = payload.get("format", "csv").strip()
             count = int(payload.get("count", 10))
+
+            # Auto-select provider if not specified
+            if not provider:
+                available = _get_available_providers()
+                if not available:
+                    self._send_json({"ok": False, "error": "AI API 키가 설정되지 않았습니다. DEV > 일반 설정에서 API 키를 등록하세요."}, status=500)
+                    return
+                provider = available[0]["id"]
+
             if not prompt:
                 self._send_json({"ok": False, "error": "데이터 설명을 입력하세요."}, status=400)
                 return
@@ -694,7 +830,7 @@ class MockHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "건수는 1~1000 사이여야 합니다."}, status=400)
                 return
 
-            logger.info(f"[DataAI] Generation request: prompt={prompt!r}, format={fmt}, count={count}")
+            logger.info(f"[DataAI] Generation request: provider={provider}, prompt={prompt!r}, format={fmt}, count={count}")
             _t0 = time.time()
 
             system_prompt = "You are a data generator. Output ONLY a valid JSON array. No explanations, no markdown, no code blocks."
@@ -709,19 +845,13 @@ IMPORTANT rules:
 - Generate values in the language specified or implied by the request above.
 - Output ONLY the JSON array, nothing else."""
 
-            client = OpenAI(api_key=api_key)
-
-            resp = client.responses.create(
-                model="gpt-5-nano",
-                instructions=system_prompt,
-                input=user_prompt,
-            )
+            result_text = _ai_chat(provider, system_prompt, user_prompt)
             elapsed = time.time() - _t0
-            logger.info(f"[DataAI] AI response received: {elapsed:.1f}s, response length={len(resp.output_text)}")
-            all_items = self._parse_dataai_json(resp.output_text)
+            logger.info(f"[DataAI] AI response received: {elapsed:.1f}s, response length={len(result_text)}")
+            all_items = self._parse_dataai_json(result_text)
 
             if not all_items:
-                logger.error(f"[DataAI] JSON parsing failed. Raw response (first 500 chars): {resp.output_text[:500]!r}")
+                logger.error(f"[DataAI] JSON parsing failed. Raw response (first 500 chars): {result_text[:500]!r}")
                 self._send_json({"ok": False, "error": "AI가 유효한 데이터를 생성하지 못했습니다."}, status=500)
                 return
 
@@ -843,33 +973,35 @@ IMPORTANT rules:
     LANG_NAMES = {"ko": "Korean", "en": "English", "ja": "Japanese"}
 
     def _translate(self):
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key:
-            logger.warning("[Translate] OPENAI_API_KEY not configured")
-            self._send_json({"ok": False, "error": "OPENAI_API_KEY가 .env에 설정되지 않았습니다."}, status=500)
-            return
         raw = self._read_body()
         try:
             payload = json.loads(raw)
+            provider = payload.get("provider", "").strip()
             text = payload.get("text", "").strip()
             source = payload.get("source", "").strip()
             target = payload.get("target", "ko").strip()
+
+            if not provider:
+                available = _get_available_providers()
+                if not available:
+                    self._send_json({"ok": False, "error": "AI API 키가 설정되지 않았습니다. DEV > 일반 설정에서 API 키를 등록하세요."}, status=500)
+                    return
+                provider = available[0]["id"]
+
             if not text:
                 self._send_json({"ok": False, "error": "번역할 텍스트를 입력하세요."}, status=400)
                 return
-            logger.info(f"[Translate] Request: {source or 'auto'}→{target}, length={len(text)}")
+            logger.info(f"[Translate] Request: provider={provider}, {source or 'auto'}→{target}, length={len(text)}")
             src_name = self.LANG_NAMES.get(source, "")
             tgt_name = self.LANG_NAMES.get(target, target)
             src_hint = f" The source language is {src_name}." if src_name else ""
-            client = OpenAI(api_key=api_key)
             _t0 = time.time()
-            resp = client.responses.create(
-                model="gpt-5-nano",
-                instructions=f"You are a translator.{src_hint} Translate the user's text into {tgt_name}. Output ONLY the translated text, nothing else.",
-                input=text,
+            result = _ai_chat(
+                provider,
+                f"You are a translator.{src_hint} Translate the user's text into {tgt_name}. Output ONLY the translated text, nothing else.",
+                text,
             )
             logger.info(f"[Translate] Complete: {time.time()-_t0:.1f}s")
-            result = resp.output_text.strip()
             self._send_json({"ok": True, "result": result})
         except json.JSONDecodeError:
             self._send_json({"ok": False, "error": "잘못된 JSON 요청입니다."}, status=400)
@@ -879,16 +1011,20 @@ IMPORTANT rules:
 
     # --- Markdown AI proofreading ---
     def _md_proofread(self):
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key:
-            logger.warning("[Proofread] OPENAI_API_KEY not configured")
-            self._send_json({"ok": False, "error": "OPENAI_API_KEY가 .env에 설정되지 않았습니다."}, status=500)
-            return
         raw = self._read_body()
         try:
             payload = json.loads(raw)
+            provider = payload.get("provider", "").strip()
             text = payload.get("text", "").strip()
             include_style = payload.get("includeStyle", False)
+
+            if not provider:
+                available = _get_available_providers()
+                if not available:
+                    self._send_json({"ok": False, "error": "AI API 키가 설정되지 않았습니다. DEV > 일반 설정에서 API 키를 등록하세요."}, status=500)
+                    return
+                provider = available[0]["id"]
+
             if not text:
                 self._send_json({"ok": False, "error": "검수할 텍스트를 입력하세요."}, status=400)
                 return
@@ -896,7 +1032,7 @@ IMPORTANT rules:
                 self._send_json({"ok": False, "error": f"문서가 너무 깁니다. ({len(text):,}자 / 제한 50,000자)"}, status=400)
                 return
 
-            logger.info(f"[Proofread] Request: length={len(text)}, style_check={include_style}")
+            logger.info(f"[Proofread] Request: provider={provider}, length={len(text)}, style_check={include_style}")
             _t0 = time.time()
 
             # Remove fenced code blocks
@@ -934,14 +1070,8 @@ Return a JSON array of corrections. Each item:
 If no corrections are needed, return an empty array: []
 Return ONLY the JSON array, no other text."""
 
-            client = OpenAI(api_key=api_key)
-            resp = client.responses.create(
-                model="gpt-5-nano",
-                instructions=prompt,
-                input=numbered,
-            )
+            result_text = _ai_chat(provider, prompt, numbered)
             logger.info(f"[Proofread] AI response: {time.time()-_t0:.1f}s")
-            result_text = resp.output_text.strip()
             # Parse JSON
             try:
                 items = json.loads(result_text)
@@ -1825,6 +1955,12 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/onboarding":
             self._dev_get_onboarding()
             return
+        if path == "/api/ai/providers":
+            self._ai_get_providers()
+            return
+        if path == "/api/dev/ai-keys":
+            self._dev_get_ai_keys()
+            return
         if path == "/api/dev/cdn/status":
             self._dev_cdn_status()
             return
@@ -1997,9 +2133,14 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 self._send_json({"ok": False, "error": "invalid id"}, status=400)
                 return
         # ── Developer mode PUT ──
-        m_dev_row = re.match(r"^/api/dev/tables/([a-zA-Z_]\w*)/(\d+)$", path)
+        m_dev_row = re.match(r"^/api/dev/tables/([a-zA-Z_]\w*)/(.+)$", path)
         if m_dev_row:
-            self._dev_update_row(m_dev_row.group(1), int(m_dev_row.group(2)))
+            row_id = unquote(m_dev_row.group(2))
+            try:
+                row_id = int(row_id)
+            except ValueError:
+                pass
+            self._dev_update_row(m_dev_row.group(1), row_id)
             return
         if path == "/api/dev/tabs":
             self._dev_save_tabs()
@@ -2009,6 +2150,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             return
         if path == "/api/dev/site-config":
             self._dev_save_site_config()
+            return
+        if path == "/api/dev/ai-keys":
+            self._dev_save_ai_keys()
             return
         self._proxy_mock("PUT", path)
 
@@ -2064,9 +2208,14 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._git_delete_template(int(m_git_tpl.group(1)))
             return
         # ── Developer mode DELETE ──
-        m_dev_del = re.match(r"^/api/dev/tables/([a-zA-Z_]\w*)/(\d+)$", path)
+        m_dev_del = re.match(r"^/api/dev/tables/([a-zA-Z_]\w*)/(.+)$", path)
         if m_dev_del:
-            self._dev_delete_row(m_dev_del.group(1), int(m_dev_del.group(2)))
+            row_id = unquote(m_dev_del.group(2))
+            try:
+                row_id = int(row_id)
+            except ValueError:
+                pass
+            self._dev_delete_row(m_dev_del.group(1), row_id)
             return
         self._proxy_mock("DELETE", path)
 
@@ -2184,20 +2333,27 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         body = self._read_body()
         data = json.loads(body)
         conn = get_conn()
-        exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,)).fetchone()
-        if not exists:
+        try:
+            exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,)).fetchone()
+            if not exists:
+                conn.close()
+                self._send_json({"ok": False, "error": "table not found"}, status=404)
+                return
+            # Find PK column
+            columns = conn.execute(f"PRAGMA table_info([{table_name}])").fetchall()
+            pk_col = next((c[1] for c in columns if c[5] == 1), "id")
+            sets = ", ".join(f"[{k}] = ?" for k in data.keys())
+            # Convert dict/list values to JSON strings for SQLite binding
+            vals = [json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v for v in data.values()]
+            vals.append(row_id)
+            conn.execute(f"UPDATE [{table_name}] SET {sets} WHERE [{pk_col}] = ?", vals)
+            conn.commit()
+            self._send_json({"ok": True})
+        except Exception as e:
+            logger.error("[dev] update row error: %s", e)
+            self._send_json({"ok": False, "error": str(e)}, status=500)
+        finally:
             conn.close()
-            self._send_json({"ok": False, "error": "table not found"}, status=404)
-            return
-        # Find PK column
-        columns = conn.execute(f"PRAGMA table_info([{table_name}])").fetchall()
-        pk_col = next((c[1] for c in columns if c[5] == 1), "id")
-        sets = ", ".join(f"[{k}] = ?" for k in data.keys())
-        vals = list(data.values()) + [row_id]
-        conn.execute(f"UPDATE [{table_name}] SET {sets} WHERE [{pk_col}] = ?", vals)
-        conn.commit()
-        conn.close()
-        self._send_json({"ok": True})
 
     def _dev_delete_row(self, table_name, row_id):
         if not self._dev_check_auth():
@@ -2224,16 +2380,21 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if not sql:
             self._send_json({"ok": False, "error": "sql required"}, status=400)
             return
-        # Allow only SELECT
+        # Allow only SELECT/PRAGMA, block multiple statements
         first_word = sql.split()[0].upper() if sql.split() else ""
         if first_word not in ("SELECT", "PRAGMA"):
             self._send_json({"ok": False, "error": "only SELECT/PRAGMA allowed"}, status=403)
+            return
+        # Strip trailing semicolons/whitespace then check for remaining semicolons (multi-statement)
+        stripped = sql.strip().rstrip(";").strip()
+        if ";" in stripped:
+            self._send_json({"ok": False, "error": "multiple statements not allowed"}, status=403)
             return
         conn = get_conn()
         try:
             # Unset row_factory to get tuples (preserves duplicate column names)
             conn.row_factory = None
-            cursor = conn.execute(sql)
+            cursor = conn.execute(stripped)
             raw_names = [d[0] for d in cursor.description] if cursor.description else []
             # Append suffix to duplicate column names (id, id → id, id_2)
             col_names = []
@@ -2854,6 +3015,47 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         conn.close()
         self._send_json({"ok": True})
 
+    def _ai_get_providers(self):
+        """Return list of providers with configured API keys."""
+        providers = _get_available_providers()
+        self._send_json({"ok": True, "providers": providers})
+
+    def _dev_get_ai_keys(self):
+        """Return configured AI API keys (masked)."""
+        keys = _get_ai_api_keys()
+        masked = {}
+        for pid, key in keys.items():
+            if key and len(key) > 8:
+                masked[pid] = key[:4] + "..." + key[-4:]
+            elif key:
+                masked[pid] = "****"
+            else:
+                masked[pid] = ""
+        self._send_json({"ok": True, "keys": masked, "providers": list(AI_PROVIDERS.keys())})
+
+    def _dev_save_ai_keys(self):
+        body = self._read_body()
+        data = json.loads(body)
+        keys = data.get("keys", {})
+        # Merge: only update non-empty values, keep existing for empty ones
+        existing = _get_ai_api_keys()
+        for pid in AI_PROVIDERS:
+            val = keys.get(pid, "").strip()
+            if val:
+                existing[pid] = val
+            # If empty string sent, remove the key
+            elif pid in keys and val == "":
+                existing.pop(pid, None)
+        conn = get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO dev_settings (key, value, encrypted) VALUES ('ai_api_keys', ?, 0)",
+            (json.dumps(existing, ensure_ascii=False),),
+        )
+        conn.commit()
+        conn.close()
+        logger.info("[AI] API keys updated: %s", [p for p in existing if existing.get(p)])
+        self._send_json({"ok": True})
+
     def _dev_get_modules(self):
         # Reading module config does not require auth
         conn = get_conn()
@@ -2868,7 +3070,6 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         else:
             default_modules = {
                 "mock": {"log_fetch_limit": 200, "log_max_limit": 1000},
-                "translate": {"openai_model": "gpt-5-nano"},
                 "csv": {"default_col_width": 120, "min_col_width": 40, "encodings": ["utf-8", "euc-kr", "shift_jis", "iso-8859-1"]},
                 "markdown": {"debounce_ms": 300, "min_pane_px": 120, "max_versions": 30},
             }

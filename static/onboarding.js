@@ -33,10 +33,12 @@
     renderStep(0);
   }
 
+  var TOTAL_STEPS = 4;
+
   // ── Progress dots ──
   function updateProgress(step) {
     var html = "";
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < TOTAL_STEPS; i++) {
       var cls = "onboarding-step-dot";
       if (i < step) cls += " done";
       else if (i === step) cls += " active";
@@ -53,7 +55,8 @@
     var footer = document.getElementById("onboardingFooter");
     if (step === 0) renderWelcome(body, footer);
     else if (step === 1) renderTabs(body, footer);
-    else if (step === 2) renderComplete(body, footer);
+    else if (step === 2) renderApiKeys(body, footer);
+    else if (step === 3) renderComplete(body, footer);
   }
 
   // ── Step 1: Welcome + Language ──
@@ -179,6 +182,59 @@
     renderStep(2);
   }
 
+  // ── Step 3: API Keys (skippable) ──
+  var API_KEY_META = {
+    openai:  { label: "OpenAI",  placeholder: "sk-..." },
+    gemini:  { label: "Gemini",  placeholder: "AIza..." },
+    claude:  { label: "Claude",  placeholder: "sk-ant-..." },
+    grok:    { label: "Grok",    placeholder: "xai-..." },
+  };
+
+  function renderApiKeys(body, footer) {
+    var html = '<h2>' + t("onboarding.apikeys_title") + '</h2>' +
+      '<p>' + t("onboarding.apikeys_desc") + '</p>' +
+      '<div class="onboarding-apikeys-list">';
+    for (var pid in API_KEY_META) {
+      var meta = API_KEY_META[pid];
+      html += '<label class="onboarding-apikey-field">' +
+        '<span>' + meta.label + '</span>' +
+        '<input type="password" class="onboarding-apikey-input" data-provider="' + pid + '" placeholder="' + meta.placeholder + '" autocomplete="off">' +
+        '</label>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+    footer.innerHTML =
+      '<button id="onboardingBack3">' + t("onboarding.btn_back") + '</button>' +
+      '<div>' +
+        '<button id="onboardingSkip3" style="margin-right:8px">' + t("onboarding.btn_skip") + '</button>' +
+        '<button class="onboarding-btn-primary" id="onboardingNext3">' + t("onboarding.btn_next") + ' &rarr;</button>' +
+      '</div>';
+    document.getElementById("onboardingBack3").addEventListener("click", function () { renderStep(1); });
+    document.getElementById("onboardingSkip3").addEventListener("click", function () { renderStep(3); });
+    document.getElementById("onboardingNext3").addEventListener("click", saveApiKeys);
+  }
+
+  async function saveApiKeys() {
+    var inputs = document.querySelectorAll(".onboarding-apikey-input");
+    var keys = {};
+    inputs.forEach(function (input) {
+      var val = input.value.trim();
+      if (val) keys[input.dataset.provider] = val;
+    });
+    if (Object.keys(keys).length > 0) {
+      try {
+        await fetch("/api/dev/ai-keys", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys: keys })
+        });
+        // Refresh provider dropdowns
+        if (typeof refreshAiProviders === "function") refreshAiProviders();
+      } catch (_) {}
+    }
+    renderStep(3);
+  }
+
   // ── Step 4: Complete ──
   function renderComplete(body, footer) {
     body.innerHTML =
@@ -191,12 +247,7 @@
       '<button class="onboarding-btn-primary" id="onboardingFinish">' + t("onboarding.btn_finish") + '</button>';
     document.getElementById("onboardingTutorial").addEventListener("click", async function () {
       await completeOnboarding();
-      switchTab("devmode");
-      // Activate tutorial section
-      setTimeout(function () {
-        var tutBtn = document.querySelector('.dev-sec-btn[data-sec="tutorial"]');
-        if (tutBtn) tutBtn.click();
-      }, 100);
+      switchTab("tutorial");
     });
     document.getElementById("onboardingFinish").addEventListener("click", function () {
       completeOnboarding();

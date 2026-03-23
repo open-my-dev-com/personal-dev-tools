@@ -85,6 +85,8 @@ function applySiteName(name) {
     }
   });
 
+  loadSiteConfig();
+
   // ── 섹션 탭 전환 ──
   document.querySelectorAll(".dev-sec-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -380,9 +382,11 @@ function applySiteName(name) {
     function openDetailCard(tr, editMode) {
       const existing = tr.nextElementSibling;
       if (existing && existing.classList.contains("dev-row-detail")) {
+        // 같은 모드면 토글(닫기), 다른 모드면 교체
+        const wasEdit = !!existing.querySelector(".dev-detail-save");
         existing.remove();
         tr.classList.remove("dev-row-selected");
-        return;
+        if (wasEdit === editMode) return;
       }
       container.querySelectorAll(".dev-row-detail").forEach(el => {
         el.previousElementSibling?.classList.remove("dev-row-selected");
@@ -431,7 +435,7 @@ function applySiteName(name) {
             try { val = JSON.parse(val); } catch (_) {}
             updates[inp.dataset.col] = val;
           });
-          const res = await devFetch(`/api/dev/tables/${tableName}/${rowId}`, {
+          const res = await devFetch(`/api/dev/tables/${encodeURIComponent(tableName)}/${encodeURIComponent(rowId)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updates),
@@ -469,7 +473,7 @@ function applySiteName(name) {
     container.querySelectorAll(".dev-del-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm(t("dev.confirm_delete", { id: btn.dataset.id }))) return;
-        const res = await devFetch(`/api/dev/tables/${btn.dataset.table}/${btn.dataset.id}`, { method: "DELETE" });
+        const res = await devFetch(`/api/dev/tables/${encodeURIComponent(btn.dataset.table)}/${encodeURIComponent(btn.dataset.id)}`, { method: "DELETE" });
         const d = await res.json();
         if (d.ok) tableLoadBtn.click();
         else alert(t("dev.delete_fail", { msg: d.error }));
@@ -659,14 +663,18 @@ function applySiteName(name) {
   const modSaveBtn = document.getElementById("devModSave");
   const modAuthGate = document.getElementById("devModAuthGate");
 
+  var AI_PROVIDERS_META = {
+    openai:  { label: "OpenAI",  placeholder: "sk-..." },
+    gemini:  { label: "Gemini",  placeholder: "AIza..." },
+    claude:  { label: "Claude",  placeholder: "sk-ant-..." },
+    grok:    { label: "Grok",    placeholder: "xai-..." },
+  };
+
   function getModuleMeta() {
     return {
       mock: { label: t("dev.mod_mock"), fields: {
         log_fetch_limit: { label: t("dev.mod_log_fetch"), type: "number" },
         log_max_limit: { label: t("dev.mod_log_max"), type: "number" },
-      }},
-      translate: { label: t("dev.mod_translate"), fields: {
-        openai_model: { label: t("dev.mod_openai_model"), type: "text" },
       }},
       csv: { label: t("dev.mod_csv"), fields: {
         default_col_width: { label: t("dev.mod_col_width"), type: "number" },
@@ -716,6 +724,31 @@ function applySiteName(name) {
       }
       const modules = data.modules || {};
       let html = "";
+
+      // AI API Keys card (first)
+      html += '<div class="dev-module-card"><h4>' + esc(t("dev.ai_api_keys")) + '</h4>';
+      html += '<p class="desc" style="margin:0 0 10px;font-size:12px;color:#6b7280">' + esc(t("dev.ai_api_keys_desc")) + '</p>';
+      html += '<div class="dev-module-fields">';
+      // Fetch AI keys and render
+      var aiKeysData = null;
+      try {
+        var aiRes = await fetch("/api/dev/ai-keys");
+        aiKeysData = await aiRes.json();
+      } catch (e) { /* ignore */ }
+      for (var pid of Object.keys(AI_PROVIDERS_META)) {
+        var pmeta = AI_PROVIDERS_META[pid];
+        var masked = (aiKeysData && aiKeysData.keys && aiKeysData.keys[pid]) || "";
+        var statusBadge = masked
+          ? '<span class="ai-key-status registered">' + masked + '</span>'
+          : '<span class="ai-key-status">' + (t("dev.ai_not_set") || "미등록") + '</span>';
+        html += '<label class="dev-field">' +
+          '<span>' + pmeta.label + ' ' + statusBadge + '</span>' +
+          '<input type="password" class="dev-input dev-ai-key-input" data-provider="' + pid + '"' +
+          ' placeholder="' + pmeta.placeholder + '" autocomplete="off">' +
+          '</label>';
+      }
+      html += '</div></div>';
+
       for (const [modId, meta] of Object.entries(getModuleMeta())) {
         const vals = modules[modId] || {};
         html += `<div class="dev-module-card"><h4>${esc(meta.label)}</h4><div class="dev-module-fields">`;
@@ -737,6 +770,7 @@ function applySiteName(name) {
   }
 
   modSaveBtn.addEventListener("click", async () => {
+    // Save module settings
     const inputs = modContent.querySelectorAll(".dev-mod-input");
     const modules = {};
     inputs.forEach((input) => {
@@ -747,15 +781,42 @@ function applySiteName(name) {
       if (input.type === "number") val = parseFloat(val) || 0;
       modules[mod][key] = val;
     });
+
+    // Save AI API keys (only non-empty ones)
+    var aiKeyInputs = modContent.querySelectorAll(".dev-ai-key-input");
+    var aiKeys = {};
+    aiKeyInputs.forEach(function (input) {
+      var val = input.value.trim();
+      if (val) aiKeys[input.dataset.provider] = val;
+    });
+
     try {
-      const res = await devFetch("/api/dev/modules", {
+      var promises = [];
+      promises.push(devFetch("/api/dev/modules", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ modules }),
-      });
-      const data = await res.json();
-      if (data.ok) alert(t("dev.modules_saved"));
-      else alert(t("common.save_fail") + ": " + data.error);
+      }));
+      if (Object.keys(aiKeys).length > 0) {
+        promises.push(fetch("/api/dev/ai-keys", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys: aiKeys }),
+        }));
+      }
+      var results = await Promise.all(promises);
+      var allOk = true;
+      for (var r of results) {
+        var d = await r.json();
+        if (!d.ok) { allOk = false; break; }
+      }
+      if (allOk) {
+        alert(t("dev.modules_saved"));
+        // Reload to refresh masked keys
+        loadModuleSettings();
+      } else {
+        alert(t("common.save_fail"));
+      }
     } catch (e) {
       alert(t("common.save_fail") + ": " + e.message);
     }

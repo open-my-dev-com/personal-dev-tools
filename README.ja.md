@@ -10,7 +10,7 @@
 | CSVエディタ | CSV編集、エンコーディング変換、重複分析、行/列の追加 |
 | Markdown | エディタ＋リアルタイムプレビュー、AI校正、ポップアップ表示、保存/バージョン管理 |
 | JSON整形 | JSONソート、フォーマット、ツリービュー |
-| 翻訳 | OpenAIベースの多言語翻訳 |
+| 翻訳 | AIベースの多言語翻訳（OpenAI、Gemini、Claude、Grok） |
 | MyBatis | MyBatis XML ↔ クエリ変換 |
 | 文字数カウント | バイト/文字/単語カウント、エンコーディング別バイト数 |
 | Diff比較 | テキスト比較（インライン/サイドバイサイド） |
@@ -18,7 +18,8 @@
 | パラメータ変換 | URLパラメータ ↔ JSON相互変換 |
 | Git管理 | ローカルGitリポジトリの状態確認、コミット、ブランチ管理 |
 | Data AI | AIベースの仮想データ生成（CSV/JSON/TSV）、DB保存 |
-| 開発者モード | ツール名変更、DBエクスプローラー、タブ管理、モジュール設定、CDNライブラリ管理 |
+| チュートリアル | 各ツールのステップバイステップ使用ガイド |
+| 開発者モード | ツール名変更、DBエクスプローラー、タブ管理、モジュール設定、AI APIキー管理、CDNライブラリ管理 |
 
 ## はじめに
 
@@ -59,11 +60,6 @@ python3 -m venv .venv
 source .venv/bin/activate        # macOS / Linux
 .venv\Scripts\activate           # Windows
 
-# 環境変数の設定（AI機能使用時）
-cp .env.example .env             # macOS / Linux
-copy .env.example .env           # Windows
-# .envファイルにOPENAI_API_KEYを入力
-
 # サーバー起動
 python3 server.py                # macOS / Linux
 python server.py                 # Windows
@@ -79,12 +75,13 @@ python3 server.py --no-open          # ブラウザ自動起動を無効化
 
 ### 3. AI機能の設定（任意）
 
-翻訳、校正、Data AI機能を使用するにはOpenAI APIキーが必要です。
+翻訳、校正、Data AI機能を使用するにはAI APIキーが必要です。
 AI機能を使用しない場合は、この手順はスキップできます。
 
-1. [OpenAI API Keys](https://platform.openai.com/api-keys) でアカウント登録後、APIキーを発行します。
-2. プロジェクトフォルダの `.env.example` を `.env` にコピーします。
-3. `.env` をテキストエディタで開き、`sk-your-api-key-here` を発行したキーに置き換えます。
+**対応AIプロバイダー**: OpenAI、Google Gemini、Anthropic Claude、xAI Grok
+
+初回起動時のオンボーディングウィザードでAPIキーを登録するか、後から **DEV > モジュール設定** で登録できます。
+環境変数（`.env`）でも設定可能です: `OPENAI_API_KEY`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`、`GROK_API_KEY`
 
 ### オフライン使用
 
@@ -94,7 +91,7 @@ AI機能を使用しない場合は、この手順はスキップできます。
 2. **現在バージョンをダウンロード** または **最新バージョンをダウンロード** をクリック
 3. `static/vendor/` に保存され、以降オフラインでも動作
 
-> AI機能（翻訳、校正、Data AI）はOpenAI API接続が必要なため、オフラインでは使用不可
+> AI機能（翻訳、校正、Data AI）はAI API接続が必要なため、オフラインでは使用不可
 
 ## パッケージ依存関係
 
@@ -102,12 +99,15 @@ AI機能を使用しない場合は、この手順はスキップできます。
 
 | パッケージ | 用途 | 必須 |
 |------------|------|------|
-| `openai` | AI翻訳、校正、Data AI | AI機能使用時 |
+| `openai` | OpenAI AI連携 | AI機能使用時 |
+| `anthropic` | Claude AI連携 | AI機能使用時 |
+| `google-genai` | Gemini AI連携 | AI機能使用時 |
+| `xai-sdk` | Grok AI連携 | AI機能使用時 |
 | `cryptography` | 開発者モード暗号化 | 開発者モード使用時 |
 | `openpyxl` | PDF → XLSX変換 | PDF変換使用時 |
 | `python-pptx` | PDF → PPTX変換 | PDF変換使用時 |
 
-> 自動インストールに失敗した場合、手動でインストール: `pip install openai cryptography openpyxl python-pptx`
+> 自動インストールに失敗した場合、手動でインストール: `pip install openai anthropic google-genai xai-sdk cryptography openpyxl python-pptx`
 
 ## プロジェクト構造
 
@@ -115,13 +115,13 @@ AI機能を使用しない場合は、この手順はスキップできます。
 ├── server.py           # Pythonサーバー（バックエンド全体）
 ├── start.sh            # macOS/Linux簡単ランチャー
 ├── start.bat           # Windows簡単ランチャー
-├── .env.example        # 環境変数の例
 ├── static/
 │   ├── index.html      # メインページ
 │   ├── styles.css      # スタイル
 │   ├── app.js          # 共通ロジック
 │   ├── *.js            # ツール別クライアントスクリプト
 │   └── vendor/         # CDNライブラリローカルキャッシュ（gitignore）
+├── dev-tool.db         # SQLiteデータベース（自動生成、gitignore）
 ├── logs/               # サーバーログ（gitignore）
 └── .env                # 環境変数（gitignore）
 ```

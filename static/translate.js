@@ -1,10 +1,13 @@
 const translateInput = document.getElementById("translateInput");
 const translateBtn = document.getElementById("translateBtn");
 const translateSource = document.getElementById("translateSource");
+const translateProvider = document.getElementById("translateProvider");
 const translateStatus = document.getElementById("translateStatus");
 const translateResultsWrap = document.getElementById("translateResults");
 const translateTargetChecks = document.querySelectorAll(".translate-target");
 const translateSelectAll = document.getElementById("translateSelectAll");
+
+loadAiProviders(translateProvider);
 
 function getLangLabel(code) { return t("translate." + code) || code; }
 
@@ -61,7 +64,7 @@ async function doTranslate() {
       fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, source: translateSource.value, target }),
+        body: JSON.stringify({ text, source: translateSource.value, target, provider: translateProvider.value }),
       }).then((r) => r.json().then((data) => ({ target, ok: r.ok && data.ok, result: data.result, error: data.error })))
     )
   );

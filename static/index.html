@@ -253,11 +253,16 @@
         <div class="tab-content" data-tab="translate">
           <section class="panel">
             <h2 data-i18n="translate.title">번역</h2>
-            <p class="desc" data-i18n-html="translate.desc">OpenAI GPT를 사용하여 한국어/영어/일본어 간 번역을 수행합니다. <code>.env</code>에 <code>OPENAI_API_KEY</code> 설정이 필요합니다.</p>
+            <p class="desc" data-i18n="translate.desc2">AI를 사용하여 한국어/영어/일본어 간 번역을 수행합니다.</p>
             <textarea id="translateInput" rows="10" data-i18n-placeholder="translate.placeholder" placeholder="번역할 텍스트를 입력하세요..."></textarea>
             <div class="toolbar">
               <div class="toolbar-group">
                 <button type="button" id="translateBtn" data-i18n="translate.title">번역</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label">AI
+                  <select id="translateProvider" class="ai-provider-select"></select>
+                </label>
               </div>
               <div class="toolbar-group">
                 <label class="opt-label"><span data-i18n="translate.source">원본</span>
@@ -452,6 +457,9 @@
                 <button type="button" id="mdSaveAsBtn" data-i18n="md.save_as">다른 이름으로 저장</button>
                 <button type="button" id="mdDownloadBtn" data-i18n="md.download_md">다운로드 (.md)</button>
                 <button type="button" id="mdExportPdfBtn" data-i18n="md.export_pdf">PDF 내보내기</button>
+              </div>
+              <div class="toolbar-group">
+                <select id="mdAiProvider" class="ai-provider-select"></select>
               </div>
               <div class="toolbar-group" style="position:relative;">
                 <div class="md-proofread-split-btn" id="mdProofreadSplit">
@@ -823,16 +831,21 @@
             <div class="dataai-form">
               <textarea id="dataaiPrompt" class="dataai-prompt" rows="4" data-i18n-placeholder="dataai.prompt_ph" placeholder="예: 한국 시도별 인구수 데이터 10건, 가상의 사용자 목록 50건 (이름, 이메일, 나이, 도시)"></textarea>
               <div class="dataai-options">
-                <label class="opt-label"><span data-i18n="dataai.output_format">출력 형식</span>
-                  <select id="dataaiFormat">
-                    <option value="csv">CSV</option>
-                    <option value="json">JSON</option>
-                    <option value="tsv">TSV</option>
-                  </select>
-                </label>
-                <label class="opt-label"><span data-i18n="dataai.count">건수</span>
-                  <input type="number" id="dataaiCount" value="10" min="1" max="1000" style="width:70px">
-                </label>
+                <div class="dataai-options-left">
+                  <label class="opt-label"><span>AI</span>
+                    <select id="dataaiProvider" class="ai-provider-select"></select>
+                  </label>
+                  <label class="opt-label"><span data-i18n="dataai.output_format">출력 형식</span>
+                    <select id="dataaiFormat">
+                      <option value="csv">CSV</option>
+                      <option value="json">JSON</option>
+                      <option value="tsv">TSV</option>
+                    </select>
+                  </label>
+                  <label class="opt-label"><span data-i18n="dataai.count">건수</span>
+                    <input type="number" id="dataaiCount" value="10" min="1" max="1000" style="width:70px">
+                  </label>
+                </div>
                 <button type="button" id="dataaiGenerateBtn" class="primary-btn" data-i18n="dataai.generate">생성</button>
               </div>
             </div>
@@ -867,10 +880,10 @@
             <h2><span data-i18n="dev.title">개발자 모드</span> <span id="devAuthBadge" class="dev-auth-badge"></span> <button type="button" id="devLockBtn" class="dev-lock-btn" style="display:none;" data-i18n-title="dev.lock_title" title="잠금 (로그아웃)" data-i18n="dev.lock">잠금</button></h2>
             <div class="dev-section-tabs">
               <button class="dev-sec-btn active" data-sec="general" data-i18n="dev.sec_general">일반</button>
-              <button class="dev-sec-btn" data-sec="db" data-i18n="dev.sec_db">DB 탐색기</button>
               <button class="dev-sec-btn" data-sec="tabs" data-i18n="dev.sec_tabs">탭 관리</button>
               <button class="dev-sec-btn" data-sec="modules" data-i18n="dev.sec_modules">모듈 설정</button>
               <button class="dev-sec-btn" data-sec="cdn" data-i18n="dev.sec_cdn">CDN 관리</button>
+              <button class="dev-sec-btn" data-sec="db" data-i18n="dev.sec_db">DB 탐색기</button>
             </div>
             <div class="dev-body">
               <!-- 일반 설정 -->
