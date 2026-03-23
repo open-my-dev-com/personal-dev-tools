@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jang's Dev Toolkit</title>
+    <title>Personal Dev Tools</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="/vendor/lucide.min.js"></script>
   </head>
@@ -11,7 +11,7 @@
     <div class="layout">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <h1 class="logo">Jang's Dev Toolkit</h1>
+          <h1 class="logo">Personal Dev Tools</h1>
           <button class="sidebar-toggle" id="sidebarToggle" title="사이드바 접기"><i data-lucide="chevrons-left"></i></button>
         </div>
         <nav class="nav">
@@ -865,14 +865,29 @@
           <section class="panel">
             <h2>개발자 모드 <span id="devAuthBadge" class="dev-auth-badge"></span> <button type="button" id="devLockBtn" class="dev-lock-btn" style="display:none;" title="잠금 (로그아웃)">잠금</button></h2>
             <div class="dev-section-tabs">
-              <button class="dev-sec-btn active" data-sec="db">DB 탐색기</button>
+              <button class="dev-sec-btn active" data-sec="general">일반</button>
+              <button class="dev-sec-btn" data-sec="db">DB 탐색기</button>
               <button class="dev-sec-btn" data-sec="tabs">탭 관리</button>
               <button class="dev-sec-btn" data-sec="modules">모듈 설정</button>
               <button class="dev-sec-btn" data-sec="cdn">CDN 관리</button>
             </div>
             <div class="dev-body">
+              <!-- 일반 설정 -->
+              <div class="dev-section active" data-sec="general">
+                <p class="desc">사이트 기본 설정을 변경합니다.</p>
+                <div class="dev-module-card">
+                  <h4>사이트 정보</h4>
+                  <div class="dev-module-fields">
+                    <label class="dev-field">
+                      <span>툴킷 이름</span>
+                      <input type="text" id="devSiteName" class="dev-input" placeholder="My Dev Toolkit">
+                    </label>
+                  </div>
+                </div>
+                <button id="devSiteConfigSave" class="dev-btn dev-btn-primary">저장</button>
+              </div>
               <!-- DB 탐색기 -->
-              <div class="dev-section active" data-sec="db">
+              <div class="dev-section" data-sec="db">
                 <div class="dev-auth-gate" id="devDbAuthGate" style="display:none">
                   <p class="dev-auth-msg"></p>
                   <div class="dev-auth-form" id="devAuthForm"></div>

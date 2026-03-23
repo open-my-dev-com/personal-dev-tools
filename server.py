@@ -1785,6 +1785,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/modules":
             self._dev_get_modules()
             return
+        if path == "/api/dev/site-config":
+            self._dev_get_site_config()
+            return
         if path == "/api/dev/cdn/status":
             self._dev_cdn_status()
             return
@@ -1957,6 +1960,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             return
         if path == "/api/dev/modules":
             self._dev_save_modules()
+            return
+        if path == "/api/dev/site-config":
+            self._dev_save_site_config()
             return
         self._proxy_mock("PUT", path)
 
@@ -2744,6 +2750,30 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._send_json({"ok": True, "html": "\n".join(html_parts)})
         except Exception as e:
             self._send_json({"ok": False, "error": str(e)}, 500)
+
+    def _dev_get_site_config(self):
+        conn = get_conn()
+        row = conn.execute("SELECT value FROM dev_settings WHERE key='site_config'").fetchone()
+        conn.close()
+        if row:
+            self._send_json({"ok": True, "config": json.loads(row[0])})
+        else:
+            self._send_json({"ok": True, "config": {"siteName": ""}})
+
+    def _dev_save_site_config(self):
+        body = self._read_body()
+        data = json.loads(body)
+        site_name = data.get("siteName", "").strip()
+        config = {"siteName": site_name}
+        conn = get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO dev_settings (key, value, encrypted) VALUES ('site_config', ?, 0)",
+            (json.dumps(config, ensure_ascii=False),),
+        )
+        conn.commit()
+        conn.close()
+        logger.info("사이트 설정 변경: %s", site_name)
+        self._send_json({"ok": True})
 
     def _dev_get_modules(self):
         # 모듈 설정 읽기는 인증 불필요

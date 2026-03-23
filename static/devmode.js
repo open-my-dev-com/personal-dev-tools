@@ -1,3 +1,18 @@
+// ── 사이트 이름 적용 (전역) ──
+function applySiteName(name) {
+  if (!name) return;
+  document.title = name;
+  var logo = document.querySelector(".logo");
+  if (logo) logo.textContent = name;
+}
+
+// 페이지 로드 시 사이트 이름 불러오기
+(function () {
+  fetch("/api/dev/site-config").then(function (r) { return r.json(); }).then(function (data) {
+    if (data.ok && data.config && data.config.siteName) applySiteName(data.config.siteName);
+  }).catch(function () {});
+})();
+
 // ── 개발자 모드 (탭 방식) ──
 (function () {
   const authBadge = document.getElementById("devAuthBadge");
@@ -23,8 +38,45 @@
 
   async function initDevMode() {
     await checkAuthStatus();
-    loadDevSection("db");
+    loadDevSection("general");
   }
+
+  // ══════════════════════════════════
+  // 일반 설정 (사이트 이름 등)
+  // ══════════════════════════════════
+  const siteNameInput = document.getElementById("devSiteName");
+  const siteConfigSaveBtn = document.getElementById("devSiteConfigSave");
+
+  async function loadSiteConfig() {
+    try {
+      const res = await fetch("/api/dev/site-config");
+      const data = await res.json();
+      if (data.ok) {
+        siteNameInput.value = data.config.siteName || "";
+      }
+    } catch (e) {
+      console.error("사이트 설정 로드 실패:", e);
+    }
+  }
+
+  siteConfigSaveBtn.addEventListener("click", async () => {
+    try {
+      const res = await fetch("/api/dev/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siteName: siteNameInput.value.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        applySiteName(siteNameInput.value.trim());
+        alert("사이트 설정이 저장되었습니다.");
+      } else {
+        alert("저장 실패: " + data.error);
+      }
+    } catch (e) {
+      alert("저장 실패: " + e.message);
+    }
+  });
 
   // ── 섹션 탭 전환 ──
   document.querySelectorAll(".dev-sec-btn").forEach((btn) => {
@@ -167,7 +219,8 @@
 
   // ── 섹션 로드 ──
   function loadDevSection(sec) {
-    if (sec === "db") loadDbExplorer();
+    if (sec === "general") loadSiteConfig();
+    else if (sec === "db") loadDbExplorer();
     else if (sec === "tabs") loadTabManager();
     else if (sec === "modules") loadModuleSettings();
     else if (sec === "cdn") loadCdnManager();
