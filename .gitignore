@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Env
+.env
+
+# DB
+*.db
+
+# Logs
+logs/
+
+# CDN vendor (로컬 다운로드)
+static/vendor/
+
+# Node
+node_modules/

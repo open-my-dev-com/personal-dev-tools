@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jang's Dev Toolkit</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/vendor/lucide.min.js"></script>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h1 class="logo">Jang's Dev Toolkit</h1>
+          <button class="sidebar-toggle" id="sidebarToggle" title="사이드바 접기"><i data-lucide="chevrons-left"></i></button>
+        </div>
+        <nav class="nav">
+          <button class="nav-btn active" data-tab="mock" data-tooltip="Mock 서버"><i data-lucide="server"></i><span class="nav-label">Mock 서버</span></button>
+          <button class="nav-btn" data-tab="charcount" data-tooltip="문자수 체크"><i data-lucide="text-cursor-input"></i><span class="nav-label">문자수 체크</span></button>
+          <button class="nav-btn" data-tab="mybatis" data-tooltip="MyBatis 로그"><i data-lucide="scroll-text"></i><span class="nav-label">MyBatis 로그</span></button>
+          <button class="nav-btn" data-tab="jsonformat" data-tooltip="JSON 정렬"><i data-lucide="braces"></i><span class="nav-label">JSON 정렬</span></button>
+          <button class="nav-btn" data-tab="translate" data-tooltip="번역"><i data-lucide="languages"></i><span class="nav-label">번역</span></button>
+          <button class="nav-btn" data-tab="csv" data-tooltip="CSV 편집"><i data-lucide="table"></i><span class="nav-label">CSV 편집</span></button>
+          <button class="nav-btn" data-tab="markdown" data-tooltip="Markdown"><i data-lucide="file-pen"></i><span class="nav-label">Markdown</span></button>
+          <button class="nav-btn" data-tab="paramchanger" data-tooltip="파라미터 변환"><i data-lucide="arrow-left-right"></i><span class="nav-label">파라미터 변환</span></button>
+          <button class="nav-btn" data-tab="pdfconvert" data-tooltip="PDF 변환"><i data-lucide="file-text"></i><span class="nav-label">PDF 변환</span></button>
+          <button class="nav-btn" data-tab="diffcompare" data-tooltip="Diff 비교"><i data-lucide="git-compare"></i><span class="nav-label">Diff 비교</span></button>
+          <button class="nav-btn" data-tab="git" data-tooltip="Git"><i data-lucide="git-branch"></i><span class="nav-label">Git</span></button>
+          <button class="nav-btn" data-tab="dataai" data-tooltip="Data AI"><i data-lucide="sparkles"></i><span class="nav-label">Data AI</span></button>
+          <hr class="nav-divider">
+          <button class="nav-btn dev-mode-btn" data-tab="devmode" data-tooltip="DEV"><i data-lucide="wrench"></i><span class="nav-label">DEV</span></button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="tab-content active" data-tab="mock">
+          <section class="panel">
+            <h2>Mock 등록</h2>
+            <p class="desc">엔드포인트/요청/응답을 정의하면 SQLite에 저장되고 즉시 목 API로 동작합니다.</p>
+
+            <form id="mockForm" class="form-grid">
+              <label>이름 <input id="name" required placeholder="ex) 주문조회 성공" /></label>
+              <label>메서드
+                <select id="method">
+                  <option>GET</option>
+                  <option>POST</option>
+                  <option>PUT</option>
+                  <option>PATCH</option>
+                  <option>DELETE</option>
+                </select>
+              </label>
+              <label>경로 <input id="path" required placeholder="/api/orders" /></label>
+              <label>응답 코드 <input id="status" type="number" value="200" /></label>
+
+              <label class="span-2">요청(JSON, 비우면 어떤 바디든 매칭)
+                <textarea id="requestJson" rows="7" placeholder='{"id": 1, "items": [{"sku": "A"}]}'></textarea>
+              </label>
+
+              <label class="span-2">응답 헤더(JSON object)
+                <textarea id="responseHeaders" rows="4" placeholder='{"X-Mock": "yes"}'>{}</textarea>
+              </label>
+
+              <label class="span-2">응답 바디(JSON)
+                <textarea id="responseBody" rows="7" placeholder='{"ok": true, "data": []}'></textarea>
+              </label>
+
+              <div class="actions span-2">
+                <button type="button" id="previewBtn">JSON 미리보기/편집</button>
+                <button type="submit" id="saveBtn">저장</button>
+                <button type="button" id="resetBtn">초기화</button>
+                <span id="statusText"></span>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <h2>JSON 테이블 편집기 (응답 바디)</h2>
+            <p class="desc">JSON 붙여넣기 후 미리보기를 누르면 구조가 보입니다. 배열 항목은 <code>+ 복제</code>로 같은 값을 추가할 수 있습니다.</p>
+            <div id="jsonTableWrap"></div>
+          </section>
+
+          <section class="panel">
+            <h2>저장된 Mock 목록</h2>
+            <table id="mockTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>이름</th>
+                  <th>Method</th>
+                  <th>Path</th>
+                  <th>요청 조건</th>
+                  <th>응답</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+
+          <section class="panel">
+            <h2>요청/응답 로그</h2>
+            <p class="desc">실제 목 엔드포인트로 들어온 트래픽이 저장됩니다. 최근 로그부터 표시합니다.</p>
+            <div class="actions">
+              <button type="button" id="refreshLogsBtn">로그 새로고침</button>
+              <button type="button" id="clearLogsBtn">로그 비우기</button>
+            </div>
+            <table id="logTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>시간</th>
+                  <th>매칭</th>
+                  <th>Method</th>
+                  <th>Path</th>
+                  <th>Request</th>
+                  <th>Response</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </div>
+
+        <div class="tab-content" data-tab="charcount">
+          <section class="panel">
+            <h2>문자수 체크</h2>
+            <p class="desc">텍스트를 붙여넣으면 개행 단위로 각 줄의 문자수를 표시합니다.</p>
+            <textarea id="charCountInput" rows="8" placeholder="여기에 텍스트를 붙여넣기 하세요..."></textarea>
+            <div id="charCountResult" class="char-count-result"></div>
+          </section>
+        </div>
+        <div class="tab-content" data-tab="mybatis">
+          <section class="panel">
+            <h2>MyBatis 로그 변환</h2>
+            <p class="desc">MyBatis 로그를 붙여넣으면 <code>?</code>에 파라미터를 바인딩하고, SQL 주석을 제거한 실행 가능한 쿼리를 생성합니다.</p>
+            <div class="mybatis-inputs">
+              <div class="mybatis-input-group">
+                <label for="mybatisQuery">SQL 쿼리</label>
+                <textarea id="mybatisQuery" rows="8" placeholder="SELECT * FROM users WHERE id = ? AND name = ?
+
+또는 로그를 그대로 붙여넣기:
+==>  Preparing: SELECT * FROM users WHERE id = ? AND name = ?"></textarea>
+              </div>
+              <div class="mybatis-input-group">
+                <label for="mybatisParams">파라미터</label>
+                <textarea id="mybatisParams" rows="4" placeholder="1(Integer), Hong(String)
+
+또는 로그를 그대로 붙여넣기:
+==> Parameters: 1(Integer), Hong(String)"></textarea>
+              </div>
+            </div>
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <button type="button" id="mybatisConvertBtn">변환</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label"><input type="checkbox" id="mybatisStripComments" checked /> 주석 제거</label>
+                <label class="opt-label"><input type="checkbox" id="mybatisFormatSql" /> 포맷팅</label>
+              </div>
+              <span id="mybatisStatus"></span>
+            </div>
+            <div id="mybatisResult" class="mybatis-result"></div>
+          </section>
+        </div>
+        <div class="tab-content" data-tab="jsonformat">
+          <section class="panel">
+            <h2>JSON 정렬</h2>
+            <p class="desc">JSON을 붙여넣으면 자동으로 포맷팅합니다. 키 알파벳 정렬, 압축(minify) 옵션을 제공합니다.</p>
+            <textarea id="jsonFmtInput" rows="24" placeholder='{"name":"Hong","age":30,"items":[1,2,3]}'></textarea>
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <button type="button" id="jsonFmtBtn">정렬</button>
+                <button type="button" id="jsonMinifyBtn">압축 (Minify)</button>
+                <button type="button" id="jsonFmtCopyBtn">복사</button>
+                <label class="file-upload-btn"><input type="file" id="jsonFileInput" accept=".json,application/json" hidden />파일 불러오기</label>
+                <button type="button" id="jsonSaveFileBtn">파일로 저장</button>
+                <button type="button" id="jsonSaveDbBtn">임시저장</button>
+              </div>
+              <div class="toolbar-group">
+                <button type="button" id="jsonRemoveEmptyBtn">빈 값 제거</button>
+                <button type="button" id="jsonFindDupKeysBtn">중복 키 찾기</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label"><input type="checkbox" id="jsonSortKeys" /> 키 알파벳순</label>
+                <label class="opt-label">들여쓰기
+                  <select id="jsonIndent">
+                    <option value="2" selected>2칸</option>
+                    <option value="4">4칸</option>
+                    <option value="tab">탭</option>
+                  </select>
+                </label>
+              </div>
+              <span id="jsonFmtStatus"></span>
+            </div>
+
+            <div class="json-util-tabs">
+              <button class="json-util-tab" data-panel="jsonTreePanel">트리 뷰어</button>
+              <button class="json-util-tab" data-panel="jsonDiffPanel">Diff</button>
+              <button class="json-util-tab" data-panel="jsonPathPanel">Path</button>
+              <button class="json-util-tab" data-panel="jsonBuilderPanel">K-V 빌더</button>
+            </div>
+
+            <div id="jsonTreePanel" class="json-util-panel" style="display:none">
+              <div class="json-util-panel-toolbar">
+                <button type="button" id="jsonTreeExpandAll">모두 펼치기</button>
+                <button type="button" id="jsonTreeCollapseAll">모두 접기</button>
+              </div>
+              <div id="jsonTreeView" class="json-tree-view"></div>
+            </div>
+
+            <div id="jsonDiffPanel" class="json-util-panel" style="display:none">
+              <p class="json-diff-header">원본: 현재 입력값 &mdash; 아래에 비교 대상 JSON을 붙여넣으세요</p>
+              <textarea id="jsonDiffTarget" rows="8" placeholder="비교할 JSON을 붙여넣으세요"></textarea>
+              <div class="json-diff-actions"><button type="button" id="jsonDiffRunBtn">비교</button></div>
+              <div id="jsonDiffResult" class="json-diff-result"></div>
+            </div>
+
+            <div id="jsonPathPanel" class="json-util-panel" style="display:none">
+              <div class="json-path-input-row">
+                <input id="jsonPathInput" type="text" placeholder="$.store.book[0].title 또는 $..author" />
+                <button type="button" id="jsonPathRunBtn">실행</button>
+              </div>
+              <div id="jsonPathResult" class="json-path-result"></div>
+            </div>
+
+            <div id="jsonBuilderPanel" class="json-util-panel" style="display:none">
+              <div id="jsonBuilderRows" class="json-builder-rows"></div>
+              <div class="json-builder-actions">
+                <button type="button" id="jsonBuilderAddBtn">+ 필드 추가</button>
+                <button type="button" id="jsonBuilderInsertBtn">JSON에 삽입</button>
+                <button type="button" id="jsonBuilderFromJsonBtn">현재 JSON에서 불러오기</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>임시저장 목록</h2>
+            <p class="desc">현재 JSON을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
+            <table id="jsonSavesTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>이름</th>
+                  <th>저장 시간</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </div>
+        <div class="tab-content" data-tab="translate">
+          <section class="panel">
+            <h2>번역</h2>
+            <p class="desc">OpenAI GPT를 사용하여 한국어/영어/일본어 간 번역을 수행합니다. <code>.env</code>에 <code>OPENAI_API_KEY</code> 설정이 필요합니다.</p>
+            <textarea id="translateInput" rows="10" placeholder="번역할 텍스트를 입력하세요..."></textarea>
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <button type="button" id="translateBtn">번역</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label">원본
+                  <select id="translateSource">
+                    <option value="ko">한국어</option>
+                    <option value="en">영어</option>
+                    <option value="ja">일본어</option>
+                  </select>
+                </label>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label">→</label>
+                <label class="opt-label"><input type="checkbox" id="translateSelectAll" checked /> 전체</label>
+                <label class="opt-label"><input type="checkbox" class="translate-target" value="ko" /> 한국어</label>
+                <label class="opt-label"><input type="checkbox" class="translate-target" value="en" checked /> 영어</label>
+                <label class="opt-label"><input type="checkbox" class="translate-target" value="ja" checked /> 일본어</label>
+              </div>
+              <span id="translateStatus"></span>
+            </div>
+            <div id="translateResults"></div>
+          </section>
+        </div>
+        <div class="tab-content" data-tab="csv">
+          <section class="panel">
+            <h2>CSV 편집기</h2>
+            <p class="desc">CSV 파일을 업로드하면 그리드로 편집할 수 있습니다. 인코딩 자동 감지를 지원합니다.</p>
+            <div id="csvUploadZone" class="csv-upload-zone">
+              <input type="file" id="csvFileInput" accept=".csv,.tsv,.txt" hidden />
+              <p>CSV 파일을 드래그하거나 클릭하여 업로드<br><small style="color:#94a3b8">또는 Ctrl+V로 클립보드 내용 붙여넣기</small></p>
+            </div>
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <span class="csv-split-btn">
+                  <button type="button" id="csvAddRowBtn">행 추가</button>
+                  <button type="button" class="csv-split-arrow" id="csvAddRowArrow">&#9662;</button>
+                  <div class="csv-split-menu" id="csvAddRowMenu">
+                    <div data-dir="above">&#8593; 위에 추가</div>
+                    <div data-dir="below">&#8595; 아래에 추가</div>
+                  </div>
+                </span>
+                <span class="csv-split-btn">
+                  <button type="button" id="csvAddColBtn">열 추가</button>
+                  <button type="button" class="csv-split-arrow" id="csvAddColArrow">&#9662;</button>
+                  <div class="csv-split-menu" id="csvAddColMenu">
+                    <div data-dir="left">&#8592; 왼쪽에 추가</div>
+                    <div data-dir="right">&#8594; 오른쪽에 추가</div>
+                  </div>
+                </span>
+                <button type="button" id="csvDelRowBtn">행 삭제</button>
+                <button type="button" id="csvDelColBtn">열 삭제</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="file-upload-btn"><input type="file" id="csvFileInput2" accept=".csv,.tsv,.txt" hidden />파일 변경</label>
+                <button type="button" id="csvDownloadBtn">다운로드</button>
+                <button type="button" id="csvSaveBtn">임시저장</button>
+                <button type="button" id="csvResetBtn">초기화</button>
+                <button type="button" id="csvDupCheckBtn">중복 분석</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label">구분자
+                  <select id="csvDelimiter">
+                    <option value="," selected>콤마 (,)</option>
+                    <option value="&#9;">탭</option>
+                  </select>
+                </label>
+                <label class="opt-label">인코딩
+                  <select id="csvEncoding">
+                    <option value="utf-8">UTF-8</option>
+                    <option value="utf-8-bom">UTF-8 BOM</option>
+                    <option value="euc-kr">EUC-KR</option>
+                    <option value="shift_jis">Shift_JIS</option>
+                  </select>
+                </label>
+              </div>
+              <span id="csvStatus"></span>
+            </div>
+            <div id="csvGridWrap" class="csv-grid-wrap"></div>
+          </section>
+
+          <section class="panel">
+            <h2>임시저장 목록</h2>
+            <p class="desc">현재 작업물을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
+            <table id="csvSavesTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>이름</th>
+                  <th>구분자</th>
+                  <th>인코딩</th>
+                  <th>저장 시간</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </div>
+        <div class="tab-content" data-tab="markdown">
+          <section class="panel">
+            <h2>Markdown 편집기</h2>
+            <p class="desc">Markdown을 작성하고 실시간으로 미리보기를 확인할 수 있습니다. 파일 업로드, DB 저장, .md 다운로드를 지원합니다.</p>
+
+            <details class="md-guide">
+              <summary>Markdown 문법 가이드 (클릭하여 열기/닫기)</summary>
+              <div class="md-guide-content">
+                <table>
+                  <thead><tr><th>문법</th><th>설명</th><th>결과</th></tr></thead>
+                  <tbody>
+                    <tr><td><code># 제목</code></td><td>제목 (h1~h6, #개수로 레벨)</td><td><strong style="font-size:1.2em">제목</strong></td></tr>
+                    <tr><td><code>**굵게**</code></td><td>볼드</td><td><strong>굵게</strong></td></tr>
+                    <tr><td><code>*기울임*</code></td><td>이탤릭</td><td><em>기울임</em></td></tr>
+                    <tr><td><code>~~취소선~~</code></td><td>취소선</td><td><del>취소선</del></td></tr>
+                    <tr><td><code>[텍스트](URL)</code></td><td>링크</td><td><a href="#">텍스트</a></td></tr>
+                    <tr><td><code>![대체텍스트](URL)</code></td><td>이미지</td><td>이미지 표시</td></tr>
+                    <tr><td><code>`인라인 코드`</code></td><td>인라인 코드</td><td><code>인라인 코드</code></td></tr>
+                    <tr><td><code>```언어</code></td><td>코드 블록 (``` 으로 감싸기)</td><td>구문 하이라이팅</td></tr>
+                    <tr><td><code>&gt; 인용문</code></td><td>인용 블록</td><td style="border-left:3px solid #ccc;padding-left:8px">인용문</td></tr>
+                    <tr><td><code>- 항목</code></td><td>순서 없는 목록</td><td>&#8226; 항목</td></tr>
+                    <tr><td><code>1. 항목</code></td><td>순서 있는 목록</td><td>1. 항목</td></tr>
+                    <tr><td><code>- [ ] 할일</code></td><td>체크리스트</td><td>&#9744; 할일</td></tr>
+                    <tr><td><code>- [x] 완료</code></td><td>체크리스트 (완료)</td><td>&#9745; 완료</td></tr>
+                    <tr><td><code>---</code></td><td>수평선</td><td><hr style="margin:2px 0"/></td></tr>
+                    <tr><td><code>| A | B |</code></td><td>테이블 (파이프로 구분)</td><td>테이블 표시</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <div id="mdUploadZone" class="md-upload-zone">
+              <input type="file" id="mdFileInput" accept=".md,.markdown,.txt" hidden />
+              <p>.md 파일을 드래그하거나 클릭하여 업로드</p>
+            </div>
+
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <button type="button" class="md-tb" data-action="bold" title="굵게">B</button>
+                <button type="button" class="md-tb" data-action="italic" title="기울임"><em>I</em></button>
+                <button type="button" class="md-tb" data-action="strikethrough" title="취소선"><s>S</s></button>
+                <button type="button" class="md-tb" data-action="h1" title="제목1">H1</button>
+                <button type="button" class="md-tb" data-action="h2" title="제목2">H2</button>
+                <button type="button" class="md-tb" data-action="h3" title="제목3">H3</button>
+                <button type="button" class="md-tb" data-action="link" title="링크">🔗</button>
+                <button type="button" class="md-tb" data-action="image" title="이미지">🖼</button>
+                <button type="button" class="md-tb" data-action="code" title="인라인 코드">&lt;/&gt;</button>
+                <button type="button" class="md-tb" data-action="codeblock" title="코드 블록">```</button>
+                <button type="button" class="md-tb" data-action="quote" title="인용">&gt;</button>
+                <button type="button" class="md-tb" data-action="ul" title="목록">&#8226;</button>
+                <button type="button" class="md-tb" data-action="ol" title="순서목록">1.</button>
+                <button type="button" class="md-tb" data-action="checkbox" title="체크박스">☑</button>
+                <button type="button" class="md-tb" data-action="hr" title="구분선">―</button>
+                <button type="button" class="md-tb" data-action="table" title="테이블 생성">표</button>
+                <button type="button" class="md-tb" data-action="toc" title="목차 생성">TOC</button>
+              </div>
+              <div class="toolbar-group">
+                <button type="button" id="mdLayoutToggle">가로 모드</button>
+                <button type="button" id="mdKeymapBtn" title="단축키 설정">&#9881;</button>
+              </div>
+              <div class="toolbar-group md-split-group">
+                <span class="opt-label">비율</span>
+                <button type="button" class="md-split-btn" data-ratio="100:0" title="편집만">편집</button>
+                <button type="button" class="md-split-btn" data-ratio="75:25" title="편집 75%">3:1</button>
+                <button type="button" class="md-split-btn active" data-ratio="50:50" title="반반">1:1</button>
+                <button type="button" class="md-split-btn" data-ratio="25:75" title="미리보기 75%">1:3</button>
+                <button type="button" class="md-split-btn" data-ratio="0:100" title="미리보기만">보기</button>
+              </div>
+            </div>
+
+            <div id="mdKeymapPanel" class="md-keymap-panel" hidden>
+              <div class="md-keymap-header">
+                <h3>단축키 설정</h3>
+                <button type="button" id="mdKeymapClose">&times;</button>
+              </div>
+              <p class="desc">각 항목을 클릭한 뒤 원하는 키 조합을 누르세요. Ctrl/Cmd + 키 조합을 지원합니다.</p>
+              <div id="mdKeymapList" class="md-keymap-list"></div>
+              <div class="md-keymap-actions">
+                <button type="button" id="mdKeymapReset">기본값 복원</button>
+              </div>
+            </div>
+
+            <div id="mdEditorWrap" class="md-editor-wrap md-layout-horizontal">
+              <div class="md-edit-pane" id="mdEditPane">
+                <textarea id="mdInput" placeholder="여기에 Markdown을 작성하세요..."></textarea>
+              </div>
+              <div class="md-resizer" id="mdResizer"></div>
+              <div class="md-preview-pane" id="mdPreview"></div>
+            </div>
+
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <button type="button" id="mdNewBtn">새 문서</button>
+                <button type="button" id="mdSaveBtn">저장</button>
+                <button type="button" id="mdSaveAsBtn">다른 이름으로 저장</button>
+                <button type="button" id="mdDownloadBtn">다운로드 (.md)</button>
+                <button type="button" id="mdExportPdfBtn">PDF 내보내기</button>
+              </div>
+              <div class="toolbar-group" style="position:relative;">
+                <div class="md-proofread-split-btn" id="mdProofreadSplit">
+                  <button type="button" id="mdProofreadBtn">AI 검수</button>
+                  <button type="button" class="md-proofread-split-toggle" id="mdProofreadToggle">&#9662;</button>
+                  <div class="md-proofread-split-menu" id="mdProofreadMenu" hidden>
+                    <label><input type="checkbox" id="mdProofreadStyle"> 문체/가독성 포함</label>
+                  </div>
+                </div>
+              </div>
+              <div class="toolbar-group">
+                <label class="md-autosave-toggle" title="자동저장">
+                  <input type="checkbox" id="mdAutoSaveToggle">
+                  <span>자동저장</span>
+                </label>
+              </div>
+              <span id="mdStatus"></span>
+            </div>
+
+            <section class="panel md-proofread-panel" id="mdProofreadPanel" hidden>
+              <div class="md-proofread-header" id="mdProofreadHeader">
+                <span class="md-proofread-toggle-icon">&#9654;</span>
+                <h3>AI 검수 결과 (<span id="mdProofreadCount">0</span>건)</h3>
+                <button type="button" id="mdProofreadApplyAll" class="btn-sm">모두 적용</button>
+              </div>
+              <div class="md-proofread-body" id="mdProofreadBody" hidden>
+                <table id="mdProofreadTable">
+                  <thead>
+                    <tr>
+                      <th>줄</th>
+                      <th>수정전</th>
+                      <th>수정후</th>
+                      <th>수정이유</th>
+                      <th>적용</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <section class="panel">
+            <h2>저장 목록</h2>
+            <p class="desc">작성한 Markdown을 DB에 저장하고, 나중에 불러와 이어서 편집할 수 있습니다.</p>
+            <table id="mdSavesTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>이름</th>
+                  <th>저장 시간</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+
+          <section class="panel" id="mdVersionPanel" hidden>
+            <h2>버전 이력 <span id="mdVersionTitle"></span></h2>
+            <p class="desc">저장할 때마다 이전 내용이 자동으로 버전에 기록됩니다. 원하는 버전으로 롤백할 수 있습니다.</p>
+            <button type="button" id="mdVersionClose" class="btn-sm">닫기</button>
+            <table id="mdVersionTable">
+              <thead>
+                <tr>
+                  <th>버전</th>
+                  <th>코멘트</th>
+                  <th>저장 시간</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </div>
+
+        <div class="tab-content" data-tab="paramchanger">
+          <section class="panel">
+            <h2>파라미터 변환</h2>
+            <p class="desc">값 목록을 다양한 포맷으로 변환합니다. 공백, 개행, 콤마, 탭 등으로 구분된 값을 입력하세요.</p>
+            <textarea id="paramInput" rows="10" placeholder="A B C&#10;또는&#10;A&#10;B&#10;C"></textarea>
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <label class="opt-label">구분자 감지
+                  <select id="paramDelimiter">
+                    <option value="auto">자동</option>
+                    <option value="\n">개행</option>
+                    <option value=" ">공백</option>
+                    <option value=",">콤마</option>
+                    <option value="\t">탭</option>
+                  </select>
+                </label>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label">출력 포맷
+                  <select id="paramFormat">
+                    <option value="comma">콤마 (A,B,C)</option>
+                    <option value="sq">작은따옴표 ('A','B','C')</option>
+                    <option value="dq">큰따옴표 ("A","B","C")</option>
+                    <option value="sql">SQL IN ('A','B','C')</option>
+                    <option value="newline">개행 (줄바꿈)</option>
+                    <option value="space">공백</option>
+                    <option value="tab">탭</option>
+                  </select>
+                </label>
+              </div>
+              <div class="toolbar-group">
+                <button type="button" id="paramConvertBtn">변환</button>
+                <button type="button" id="paramCopyBtn">복사</button>
+              </div>
+              <span id="paramStatus"></span>
+            </div>
+            <textarea id="paramOutput" rows="10" readonly placeholder="변환 결과가 여기에 표시됩니다."></textarea>
+          </section>
+        </div>
+
+        <!-- PDF 변환기 탭 -->
+        <div class="tab-content" data-tab="pdfconvert">
+          <section class="panel">
+            <h2>PDF 변환</h2>
+            <p class="desc">다양한 파일을 PDF로 변환합니다. 여러 파일을 하나의 PDF로 병합할 수 있습니다. 현재 이 PDF변환기는 불안정합니다. Markdown정도만 PDF로 변환하시고, docx, xlsx, pptx는 외부 PDF 변환 툴을 이용하세요.</p>
+
+            <div class="pdf-upload-zone" id="pdfUploadZone">
+              <p>파일을 드래그하거나 클릭하여 업로드</p>
+              <p class="pdf-upload-formats">지원: md, txt, html, jpg, png, gif, bmp, webp, docx, xlsx, pptx</p>
+              <input type="file" id="pdfFileInput" multiple accept=".md,.txt,.html,.htm,.jpg,.jpeg,.png,.gif,.bmp,.webp,.docx,.xlsx,.pptx" hidden />
+            </div>
+
+            <div class="pdf-md-saves">
+              <button type="button" id="pdfLoadMdSaveBtn">저장된 Markdown에서 불러오기</button>
+              <select id="pdfMdSaveSelect" style="display:none"></select>
+            </div>
+
+            <div id="pdfFileList" class="pdf-file-list"></div>
+
+            <div class="toolbar" id="pdfToolbar" style="display:none">
+              <div class="toolbar-group">
+                <button type="button" id="pdfConvertBtn">PDF 변환</button>
+                <button type="button" id="pdfMergeBtn">하나의 PDF로 병합</button>
+                <button type="button" id="pdfClearBtn">전체 제거</button>
+              </div>
+              <div class="toolbar-group">
+                <label class="opt-label">용지
+                  <select id="pdfPageSize">
+                    <option value="a4" selected>A4</option>
+                    <option value="letter">Letter</option>
+                    <option value="legal">Legal</option>
+                  </select>
+                </label>
+                <label class="opt-label">방향
+                  <select id="pdfOrientation">
+                    <option value="portrait" selected>세로</option>
+                    <option value="landscape">가로</option>
+                  </select>
+                </label>
+                <label class="opt-label">여백
+                  <select id="pdfMargin">
+                    <option value="10" selected>보통</option>
+                    <option value="5">좁게</option>
+                    <option value="20">넓게</option>
+                  </select>
+                </label>
+                <label class="opt-label"><input type="checkbox" id="pdfPageBreakH2"> 제목(h2)마다 페이지 분리</label>
+              </div>
+              <span id="pdfStatus"></span>
+            </div>
+
+            <div id="pdfPreview" class="pdf-preview" style="display:none"></div>
+          </section>
+        </div>
+
+        <div class="tab-content" data-tab="diffcompare">
+          <section class="panel">
+            <h2>Diff 비교</h2>
+            <p class="desc">두 텍스트, 파일, 또는 폴더를 비교합니다. Alt+↑↓로 블록 이동, Alt+←→로 변경 반영. (파일/폴더 선택은 로컬 서버 환경에서만 동작합니다)</p>
+
+            <!-- 모드 선택 + 액션 -->
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <label><input type="radio" name="diffMode" value="text" checked> 텍스트</label>
+                <label><input type="radio" name="diffMode" value="file"> 파일</label>
+                <label><input type="radio" name="diffMode" value="folder"> 폴더</label>
+              </div>
+              <div class="toolbar-group">
+                <button type="button" id="diffCompareBtn">비교</button>
+                <button type="button" id="diffClearBtn">지우기</button>
+                <button type="button" id="diffCopyLeftBtn" style="display:none">왼쪽 복사</button>
+                <button type="button" id="diffCopyRightBtn" style="display:none">오른쪽 복사</button>
+                <button type="button" id="diffSaveLeftBtn" style="display:none">왼쪽 저장</button>
+                <button type="button" id="diffSaveRightBtn" style="display:none">오른쪽 저장</button>
+              </div>
+              <span id="diffStatus"></span>
+            </div>
+
+            <!-- 텍스트 모드: 좌/우 textarea -->
+            <div id="diffTextInputs" class="diff-input-row">
+              <div class="diff-input-col">
+                <div class="diff-input-header">Left</div>
+                <textarea id="diffLeftText" class="diff-textarea" placeholder="왼쪽 텍스트를 붙여넣으세요"></textarea>
+              </div>
+              <div class="diff-input-col">
+                <div class="diff-input-header">Right</div>
+                <textarea id="diffRightText" class="diff-textarea" placeholder="오른쪽 텍스트를 붙여넣으세요"></textarea>
+              </div>
+            </div>
+
+            <!-- 파일 모드: 경로 입력 또는 파일 업로드 -->
+            <div id="diffFileInputs" class="diff-input-row" style="display:none">
+              <div class="diff-input-col">
+                <div class="diff-input-header">Left</div>
+                <div class="diff-folder-row">
+                  <input type="text" id="diffLeftFilePath" class="diff-folder-input" placeholder="파일 경로 입력">
+                  <button type="button" id="diffLeftFilePickBtn" class="diff-folder-btn">파일 선택</button>
+                </div>
+                <div id="diffLeftFileName" class="diff-file-name"></div>
+              </div>
+              <div class="diff-input-col">
+                <div class="diff-input-header">Right</div>
+                <div class="diff-folder-row">
+                  <input type="text" id="diffRightFilePath" class="diff-folder-input" placeholder="파일 경로 입력">
+                  <button type="button" id="diffRightFilePickBtn" class="diff-folder-btn">파일 선택</button>
+                </div>
+                <div id="diffRightFileName" class="diff-file-name"></div>
+              </div>
+            </div>
+
+            <!-- 폴더 모드: 좌/우 경로 입력 또는 폴더 선택 -->
+            <div id="diffFolderInputs" class="diff-input-row" style="display:none">
+              <div class="diff-input-col">
+                <div class="diff-input-header">Left 폴더</div>
+                <div class="diff-folder-row">
+                  <input type="text" id="diffLeftFolder" class="diff-folder-input" placeholder="경로 직접 입력 또는 폴더 선택">
+                  <button type="button" id="diffLeftFolderBtn" class="diff-folder-btn">폴더 선택</button>
+                </div>
+                <div id="diffLeftFolderName" class="diff-file-name"></div>
+              </div>
+              <div class="diff-input-col">
+                <div class="diff-input-header">Right 폴더</div>
+                <div class="diff-folder-row">
+                  <input type="text" id="diffRightFolder" class="diff-folder-input" placeholder="경로 직접 입력 또는 폴더 선택">
+                  <button type="button" id="diffRightFolderBtn" class="diff-folder-btn">폴더 선택</button>
+                </div>
+                <div id="diffRightFolderName" class="diff-file-name"></div>
+              </div>
+            </div>
+
+            <!-- 폴더 비교: 파일 목록 -->
+            <div id="diffFileTree" class="diff-file-tree" style="display:none"></div>
+
+            <!-- Diff 결과 -->
+            <div id="diffResult" class="diff-result" style="display:none">
+              <div class="diff-stats" id="diffStats"></div>
+              <div class="diff-view-wrap">
+                <div class="diff-side diff-side-left" id="diffViewLeft"></div>
+                <div class="diff-side diff-side-right" id="diffViewRight"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Git 관리 탭 -->
+        <div class="tab-content" data-tab="git">
+          <section class="panel">
+            <h2>Git 관리</h2>
+            <p class="desc">로컬 Git 저장소를 선택하면 변경사항 확인, 커밋, 브랜치 관리를 할 수 있습니다.</p>
+
+            <!-- 저장소 선택 -->
+            <div class="git-repo-row">
+              <input type="text" id="gitRepoPath" class="git-repo-input" placeholder="저장소 경로 입력" />
+              <button type="button" id="gitPickRepoBtn" class="git-btn">폴더 선택</button>
+              <button type="button" id="gitRefreshBtn" class="git-btn">새로고침</button>
+            </div>
+
+            <!-- 브랜치 바 -->
+            <div class="git-branch-bar" id="gitBranchBar" style="display:none">
+              <span class="git-branch-label">브랜치: <strong id="gitCurrentBranch"></strong></span>
+              <select id="gitBranchSelect" class="git-branch-select"></select>
+              <button type="button" id="gitSwitchBranchBtn" class="git-btn-sm">전환</button>
+              <button type="button" id="gitNewBranchBtn" class="git-btn-sm">새 브랜치</button>
+            </div>
+
+            <!-- 메인: 파일 목록 + Diff -->
+            <div class="git-main" id="gitMain" style="display:none">
+              <div class="git-file-panel" id="gitFilePanel">
+                <div class="git-file-header">변경된 파일</div>
+                <div class="git-file-list" id="gitFileList"></div>
+              </div>
+              <div class="git-diff-panel" id="gitDiffPanel">
+                <div class="git-diff-header" id="gitDiffHeader">파일을 선택하세요</div>
+                <div class="git-diff-view">
+                  <div class="git-diff-side git-diff-left" id="gitDiffLeft"></div>
+                  <div class="git-diff-side git-diff-right" id="gitDiffRight"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 액션 바 -->
+            <div class="git-action-bar" id="gitActionBar" style="display:none">
+              <button type="button" id="gitSelectAllBtn" class="git-btn-sm">전체 선택</button>
+              <button type="button" id="gitDeselectAllBtn" class="git-btn-sm">전체 해제</button>
+              <button type="button" id="gitDiscardBtn" class="git-btn-sm git-btn-danger">선택 Discard</button>
+            </div>
+
+            <!-- 커밋 영역 -->
+            <div class="git-commit-area" id="gitCommitArea" style="display:none">
+              <div class="git-commit-row">
+                <textarea id="gitCommitMsg" class="git-commit-input" rows="3" placeholder="커밋 메시지를 입력하세요"></textarea>
+                <button type="button" id="gitCommitBtn" class="git-btn git-btn-primary">Commit</button>
+              </div>
+              <div class="git-template-row">
+                <select id="gitTemplateSelect" class="git-template-select">
+                  <option value="">템플릿 선택...</option>
+                </select>
+                <button type="button" id="gitTemplateManageBtn" class="git-btn-sm">템플릿 관리</button>
+              </div>
+            </div>
+
+            <!-- 템플릿 관리 모달 -->
+            <div class="git-template-modal" id="gitTemplateModal" style="display:none">
+              <div class="git-template-modal-header">
+                <h3>커밋 메시지 템플릿</h3>
+                <button type="button" id="gitTemplateModalClose">&times;</button>
+              </div>
+              <div class="git-template-list" id="gitTemplateList"></div>
+              <div class="git-template-add">
+                <input type="text" id="gitTemplateNameInput" placeholder="템플릿 이름" />
+                <textarea id="gitTemplateContentInput" rows="2" placeholder="템플릿 내용 (예: [${branch}] ${date} - )"></textarea>
+                <button type="button" id="gitTemplateAddBtn" class="git-btn-sm">추가</button>
+              </div>
+              <details class="git-template-vars">
+                <summary>사용 가능한 변수</summary>
+                <table class="git-var-table">
+                  <thead><tr><th>변수</th><th>설명</th><th>예시</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>${branch}</code></td><td>현재 브랜치</td><td>feature/login</td></tr>
+                    <tr><td><code>${user}</code></td><td>git user.name</td><td>jang</td></tr>
+                    <tr><td><code>${email}</code></td><td>git user.email</td><td>jang@example.com</td></tr>
+                    <tr><td><code>${date}</code></td><td>날짜 (YYYY-MM-DD)</td><td>2026-03-12</td></tr>
+                    <tr><td><code>${date:포맷}</code></td><td>커스텀 날짜</td><td>${date:YYYY/MM/DD}</td></tr>
+                    <tr><td><code>${time}</code></td><td>시간 (HH:mm:ss)</td><td>14:30:05</td></tr>
+                    <tr><td><code>${time:포맷}</code></td><td>커스텀 시간</td><td>${time:HH:mm}</td></tr>
+                    <tr><td><code>${datetime}</code></td><td>날짜+시간</td><td>2026-03-12 14:30:05</td></tr>
+                    <tr><td><code>${datetime:포맷}</code></td><td>커스텀 포맷</td><td>${datetime:YYYY/MM/DD HH:mm}</td></tr>
+                    <tr><td><code>${files}</code></td><td>커밋 대상 파일명</td><td>app.js, server.py</td></tr>
+                    <tr><td><code>${file_count}</code></td><td>커밋 대상 파일 수</td><td>3</td></tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+
+            <!-- 최근 커밋 로그 -->
+            <div class="git-log-area" id="gitLogArea" style="display:none">
+              <h3 class="git-log-title">최근 커밋</h3>
+              <table class="git-log-table">
+                <thead>
+                  <tr><th>해시</th><th>메시지</th><th>작성자</th><th>날짜</th></tr>
+                </thead>
+                <tbody id="gitLogBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- Data AI 탭 -->
+        <div class="tab-content" data-tab="dataai">
+          <section class="panel">
+            <h2>Data AI</h2>
+            <p class="desc">원하는 데이터를 설명하면 AI가 CSV, JSON 등의 형식으로 생성합니다.</p>
+            <div class="dataai-form">
+              <textarea id="dataaiPrompt" class="dataai-prompt" rows="4" placeholder="예: 한국 시도별 인구수 데이터 10건, 가상의 사용자 목록 50건 (이름, 이메일, 나이, 도시)"></textarea>
+              <div class="dataai-options">
+                <label class="opt-label">출력 형식
+                  <select id="dataaiFormat">
+                    <option value="csv">CSV</option>
+                    <option value="json">JSON</option>
+                    <option value="tsv">TSV</option>
+                  </select>
+                </label>
+                <label class="opt-label">건수
+                  <input type="number" id="dataaiCount" value="10" min="1" max="1000" style="width:70px">
+                </label>
+                <button type="button" id="dataaiGenerateBtn" class="primary-btn">생성</button>
+              </div>
+            </div>
+            <div id="dataaiStatus" class="dataai-status" style="display:none"></div>
+            <div id="dataaiResultWrap" style="display:none">
+              <div class="dataai-result-toolbar">
+                <button type="button" id="dataaiCopyBtn">복사</button>
+                <button type="button" id="dataaiDownloadBtn">다운로드</button>
+                <button type="button" id="dataaiToCsvBtn">CSV 편집기로 보내기</button>
+                <button type="button" id="dataaiToJsonBtn" style="display:none">JSON 정렬로 보내기</button>
+                <button type="button" id="dataaiSaveBtn">DB 저장</button>
+              </div>
+              <div id="dataaiPreviewWrap" style="display:none"></div>
+              <details>
+                <summary style="cursor:pointer;font-size:13px;color:var(--muted);margin:8px 0">원본 데이터 보기</summary>
+                <pre id="dataaiResult" class="dataai-result"></pre>
+              </details>
+            </div>
+          </section>
+          <section class="panel">
+            <h2>저장 목록</h2>
+            <table class="dev-table" id="dataaiSavesTable">
+              <thead><tr><th>ID</th><th>요청</th><th>형식</th><th>생성일</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </div>
+
+        <!-- 개발자 모드 탭 -->
+        <div class="tab-content" data-tab="devmode">
+          <section class="panel">
+            <h2>개발자 모드 <span id="devAuthBadge" class="dev-auth-badge"></span> <button type="button" id="devLockBtn" class="dev-lock-btn" style="display:none;" title="잠금 (로그아웃)">잠금</button></h2>
+            <div class="dev-section-tabs">
+              <button class="dev-sec-btn active" data-sec="db">DB 탐색기</button>
+              <button class="dev-sec-btn" data-sec="tabs">탭 관리</button>
+              <button class="dev-sec-btn" data-sec="modules">모듈 설정</button>
+              <button class="dev-sec-btn" data-sec="cdn">CDN 관리</button>
+            </div>
+            <div class="dev-body">
+              <!-- DB 탐색기 -->
+              <div class="dev-section active" data-sec="db">
+                <div class="dev-auth-gate" id="devDbAuthGate" style="display:none">
+                  <p class="dev-auth-msg"></p>
+                  <div class="dev-auth-form" id="devAuthForm"></div>
+                </div>
+                <div id="devDbContent">
+                  <div class="dev-db-controls">
+                    <select id="devTableSelect"><option value="">테이블 선택...</option></select>
+                    <button id="devTableLoad" class="dev-btn">조회</button>
+                  </div>
+                  <div id="devTableResult"></div>
+                  <hr>
+                  <h4>SQL 실행 (SELECT만)</h4>
+                  <textarea id="devSqlInput" class="dev-sql-area" rows="3" placeholder="SELECT * FROM mocks LIMIT 10"></textarea>
+                  <button id="devSqlRun" class="dev-btn">실행</button>
+                  <div id="devSqlResult"></div>
+                </div>
+              </div>
+              <!-- 탭 관리 -->
+              <div class="dev-section" data-sec="tabs">
+                <p class="desc">사이드바 탭의 이름, 표시 여부, 순서를 변경할 수 있습니다. 변경 후 저장하면 즉시 반영됩니다.</p>
+                <div id="devTabsList"></div>
+                <button id="devTabsSave" class="dev-btn dev-btn-primary">탭 설정 저장</button>
+              </div>
+              <!-- 모듈 설정 -->
+              <div class="dev-section" data-sec="modules">
+                <div class="dev-auth-gate" id="devModAuthGate" style="display:none">
+                  <p class="dev-auth-msg"></p>
+                  <div class="dev-auth-form" id="devModAuthForm"></div>
+                </div>
+                <div id="devModContent"></div>
+                <button id="devModSave" class="dev-btn dev-btn-primary" style="display:none">모듈 설정 저장</button>
+              </div>
+              <!-- CDN 관리 -->
+              <div class="dev-section" data-sec="cdn">
+                <div class="dev-auth-gate" id="devCdnAuthGate" style="display:none">
+                  <p class="dev-auth-msg"></p>
+                  <div class="dev-auth-form" id="devCdnAuthForm"></div>
+                </div>
+                <div id="devCdnContent">
+                  <p class="desc">외부 CDN 라이브러리를 로컬(<code>static/vendor/</code>)로 다운로드합니다. 오프라인 환경에서도 도구를 사용할 수 있습니다.</p>
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                    <button id="devCdnCheckLatest" class="dev-btn">최신 버전 확인</button>
+                    <button id="devCdnSync" class="dev-btn dev-btn-primary">현재 버전 다운로드</button>
+                    <button id="devCdnSyncLatest" class="dev-btn dev-btn-primary">최신 버전 다운로드</button>
+                  </div>
+                  <span id="devCdnStatus" style="display:block;margin-top:6px;"></span>
+                  <div id="devCdnList" style="margin-top:12px;"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <link rel="stylesheet" href="/vendor/github.min.css" />
+    <script src="/vendor/marked.min.js"></script>
+    <script src="/vendor/highlight.min.js"></script>
+    <script src="/vendor/mermaid.min.js"></script>
+    <script src="/vendor/jspdf.umd.min.js"></script>
+    <script src="/vendor/html2pdf.bundle.min.js"></script>
+    <script src="/vendor/mammoth.browser.min.js"></script>
+    <script src="/vendor/diff_match_patch.js"></script>
+    <script src="/app.js"></script>
+    <script src="/mock.js"></script>
+    <script src="/charcount.js"></script>
+    <script src="/mybatis.js"></script>
+    <script src="/jsonformat.js"></script>
+    <script src="/translate.js"></script>
+    <script src="/csvEditor.js"></script>
+    <script src="/markdown.js"></script>
+    <script src="/paramchanger.js"></script>
+    <script src="/pdfConverter.js"></script>
+    <script src="/diffcompare.js"></script>
+    <script src="/gitmanager.js"></script>
+    <script src="/dataai.js"></script>
+    <script src="/devmode.js"></script>
+  </body>
+</html>
