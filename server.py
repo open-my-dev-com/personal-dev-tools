@@ -2980,7 +2980,10 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         data = json.loads(body)
         site_name = data.get("siteName", "").strip()
         lang = data.get("lang", "").strip() or "ko"
+        toast_config = data.get("toast_config", None)
         config = {"siteName": site_name, "lang": lang}
+        if toast_config:
+            config["toast_config"] = toast_config
         conn = get_conn()
         conn.execute(
             "INSERT OR REPLACE INTO dev_settings (key, value, encrypted) VALUES ('site_config', ?, 0)",

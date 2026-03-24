@@ -183,6 +183,7 @@ dataaiGenerateBtn.addEventListener("click", async function () {
 dataaiCopyBtn.addEventListener("click", function () {
   navigator.clipboard.writeText(_dataaiLastResult).then(function () {
     setDataaiStatus(t("common.copy_done"), "success");
+    showToast(t("common.copy_done"), "success");
   });
 });
 
@@ -199,6 +200,7 @@ dataaiDownloadBtn.addEventListener("click", function () {
   a.click();
   URL.revokeObjectURL(url);
   setDataaiStatus(t("dataai.download_done"), "success");
+  showToast(t("dataai.download_done"), "success");
 });
 
 // CSV 편집기로 보내기
@@ -266,11 +268,13 @@ dataaiSaveBtn.addEventListener("click", async function () {
       }),
     });
     var res = await r.json();
-    if (!res.ok) { setDataaiStatus(res.error || t("dataai.save_fail"), "error"); return; }
+    if (!res.ok) { setDataaiStatus(res.error || t("dataai.save_fail"), "error"); showToast(res.error || t("dataai.save_fail"), "error"); return; }
     setDataaiStatus(t("dataai.save_done", {id: res.id}), "success");
+    showToast(t("dataai.save_done", {id: res.id}), "success");
     loadDataaiSaves();
   } catch (e) {
     setDataaiStatus(t("dataai.save_fail") + ": " + e.message, "error");
+    showToast(t("dataai.save_fail") + ": " + e.message, "error");
   }
 });
 
@@ -336,11 +340,13 @@ async function deleteDataaiSave(id) {
   try {
     var r = await fetch("/api/dataai/saves/" + id, { method: "DELETE" });
     var res = await r.json();
-    if (!res.ok) { setDataaiStatus(res.error || t("common.delete_fail"), "error"); return; }
+    if (!res.ok) { setDataaiStatus(res.error || t("common.delete_fail"), "error"); showToast(res.error || t("common.delete_fail"), "error"); return; }
     setDataaiStatus(t("common.delete_done"), "success");
+    showToast(t("common.delete_done"), "success");
     loadDataaiSaves();
   } catch (e) {
     setDataaiStatus(t("common.delete_fail") + ": " + e.message, "error");
+    showToast(t("common.delete_fail") + ": " + e.message, "error");
   }
 }
 

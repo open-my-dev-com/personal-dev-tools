@@ -99,13 +99,16 @@
             var data = await res.json();
             if (data.ok) {
               setStatus(t("common.delete_done"));
+              showToast(t("common.delete_done"), "success");
               loadMocks();
               if (editingId === id) resetForm();
             } else {
               setStatus(data.error || t("common.delete_fail"), true);
+              showToast(data.error || t("common.delete_fail"), "error");
             }
           } catch (e) {
             setStatus(t("common.delete_fail") + ": " + e.message, true);
+            showToast(t("common.delete_fail") + ": " + e.message, "error");
           }
         });
       });
@@ -186,13 +189,16 @@
       var data = await res.json();
       if (data.ok || data.id) {
         setStatus(editingId ? t("mock.edit_done") : t("mock.save_done_id", {id: data.id}));
+        showToast(editingId ? t("mock.edit_done") : t("mock.save_done_id", {id: data.id}), "success");
         resetForm();
         loadMocks();
       } else {
         setStatus(data.error || t("common.save_fail"), true);
+        showToast(data.error || t("common.save_fail"), "error");
       }
     } catch (e) {
       setStatus(t("common.save_fail") + ": " + e.message, true);
+      showToast(t("common.save_fail") + ": " + e.message, "error");
     }
   });
 
@@ -379,10 +385,12 @@
       var data = await res.json();
       if (data.ok) {
         setStatus(t("mock.log_cleared"));
+        showToast(t("mock.log_cleared"), "success");
         loadLogs();
       }
     } catch (e) {
       setStatus(t("common.delete_fail") + ": " + e.message, true);
+      showToast(t("common.delete_fail") + ": " + e.message, "error");
     }
   });
 

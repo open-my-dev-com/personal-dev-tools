@@ -575,15 +575,18 @@ async function downloadCsv() {
       if (!r.ok) {
         const err = await r.json();
         setCsvStatus(err.error || t("csv.encoding_fail"), true);
+        showToast(err.error || t("csv.encoding_fail"), "error");
         return;
       }
       downloadBlob(await r.blob());
     } catch (e) {
       setCsvStatus(t("csv.download_fail", {msg: e.message}), true);
+      showToast(t("csv.download_fail", {msg: e.message}), "error");
       return;
     }
   }
   setCsvStatus(t("csv.download_done", {name: csvFilename, encoding}));
+  showToast(t("csv.download_done", {name: csvFilename, encoding}), "success");
 }
 
 function downloadBlob(blob) {
@@ -732,12 +735,14 @@ async function saveCsv() {
       });
     }
     const res = await r.json();
-    if (!r.ok) { setCsvStatus(res.error || t("common.save_fail"), true); return; }
+    if (!r.ok) { setCsvStatus(res.error || t("common.save_fail"), true); showToast(res.error || t("common.save_fail"), "error"); return; }
     if (res.id) csvCurrentSaveId = res.id;
     setCsvStatus(t("csv.save_done", {name}));
+    showToast(t("csv.save_done", {name}), "success");
     loadCsvSaves();
   } catch (e) {
     setCsvStatus(t("common.save_fail") + `: ${e.message}`, true);
+    showToast(t("common.save_fail") + `: ${e.message}`, "error");
   }
 }
 
@@ -805,12 +810,14 @@ async function deleteCsvSave(id) {
   try {
     const r = await fetch(`/api/csv/saves/${id}`, { method: "DELETE" });
     const res = await r.json();
-    if (!r.ok) { setCsvStatus(res.error || t("common.delete_fail"), true); return; }
+    if (!r.ok) { setCsvStatus(res.error || t("common.delete_fail"), true); showToast(res.error || t("common.delete_fail"), "error"); return; }
     if (csvCurrentSaveId === id) csvCurrentSaveId = null;
     setCsvStatus(t("csv.save_deleted"));
+    showToast(t("csv.save_deleted"), "success");
     loadCsvSaves();
   } catch (e) {
     setCsvStatus(t("common.delete_fail") + `: ${e.message}`, true);
+    showToast(t("common.delete_fail") + `: ${e.message}`, "error");
   }
 }
 
@@ -892,6 +899,7 @@ csvGridWrap.addEventListener("keydown", (e) => {
     const text = sortedRows.map((ri) => allCols.map((ci) => rows[ri]?.[ci] ?? "").join("\t")).join("\n");
     navigator.clipboard.writeText(text).then(() => {
       setCsvStatus(t("csv.cells_copied", {count: csvSelectedCells.length}));
+      showToast(t("csv.cells_copied", {count: csvSelectedCells.length}), "success");
     });
   }
 });

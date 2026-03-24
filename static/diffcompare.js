@@ -486,12 +486,14 @@
   copyLeftBtn.addEventListener("click", function () {
     navigator.clipboard.writeText(getTextFromAligned(alignedLeft)).then(function () {
       setStatus(t("diff.left_copied"), false);
+      showToast(t("diff.left_copied"), "success");
     });
   });
 
   copyRightBtn.addEventListener("click", function () {
     navigator.clipboard.writeText(getTextFromAligned(alignedRight)).then(function () {
       setStatus(t("diff.right_copied"), false);
+      showToast(t("diff.right_copied"), "success");
     });
   });
 
@@ -526,11 +528,14 @@
       var data = await res.json();
       if (data.ok) {
         setStatus(t("diff.file_saved", { path: filePath }), false);
+        showToast(t("diff.file_saved", { path: filePath }), "success");
       } else {
         setStatus(data.error, true);
+        showToast(data.error, "error");
       }
     } catch (e) {
       setStatus(t("diff.file_save_fail", { msg: e.message }), true);
+      showToast(t("diff.file_save_fail", { msg: e.message }), "error");
     }
   }
 

@@ -157,3 +157,96 @@ function escapeHtml(text) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+// ── Toast Notification ──
+var _toastConfig = { position: "bottom-right", mode: "stack", duration: 3, size: "medium" };
+var _toastContainer = null;
+var _toastMaxStack = 5;
+
+function _initToastContainer() {
+  if (_toastContainer) return;
+  _toastContainer = document.createElement("div");
+  _toastContainer.className = "toast-container toast-" + _toastConfig.position + " toast-size-" + _toastConfig.size;
+  document.body.appendChild(_toastContainer);
+}
+
+function _updateToastPosition() {
+  if (!_toastContainer) return;
+  _toastContainer.className = "toast-container toast-" + _toastConfig.position + " toast-size-" + _toastConfig.size;
+}
+
+function loadToastConfig() {
+  fetch("/api/dev/site-config").then(function (r) { return r.json(); }).then(function (data) {
+    if (data.ok && data.config && data.config.toast_config) {
+      try {
+        var cfg = typeof data.config.toast_config === "string"
+          ? JSON.parse(data.config.toast_config) : data.config.toast_config;
+        _toastConfig.position = cfg.position || "bottom-right";
+        _toastConfig.mode = cfg.mode || "stack";
+        _toastConfig.duration = cfg.duration || 3;
+        _toastConfig.size = cfg.size || "medium";
+        _updateToastPosition();
+      } catch (_) {}
+    }
+  }).catch(function () {});
+}
+
+function showToast(message, type) {
+  type = type || "info";
+  _initToastContainer();
+
+  // Replace mode: remove existing toasts
+  if (_toastConfig.mode === "replace") {
+    while (_toastContainer.firstChild) {
+      _toastContainer.removeChild(_toastContainer.firstChild);
+    }
+  }
+
+  // Stack mode: limit max
+  if (_toastConfig.mode === "stack") {
+    var existing = _toastContainer.querySelectorAll(".toast");
+    if (existing.length >= _toastMaxStack) {
+      existing[0].remove();
+    }
+  }
+
+  var iconName = type === "success" ? "check-circle" : type === "error" ? "alert-circle" : "info";
+
+  var toast = document.createElement("div");
+  toast.className = "toast toast-" + type;
+  toast.innerHTML =
+    '<i data-lucide="' + iconName + '" class="toast-icon"></i>' +
+    '<span class="toast-message">' + escapeHtml(message) + '</span>' +
+    '<button class="toast-close">&times;</button>';
+
+  _toastContainer.appendChild(toast);
+  lucide.createIcons({ nodes: [toast.querySelector("i")] });
+
+  // Trigger enter animation
+  requestAnimationFrame(function () {
+    toast.classList.add("toast-show");
+  });
+
+  // Close button
+  toast.querySelector(".toast-close").addEventListener("click", function () {
+    _dismissToast(toast);
+  });
+
+  // Auto-dismiss (error = 2x duration)
+  var duration = _toastConfig.duration * 1000;
+  if (type === "error") duration *= 2;
+  setTimeout(function () {
+    _dismissToast(toast);
+  }, duration);
+}
+
+function _dismissToast(toast) {
+  if (!toast || !toast.parentNode) return;
+  toast.classList.add("toast-hide");
+  toast.addEventListener("animationend", function () {
+    if (toast.parentNode) toast.remove();
+  });
+}
+
+// Load toast config on init
+loadToastConfig();
