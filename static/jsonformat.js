@@ -45,6 +45,7 @@ jsonMinifyBtn.addEventListener("click", () => formatJson(true));
 jsonFmtCopyBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(jsonFmtInput.value).then(() => {
     setJsonFmtStatus(t("json.copy_done"));
+    showToast(t("json.copy_done"), "success");
   });
 });
 jsonFmtInput.addEventListener("paste", () => setTimeout(() => formatJson(false), 0));
@@ -73,6 +74,7 @@ document.getElementById("jsonSaveFileBtn").addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(a.href);
   setJsonFmtStatus(t("json.file_save_done"));
+  showToast(t("json.file_save_done"), "success");
 });
 
 // --- 임시저장 ---
@@ -104,9 +106,11 @@ async function saveJsonToDb() {
     const res = await r.json();
     if (res.id) jsonCurrentSaveId = res.id;
     setJsonFmtStatus(t("json.temp_save_done"));
+    showToast(t("json.temp_save_done"), "success");
     loadJsonSaves();
   } catch (e) {
     setJsonFmtStatus(t("json.temp_save_fail"), true);
+    showToast(t("json.temp_save_fail"), "error");
   }
 }
 
@@ -163,9 +167,11 @@ async function deleteJsonSave(id) {
     await fetch(`/api/json/saves/${id}`, { method: "DELETE" });
     if (jsonCurrentSaveId === id) jsonCurrentSaveId = null;
     setJsonFmtStatus(t("common.delete_done"));
+    showToast(t("common.delete_done"), "success");
     loadJsonSaves();
   } catch (e) {
     setJsonFmtStatus(t("common.delete_fail"), true);
+    showToast(t("common.delete_fail"), "error");
   }
 }
 

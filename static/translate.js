@@ -88,6 +88,7 @@ async function doTranslate() {
         navigator.clipboard.writeText(data.result).then(() => {
           e.target.textContent = "OK!";
           setTimeout(() => { e.target.textContent = t("common.copy"); }, 1000);
+          showToast(t("common.copy_done"), "success");
         });
       });
     } else {

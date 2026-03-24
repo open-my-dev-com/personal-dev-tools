@@ -253,6 +253,7 @@
     resultEl.querySelector(".mybatis-copy-btn").addEventListener("click", function () {
       navigator.clipboard.writeText(bound).then(function () {
         setStatus(t("mybatis.copied"));
+        showToast(t("mybatis.copied"), "success");
       });
     });
   }

@@ -47,6 +47,20 @@ function applySiteName(name) {
   const siteNameInput = document.getElementById("devSiteName");
   const siteLangSelect = document.getElementById("devSiteLang");
   const siteConfigSaveBtn = document.getElementById("devSiteConfigSave");
+  const toastPositionGrid = document.getElementById("devToastPosition");
+  const toastModeSelect = document.getElementById("devToastMode");
+  const toastSizeSelect = document.getElementById("devToastSize");
+  const toastDurationInput = document.getElementById("devToastDuration");
+
+  // Toast position grid click handler
+  var _toastSelectedPosition = "bottom-right";
+  toastPositionGrid.addEventListener("click", (e) => {
+    const btn = e.target.closest(".toast-pos-btn");
+    if (!btn) return;
+    toastPositionGrid.querySelectorAll(".toast-pos-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    _toastSelectedPosition = btn.dataset.pos;
+  });
 
   async function loadSiteConfig() {
     try {
@@ -55,6 +69,22 @@ function applySiteName(name) {
       if (data.ok) {
         siteNameInput.value = data.config.siteName || "";
         if (data.config.lang) siteLangSelect.value = data.config.lang;
+        // Toast config
+        if (data.config.toast_config) {
+          try {
+            const tc = typeof data.config.toast_config === "string"
+              ? JSON.parse(data.config.toast_config) : data.config.toast_config;
+            if (tc.position) {
+              _toastSelectedPosition = tc.position;
+              toastPositionGrid.querySelectorAll(".toast-pos-btn").forEach(b => {
+                b.classList.toggle("active", b.dataset.pos === tc.position);
+              });
+            }
+            if (tc.mode) toastModeSelect.value = tc.mode;
+            if (tc.size) toastSizeSelect.value = tc.size;
+            if (tc.duration) toastDurationInput.value = tc.duration;
+          } catch (_) {}
+        }
       }
     } catch (e) {
       console.error("Site config load failed:", e);
@@ -69,19 +99,26 @@ function applySiteName(name) {
         body: JSON.stringify({
           siteName: siteNameInput.value.trim(),
           lang: siteLangSelect.value,
+          toast_config: JSON.stringify({
+            position: _toastSelectedPosition,
+            mode: toastModeSelect.value,
+            size: toastSizeSelect.value,
+            duration: parseInt(toastDurationInput.value) || 3,
+          }),
         }),
       });
       const data = await res.json();
       if (data.ok) {
         applySiteName(siteNameInput.value.trim());
-        // Apply language change
         if (typeof i18nSetLang === "function") i18nSetLang(siteLangSelect.value);
-        alert(t("dev.site_saved"));
+        // Apply toast config immediately
+        if (typeof loadToastConfig === "function") loadToastConfig();
+        showToast(t("dev.site_saved"), "success");
       } else {
-        alert(t("common.save_fail") + ": " + data.error);
+        showToast(t("common.save_fail") + ": " + data.error, "error");
       }
     } catch (e) {
-      alert(t("common.save_fail") + ": " + e.message);
+      showToast(t("common.save_fail") + ": " + e.message, "error");
     }
   });
 
@@ -441,8 +478,8 @@ function applySiteName(name) {
             body: JSON.stringify(updates),
           });
           const d = await res.json();
-          if (d.ok) tableLoadBtn.click();
-          else alert(t("dev.edit_fail", { msg: d.error }));
+          if (d.ok) { showToast(t("dev.edit_success"), "success"); tableLoadBtn.click(); }
+          else showToast(t("dev.edit_fail", { msg: d.error }), "error");
         });
       }
 
@@ -475,8 +512,8 @@ function applySiteName(name) {
         if (!confirm(t("dev.confirm_delete", { id: btn.dataset.id }))) return;
         const res = await devFetch(`/api/dev/tables/${encodeURIComponent(btn.dataset.table)}/${encodeURIComponent(btn.dataset.id)}`, { method: "DELETE" });
         const d = await res.json();
-        if (d.ok) tableLoadBtn.click();
-        else alert(t("dev.delete_fail", { msg: d.error }));
+        if (d.ok) { showToast(t("dev.delete_success"), "success"); tableLoadBtn.click(); }
+        else showToast(t("dev.delete_fail", { msg: d.error }), "error");
       });
     });
   }
@@ -646,13 +683,13 @@ function applySiteName(name) {
       });
       const data = await res.json();
       if (data.ok) {
-        alert(t("dev.tabs_saved"));
+        showToast(t("dev.tabs_saved"), "success");
         if (typeof applyTabConfig === "function") applyTabConfig();
       } else {
-        alert(t("common.save_fail") + ": " + data.error);
+        showToast(t("common.save_fail") + ": " + data.error, "error");
       }
     } catch (e) {
-      alert(t("common.save_fail") + ": " + e.message);
+      showToast(t("common.save_fail") + ": " + e.message, "error");
     }
   });
 
@@ -811,14 +848,13 @@ function applySiteName(name) {
         if (!d.ok) { allOk = false; break; }
       }
       if (allOk) {
-        alert(t("dev.modules_saved"));
-        // Reload to refresh masked keys
+        showToast(t("dev.modules_saved"), "success");
         loadModuleSettings();
       } else {
-        alert(t("common.save_fail"));
+        showToast(t("common.save_fail"), "error");
       }
     } catch (e) {
-      alert(t("common.save_fail") + ": " + e.message);
+      showToast(t("common.save_fail") + ": " + e.message, "error");
     }
   });
 

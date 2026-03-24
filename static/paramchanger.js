@@ -62,5 +62,5 @@ paramDelimiter.addEventListener("change", convertParams);
 paramCopyBtn.addEventListener("click", () => {
   const text = paramOutput.value;
   if (!text) { setParamStatus(t("param.no_copy"), true); return; }
-  navigator.clipboard.writeText(text).then(() => setParamStatus(t("param.copy_done")));
+  navigator.clipboard.writeText(text).then(() => { setParamStatus(t("param.copy_done")); showToast(t("param.copy_done"), "success"); });
 });

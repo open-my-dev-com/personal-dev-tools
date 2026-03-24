@@ -906,6 +906,42 @@
                     </label>
                   </div>
                 </div>
+                <div class="dev-module-card">
+                  <h4 data-i18n="toast.settings">토스트 알림</h4>
+                  <div class="dev-module-fields">
+                    <div class="dev-field">
+                      <span data-i18n="toast.position">위치</span>
+                      <div class="toast-position-grid" id="devToastPosition">
+                        <button type="button" class="toast-pos-btn" data-pos="top-left" title="↖"></button>
+                        <button type="button" class="toast-pos-btn" data-pos="top-center" title="↑"></button>
+                        <button type="button" class="toast-pos-btn" data-pos="top-right" title="↗"></button>
+                        <button type="button" class="toast-pos-btn" data-pos="bottom-left" title="↙"></button>
+                        <button type="button" class="toast-pos-btn" data-pos="bottom-center" title="↓"></button>
+                        <button type="button" class="toast-pos-btn active" data-pos="bottom-right" title="↘"></button>
+                      </div>
+                    </div>
+                    <label class="dev-field">
+                      <span data-i18n="toast.display_mode">표시 방식</span>
+                      <select id="devToastMode" class="dev-input">
+                        <option value="stack" data-i18n="toast.mode_stack">스택 (여러 개)</option>
+                        <option value="replace" data-i18n="toast.mode_replace">교체 (1개)</option>
+                      </select>
+                    </label>
+                    <label class="dev-field">
+                      <span data-i18n="toast.size">크기</span>
+                      <select id="devToastSize" class="dev-input">
+                        <option value="small" data-i18n="toast.size_small">작게</option>
+                        <option value="medium" data-i18n="toast.size_medium">보통</option>
+                        <option value="large" data-i18n="toast.size_large">크게</option>
+                      </select>
+                    </label>
+                    <label class="dev-field">
+                      <span data-i18n="toast.duration">자동 닫힘 (초)</span>
+                      <input type="number" id="devToastDuration" class="dev-input" value="3" min="1" max="30" step="1">
+                      <span class="dev-field-hint" data-i18n="toast.duration_desc">에러는 설정값의 2배 적용</span>
+                    </label>
+                  </div>
+                </div>
                 <button id="devSiteConfigSave" class="dev-btn dev-btn-primary" data-i18n="common.save">저장</button>
               </div>
               <!-- DB 탐색기 -->

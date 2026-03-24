@@ -59,7 +59,7 @@
         loadStatus();
       }
     } catch (e) {
-      alert(t("git.folder_select_fail", { msg: e.message }));
+      showToast(t("git.folder_select_fail", { msg: e.message }), "error");
     }
   });
 
@@ -85,7 +85,7 @@
       const res = await fetch(`/api/git/status?repo=${encodeURIComponent(repoPath)}`);
       const data = await res.json();
       if (!data.ok) {
-        alert(data.error);
+        showToast(data.error, "error");
         hideAll();
         return;
       }
@@ -115,7 +115,7 @@
         diffRight.innerHTML = "";
       }
     } catch (e) {
-      alert(t("git.status_fail", { msg: e.message }));
+      showToast(t("git.status_fail", { msg: e.message }), "error");
     }
   }
 
@@ -299,7 +299,7 @@
   discardBtn.addEventListener("click", async () => {
     var checked = files.filter((f) => f.checked);
     if (checked.length === 0) {
-      alert(t("git.select_files"));
+      showToast(t("git.select_files"), "error");
       return;
     }
     if (!confirm(t("git.confirm_discard", { count: checked.length }))) {
@@ -316,11 +316,13 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert(t("git.discard_fail", { msg: data.error }));
+        showToast(t("git.discard_fail", { msg: data.error }), "error");
+      } else {
+        showToast(t("git.discard_success"), "success");
       }
       loadStatus();
     } catch (e) {
-      alert(t("git.discard_fail", { msg: e.message }));
+      showToast(t("git.discard_fail", { msg: e.message }), "error");
     }
   });
 
@@ -328,12 +330,12 @@
   commitBtn.addEventListener("click", async () => {
     var checked = files.filter((f) => f.checked);
     if (checked.length === 0) {
-      alert(t("git.select_commit_files"));
+      showToast(t("git.select_commit_files"), "error");
       return;
     }
     var msg = commitMsg.value.trim();
     if (!msg) {
-      alert(t("git.commit_msg_required"));
+      showToast(t("git.commit_msg_required"), "error");
       commitMsg.focus();
       return;
     }
@@ -349,13 +351,14 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert(t("git.commit_fail", { msg: data.error }));
+        showToast(t("git.commit_fail", { msg: data.error }), "error");
         return;
       }
+      showToast(t("git.commit_success"), "success");
       commitMsg.value = "";
       loadStatus();
     } catch (e) {
-      alert(t("git.commit_fail", { msg: e.message }));
+      showToast(t("git.commit_fail", { msg: e.message }), "error");
     }
   });
 
@@ -398,12 +401,13 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert(t("git.switch_fail", { msg: data.error }));
+        showToast(t("git.switch_fail", { msg: data.error }), "error");
         return;
       }
+      showToast(t("git.switch_success"), "success");
       loadStatus();
     } catch (e) {
-      alert(t("git.switch_fail", { msg: e.message }));
+      showToast(t("git.switch_fail", { msg: e.message }), "error");
     }
   });
 
@@ -418,12 +422,13 @@
       });
       var data = await res.json();
       if (!data.ok) {
-        alert(t("git.create_fail", { msg: data.error }));
+        showToast(t("git.create_fail", { msg: data.error }), "error");
         return;
       }
+      showToast(t("git.branch_create_success"), "success");
       loadStatus();
     } catch (e) {
-      alert(t("git.create_fail", { msg: e.message }));
+      showToast(t("git.create_fail", { msg: e.message }), "error");
     }
   });
 
@@ -508,7 +513,7 @@
     var name = templateNameInput.value.trim();
     var content = templateContentInput.value;
     if (!name) {
-      alert(t("git.template_name_required"));
+      showToast(t("git.template_name_required"), "error");
       return;
     }
     try {
@@ -522,7 +527,7 @@
       loadTemplates();
       renderTemplateList();
     } catch (e) {
-      alert(t("git.template_add_fail", { msg: e.message }));
+      showToast(t("git.template_add_fail", { msg: e.message }), "error");
     }
   });
 

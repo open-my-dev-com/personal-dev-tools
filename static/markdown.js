@@ -692,6 +692,7 @@ mdDownloadBtn.addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(url);
   setMdStatus(t("md.download_done", { name: mdFilename }));
+  showToast(t("md.download_done", { name: mdFilename }), "success");
 });
 
 // ── PDF 내보내기 ──
@@ -737,6 +738,7 @@ async function mdDoSave() {
       mdLastSavedContent = content;
       mdUpdateDirtyState();
       setMdStatus(t("md.update_done", { name: name, id: mdCurrentSaveId }));
+      showToast(t("md.update_done", { name: name, id: mdCurrentSaveId }), "success");
     } else {
       // 신규 저장
       mdDoSaveAs();
@@ -749,6 +751,7 @@ async function mdDoSave() {
     }
   } catch (e) {
     setMdStatus(t("common.save_fail") + ": " + e.message, true);
+    showToast(t("common.save_fail") + ": " + e.message, "error");
   }
 }
 
@@ -774,9 +777,11 @@ async function mdDoSaveAs() {
     mdLastSavedContent = content;
     mdUpdateDirtyState();
     setMdStatus(t("md.save_done", { name: name, id: data.id }));
+    showToast(t("md.save_done", { name: name, id: data.id }), "success");
     loadMdSaves();
   } catch (e) {
     setMdStatus(t("common.save_fail") + ": " + e.message, true);
+    showToast(t("common.save_fail") + ": " + e.message, "error");
   }
 }
 
@@ -909,9 +914,11 @@ async function deleteMdSave(id) {
     if (!data.ok) throw new Error(data.error);
     if (mdCurrentSaveId === id) mdCurrentSaveId = null;
     setMdStatus(t("common.delete_done"));
+    showToast(t("common.delete_done"), "success");
     loadMdSaves();
   } catch (e) {
     setMdStatus(t("common.delete_fail") + ": " + e.message, true);
+    showToast(t("common.delete_fail") + ": " + e.message, "error");
   }
 }
 
@@ -1036,9 +1043,11 @@ async function toggleMdVersionArchive(versionId, saveId, saveName) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error);
     setMdStatus(data.archived ? t("md.archived_done") : t("md.unarchived_done"));
+    showToast(data.archived ? t("md.archived_done") : t("md.unarchived_done"), "success");
     showMdVersions(saveId, saveName);
   } catch (e) {
     setMdStatus(t("common.error") + ": " + e.message, true);
+    showToast(t("common.error") + ": " + e.message, "error");
   }
 }
 
@@ -1055,10 +1064,12 @@ async function rollbackMdVersion(saveId, versionId) {
     renderPreview();
     if (typeof updateCharCount === "function") updateCharCount();
     setMdStatus(t("md.rollback_done"));
+    showToast(t("md.rollback_done"), "success");
     loadMdSaves();
     showMdVersions(saveId, mdFilename.replace(/\.md$/, ""));
   } catch (e) {
     setMdStatus(t("common.error") + ": " + e.message, true);
+    showToast(t("common.error") + ": " + e.message, "error");
   }
 }
 
