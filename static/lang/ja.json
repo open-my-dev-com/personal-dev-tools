@@ -686,6 +686,8 @@
   "toast.size_small": "小",
   "toast.size_medium": "中",
   "toast.size_large": "大",
+  "toast.preview": "プレビュー",
+  "toast.preview_message": "トーストプレビューです",
   "dev.mod_csv": "CSV編集",
   "dev.mod_col_width": "デフォルト列幅(px)",
   "dev.mod_col_min_width": "最小列幅(px)",

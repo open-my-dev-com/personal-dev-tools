@@ -686,6 +686,8 @@
   "toast.size_small": "작게",
   "toast.size_medium": "보통",
   "toast.size_large": "크게",
+  "toast.preview": "미리보기",
+  "toast.preview_message": "토스트 미리보기입니다",
   "dev.mod_csv": "CSV 편집",
   "dev.mod_col_width": "기본 열 너비(px)",
   "dev.mod_col_min_width": "최소 열 너비(px)",

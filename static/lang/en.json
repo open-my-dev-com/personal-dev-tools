@@ -686,6 +686,8 @@
   "toast.size_small": "Small",
   "toast.size_medium": "Medium",
   "toast.size_large": "Large",
+  "toast.preview": "Preview",
+  "toast.preview_message": "This is a toast preview",
   "dev.mod_csv": "CSV Editor",
   "dev.mod_col_width": "Default column width (px)",
   "dev.mod_col_min_width": "Min column width (px)",

@@ -51,6 +51,22 @@ function applySiteName(name) {
   const toastModeSelect = document.getElementById("devToastMode");
   const toastSizeSelect = document.getElementById("devToastSize");
   const toastDurationInput = document.getElementById("devToastDuration");
+  const toastPreviewBtn = document.getElementById("devToastPreview");
+
+  // Toast preview button — temporarily apply selected settings and show a test toast
+  toastPreviewBtn.addEventListener("click", () => {
+    // Temporarily apply current UI settings
+    const origConfig = Object.assign({}, _toastConfig);
+    _toastConfig.position = _toastSelectedPosition;
+    _toastConfig.mode = toastModeSelect.value;
+    _toastConfig.size = toastSizeSelect.value;
+    _toastConfig.duration = parseInt(toastDurationInput.value) || 3;
+    _updateToastPosition();
+    showToast(t("toast.preview_message"), "success");
+    // Restore original config after showing
+    Object.assign(_toastConfig, origConfig);
+    _updateToastPosition();
+  });
 
   // Toast position grid click handler
   var _toastSelectedPosition = "bottom-right";
