@@ -1,14 +1,15 @@
-const csvFileInput = document.getElementById("csvFileInput");
-const csvUploadZone = document.getElementById("csvUploadZone");
-const csvGridWrap = document.getElementById("csvGridWrap");
-const csvDelimiter = document.getElementById("csvDelimiter");
-const csvEncoding = document.getElementById("csvEncoding");
-const csvStatus = document.getElementById("csvStatus");
-const csvAddRowBtn = document.getElementById("csvAddRowBtn");
-const csvAddColBtn = document.getElementById("csvAddColBtn");
-const csvDelRowBtn = document.getElementById("csvDelRowBtn");
-const csvDelColBtn = document.getElementById("csvDelColBtn");
-const csvDownloadBtn = document.getElementById("csvDownloadBtn");
+(function() {
+const $csvFileInput = $("#csvFileInput");
+const $csvUploadZone = $("#csvUploadZone");
+const $csvGridWrap = $("#csvGridWrap");
+const $csvDelimiter = $("#csvDelimiter");
+const $csvEncoding = $("#csvEncoding");
+const $csvStatus = $("#csvStatus");
+const $csvAddRowBtn = $("#csvAddRowBtn");
+const $csvAddColBtn = $("#csvAddColBtn");
+const $csvDelRowBtn = $("#csvDelRowBtn");
+const $csvDelColBtn = $("#csvDelColBtn");
+const $csvDownloadBtn = $("#csvDownloadBtn");
 
 let csvData = [];
 let csvFilename = "data.csv";
@@ -50,8 +51,8 @@ function clearAllFilters() {
 }
 
 function setCsvStatus(text, isError = false) {
-  csvStatus.textContent = text;
-  csvStatus.style.color = isError ? "#bf233a" : "#65748b";
+  $csvStatus.text(text);
+  $csvStatus.css("color", isError ? "#bf233a" : "#65748b");
 }
 
 // --- 인코딩 감지 ---
@@ -161,7 +162,7 @@ let csvColWidths = [];
 
 // --- 그리드 렌더링 ---
 function renderGrid() {
-  csvGridWrap.innerHTML = "";
+  $csvGridWrap.html("");
   if (csvData.length === 0) return;
 
   const colCount = csvData[0]?.length || 0;
@@ -171,20 +172,17 @@ function renderGrid() {
     csvColWidths = new Array(colCount).fill(120);
   }
 
-  const table = document.createElement("table");
-  table.className = "csv-grid";
+  const $table = $("<table>").addClass("csv-grid");
 
   // colgroup으로 열 너비 제어
-  const colgroup = document.createElement("colgroup");
-  const rowNumCol = document.createElement("col");
-  rowNumCol.style.width = "44px";
-  colgroup.appendChild(rowNumCol);
+  const $colgroup = $("<colgroup>");
+  const $rowNumCol = $("<col>").css("width", "44px");
+  $colgroup.append($rowNumCol);
   csvColWidths.forEach((w) => {
-    const col = document.createElement("col");
-    col.style.width = w + "px";
-    colgroup.appendChild(col);
+    const $col = $("<col>").css("width", w + "px");
+    $colgroup.append($col);
   });
-  table.appendChild(colgroup);
+  $table.append($colgroup);
 
   // 필터 적용: 표시할 행 결정
   const rowsToRender = csvVisibleRows
@@ -194,32 +192,25 @@ function renderGrid() {
   rowsToRender.forEach((origIdx) => {
     const row = csvData[origIdx];
     if (!row) return;
-    const tr = document.createElement("tr");
+    const $tr = $("<tr>");
     // 행 번호
-    const numTd = document.createElement("td");
-    numTd.className = "row-num";
-    numTd.textContent = origIdx + 1;
-    numTd.addEventListener("click", (e) => {
+    const $numTd = $("<td>").addClass("row-num").text(origIdx + 1);
+    $numTd.on("click", (e) => {
       selectRow(origIdx, e.shiftKey);
       e.preventDefault();
     });
-    tr.appendChild(numTd);
+    $tr.append($numTd);
 
     row.forEach((cell, ci) => {
-      const td = document.createElement("td");
-      td.className = "csv-cell";
-      td.dataset.row = origIdx;
-      td.dataset.col = ci;
-      td.style.position = "relative";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = cell;
+      const $td = $("<td>").addClass("csv-cell").data("row", origIdx).data("col", ci).css("position", "relative");
+      // Set data attributes for selector queries
+      $td.attr("data-row", origIdx).attr("data-col", ci);
+      const $input = $("<input>").attr("type", "text").val(cell);
       if (origIdx === 0) {
-        input.classList.add("csv-header-cell");
-        input.style.paddingRight = "24px";
+        $input.addClass("csv-header-cell").css("paddingRight", "24px");
       }
-      input.addEventListener("input", () => { csvData[origIdx][ci] = input.value; });
-      input.addEventListener("mousedown", (e) => {
+      $input.on("input", function() { csvData[origIdx][ci] = $(this).val(); });
+      $input.on("mousedown", (e) => {
         csvFocusRow = origIdx;
         csvFocusCol = ci;
         if (e.shiftKey && csvSelAnchor) {
@@ -236,37 +227,34 @@ function renderGrid() {
 
       // 헤더 셀 더블클릭 → 열 전체 선택
       if (origIdx === 0) {
-        td.addEventListener("dblclick", (e) => {
-          if (e.target === input) { selectColumn(ci); e.preventDefault(); }
+        $td.on("dblclick", (e) => {
+          if (e.target === $input[0]) { selectColumn(ci); e.preventDefault(); }
         });
       }
 
-      td.appendChild(input);
+      $td.append($input);
 
       // 첫 행: 필터 버튼 + 리사이즈 핸들
       if (origIdx === 0) {
-        const filterBtn = document.createElement("div");
-        filterBtn.className = "csv-filter-btn";
-        filterBtn.textContent = csvFilters[ci] ? "▼" : "▽";
-        if (csvFilters[ci]) filterBtn.classList.add("csv-filter-active");
-        filterBtn.addEventListener("click", (e) => {
+        const $filterBtn = $("<div>").addClass("csv-filter-btn").text(csvFilters[ci] ? "▼" : "▽");
+        if (csvFilters[ci]) $filterBtn.addClass("csv-filter-active");
+        $filterBtn.on("click", (e) => {
           e.stopPropagation();
-          openFilterMenu(ci, filterBtn);
+          openFilterMenu(ci, $filterBtn[0]);
         });
-        td.appendChild(filterBtn);
+        $td.append($filterBtn);
 
-        const handle = document.createElement("div");
-        handle.className = "csv-col-resize";
-        handle.addEventListener("mousedown", (e) => startColResize(e, ci, colgroup));
-        td.appendChild(handle);
+        const $handle = $("<div>").addClass("csv-col-resize");
+        $handle.on("mousedown", (e) => startColResize(e, ci, $colgroup[0]));
+        $td.append($handle);
       }
 
-      tr.appendChild(td);
+      $tr.append($td);
     });
-    table.appendChild(tr);
+    $table.append($tr);
   });
 
-  csvGridWrap.appendChild(table);
+  $csvGridWrap.append($table);
 }
 
 // --- 필터 드롭다운 메뉴 ---
@@ -274,10 +262,10 @@ let _activeFilterMenu = null;
 
 function closeFilterMenu() {
   if (_activeFilterMenu) {
-    _activeFilterMenu.remove();
+    $(_activeFilterMenu).remove();
     _activeFilterMenu = null;
   }
-  document.removeEventListener("mousedown", _onFilterOutsideClick);
+  $(document).off("mousedown", _onFilterOutsideClick);
 }
 
 function _onFilterOutsideClick(e) {
@@ -289,8 +277,8 @@ function _onFilterOutsideClick(e) {
 function openFilterMenu(colIndex, anchorEl) {
   closeFilterMenu();
 
-  const menu = document.createElement("div");
-  menu.className = "csv-filter-menu";
+  const $menu = $("<div>").addClass("csv-filter-menu");
+  const menu = $menu[0];
   _activeFilterMenu = menu;
 
   // 고유값 추출 (헤더 제외)
@@ -309,98 +297,78 @@ function openFilterMenu(colIndex, anchorEl) {
   const checkedSet = new Set(currentFilter ? currentFilter : uniqueValues);
 
   // -- 정렬 버튼 --
-  const sortSection = document.createElement("div");
-  sortSection.className = "csv-filter-sort";
-  const sortAsc = document.createElement("div");
-  sortAsc.className = "csv-filter-sort-item";
-  sortAsc.textContent = t("csv.sort_asc");
-  sortAsc.addEventListener("click", () => { sortColumn(colIndex, true); closeFilterMenu(); });
-  const sortDesc = document.createElement("div");
-  sortDesc.className = "csv-filter-sort-item";
-  sortDesc.textContent = t("csv.sort_desc");
-  sortDesc.addEventListener("click", () => { sortColumn(colIndex, false); closeFilterMenu(); });
-  sortSection.appendChild(sortAsc);
-  sortSection.appendChild(sortDesc);
-  menu.appendChild(sortSection);
+  const $sortSection = $("<div>").addClass("csv-filter-sort");
+  const $sortAsc = $("<div>").addClass("csv-filter-sort-item").text(t("csv.sort_asc"));
+  $sortAsc.on("click", () => { sortColumn(colIndex, true); closeFilterMenu(); });
+  const $sortDesc = $("<div>").addClass("csv-filter-sort-item").text(t("csv.sort_desc"));
+  $sortDesc.on("click", () => { sortColumn(colIndex, false); closeFilterMenu(); });
+  $sortSection.append($sortAsc).append($sortDesc);
+  $menu.append($sortSection);
 
   // -- 구분선 --
-  menu.appendChild(Object.assign(document.createElement("div"), { className: "csv-filter-divider" }));
+  $menu.append($("<div>").addClass("csv-filter-divider"));
 
   // -- 검색 --
-  const searchInput = document.createElement("input");
-  searchInput.type = "text";
-  searchInput.className = "csv-filter-search";
-  searchInput.placeholder = t("csv.filter_search");
-  menu.appendChild(searchInput);
+  const $searchInput = $("<input>").attr("type", "text").addClass("csv-filter-search").attr("placeholder", t("csv.filter_search"));
+  $menu.append($searchInput);
 
   // -- 구분선 --
-  menu.appendChild(Object.assign(document.createElement("div"), { className: "csv-filter-divider" }));
+  $menu.append($("<div>").addClass("csv-filter-divider"));
 
   // -- 체크박스 목록 --
-  const listWrap = document.createElement("div");
-  listWrap.className = "csv-filter-list";
+  const $listWrap = $("<div>").addClass("csv-filter-list");
 
   // (모두 선택)
-  const allItem = document.createElement("label");
-  allItem.className = "csv-filter-item csv-filter-all";
-  const allCb = document.createElement("input");
-  allCb.type = "checkbox";
-  allCb.checked = checkedSet.size === uniqueValues.length;
-  allItem.appendChild(allCb);
-  allItem.appendChild(document.createTextNode(t("csv.filter_all")));
-  listWrap.appendChild(allItem);
+  const $allItem = $("<label>").addClass("csv-filter-item csv-filter-all");
+  const $allCb = $("<input>").attr("type", "checkbox").prop("checked", checkedSet.size === uniqueValues.length);
+  $allItem.append($allCb).append(document.createTextNode(t("csv.filter_all")));
+  $listWrap.append($allItem);
 
   // 개별 값
   const itemElements = [];
   for (const val of uniqueValues) {
-    const item = document.createElement("label");
-    item.className = "csv-filter-item";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = checkedSet.has(val);
-    cb.dataset.val = val;
-    item.appendChild(cb);
-    item.appendChild(document.createTextNode(val === "" ? t("csv.filter_empty") : val));
-    listWrap.appendChild(item);
-    itemElements.push({ el: item, cb, val });
+    const $item = $("<label>").addClass("csv-filter-item");
+    const $cb = $("<input>").attr("type", "checkbox").prop("checked", checkedSet.has(val)).data("val", val);
+    $cb.attr("data-val", val);
+    $item.append($cb).append(document.createTextNode(val === "" ? t("csv.filter_empty") : val));
+    $listWrap.append($item);
+    itemElements.push({ $el: $item, $cb, val });
   }
-  menu.appendChild(listWrap);
+  $menu.append($listWrap);
 
   // (모두 선택) 토글
-  allCb.addEventListener("change", () => {
-    const visibleItems = itemElements.filter(it => it.el.style.display !== "none");
-    visibleItems.forEach(it => { it.cb.checked = allCb.checked; });
+  $allCb.on("change", () => {
+    const checked = $allCb.prop("checked");
+    const visibleItems = itemElements.filter(it => it.$el.css("display") !== "none");
+    visibleItems.forEach(it => { it.$cb.prop("checked", checked); });
   });
 
   // 개별 체크박스 변경 시 (모두 선택) 업데이트
-  listWrap.addEventListener("change", (e) => {
-    if (e.target === allCb) return;
-    const visibleItems = itemElements.filter(it => it.el.style.display !== "none");
-    allCb.checked = visibleItems.every(it => it.cb.checked);
+  $listWrap.on("change", (e) => {
+    if (e.target === $allCb[0]) return;
+    const visibleItems = itemElements.filter(it => it.$el.css("display") !== "none");
+    $allCb.prop("checked", visibleItems.every(it => it.$cb.prop("checked")));
   });
 
   // 검색 필터링
-  searchInput.addEventListener("input", () => {
-    const q = searchInput.value.toLowerCase();
+  $searchInput.on("input", function() {
+    const q = $(this).val().toLowerCase();
     for (const it of itemElements) {
       const show = !q || it.val.toLowerCase().includes(q);
-      it.el.style.display = show ? "" : "none";
+      it.$el.css("display", show ? "" : "none");
     }
-    const visibleItems = itemElements.filter(it => it.el.style.display !== "none");
-    allCb.checked = visibleItems.length > 0 && visibleItems.every(it => it.cb.checked);
+    const visibleItems = itemElements.filter(it => it.$el.css("display") !== "none");
+    $allCb.prop("checked", visibleItems.length > 0 && visibleItems.every(it => it.$cb.prop("checked")));
   });
 
   // -- 구분선 --
-  menu.appendChild(Object.assign(document.createElement("div"), { className: "csv-filter-divider" }));
+  $menu.append($("<div>").addClass("csv-filter-divider"));
 
   // -- 액션 버튼 --
-  const actions = document.createElement("div");
-  actions.className = "csv-filter-actions";
-  const applyBtn = document.createElement("button");
-  applyBtn.textContent = t("common.apply");
-  applyBtn.className = "csv-filter-apply-btn";
-  applyBtn.addEventListener("click", () => {
-    const selected = new Set(itemElements.filter(it => it.cb.checked).map(it => it.val));
+  const $actions = $("<div>").addClass("csv-filter-actions");
+  const $applyBtn = $("<button>").text(t("common.apply")).addClass("csv-filter-apply-btn");
+  $applyBtn.on("click", () => {
+    const selected = new Set(itemElements.filter(it => it.$cb.prop("checked")).map(it => it.val));
     if (selected.size === uniqueValues.length || selected.size === 0) {
       delete csvFilters[colIndex];
     } else {
@@ -409,19 +377,17 @@ function openFilterMenu(colIndex, anchorEl) {
     closeFilterMenu();
     applyFilters();
   });
-  const resetBtn = document.createElement("button");
-  resetBtn.textContent = t("common.reset");
-  resetBtn.addEventListener("click", () => {
+  const $resetBtn = $("<button>").text(t("common.reset"));
+  $resetBtn.on("click", () => {
     delete csvFilters[colIndex];
     closeFilterMenu();
     applyFilters();
   });
-  actions.appendChild(applyBtn);
-  actions.appendChild(resetBtn);
-  menu.appendChild(actions);
+  $actions.append($applyBtn).append($resetBtn);
+  $menu.append($actions);
 
   // -- 위치 계산 --
-  document.body.appendChild(menu);
+  $("body").append($menu);
   const rect = anchorEl.getBoundingClientRect();
   let top = rect.bottom + 2;
   let left = rect.left;
@@ -430,12 +396,11 @@ function openFilterMenu(colIndex, anchorEl) {
   if (top + menuRect.height > window.innerHeight) top = rect.top - menuRect.height - 2;
   if (left < 0) left = 4;
   if (top < 0) top = 4;
-  menu.style.top = top + "px";
-  menu.style.left = left + "px";
+  $menu.css({ top: top + "px", left: left + "px" });
 
   setTimeout(() => {
-    document.addEventListener("mousedown", _onFilterOutsideClick);
-    searchInput.focus();
+    $(document).on("mousedown", _onFilterOutsideClick);
+    $searchInput.trigger("focus");
   }, 0);
 }
 
@@ -467,16 +432,17 @@ function sortColumn(colIndex, ascending) {
 // --- 열 자동 맞춤 (더블클릭) ---
 function autoFitColumn(colIndex, colgroup) {
   // 실제 DOM input의 scrollWidth로 측정
-  const inputs = csvGridWrap.querySelectorAll(`.csv-cell[data-col="${colIndex}"] input`);
+  const $inputs = $csvGridWrap.find(`.csv-cell[data-col="${colIndex}"] input`);
   let maxW = 40;
-  for (const input of inputs) {
+  $inputs.each(function() {
+    const input = this;
     // 임시로 너비를 줄여 scrollWidth가 실제 콘텐츠 폭을 반환하게 함
     const origW = input.style.width;
     input.style.width = "0";
     const w = input.scrollWidth + 8; // 약간의 여유
     input.style.width = origW;
     if (w > maxW) maxW = w;
-  }
+  });
   maxW = Math.min(maxW, 600);
   csvColWidths[colIndex] = maxW;
   colgroup.children[colIndex + 1].style.width = maxW + "px";
@@ -505,9 +471,8 @@ function startColResize(e, colIndex, colgroup) {
   const startWidth = csvColWidths[colIndex];
   const col = colgroup.children[colIndex + 1]; // +1: rowNum col 건너뛰기
 
-  const overlay = document.createElement("div");
-  overlay.style.cssText = "position:fixed;inset:0;z-index:9999;cursor:col-resize;";
-  document.body.appendChild(overlay);
+  const $overlay = $("<div>").css({ position: "fixed", inset: "0", zIndex: 9999, cursor: "col-resize" });
+  $("body").append($overlay);
 
   function onMove(ev) {
     const diff = ev.clientX - startX;
@@ -517,13 +482,13 @@ function startColResize(e, colIndex, colgroup) {
   }
 
   function onUp() {
-    overlay.remove();
-    document.removeEventListener("mousemove", onMove);
-    document.removeEventListener("mouseup", onUp);
+    $overlay.remove();
+    $(document).off("mousemove", onMove);
+    $(document).off("mouseup", onUp);
   }
 
-  document.addEventListener("mousemove", onMove);
-  document.addEventListener("mouseup", onUp);
+  $(document).on("mousemove", onMove);
+  $(document).on("mouseup", onUp);
 }
 
 // --- 파일 로드 ---
@@ -535,19 +500,19 @@ function loadFile(file) {
     // 구분자 자동 감지
     const firstLine = text.split("\n")[0] || "";
     if (firstLine.split("\t").length > firstLine.split(",").length) {
-      csvDelimiter.value = "\t";
+      $csvDelimiter.val("\t");
     } else {
-      csvDelimiter.value = ",";
+      $csvDelimiter.val(",");
     }
-    csvData = parseCsv(text, csvDelimiter.value);
-    csvEncoding.value = csvDetectedEncoding === "euc-kr" ? "euc-kr"
-      : csvDetectedEncoding === "shift_jis" ? "shift_jis" : "utf-8";
+    csvData = parseCsv(text, $csvDelimiter.val());
+    $csvEncoding.val(csvDetectedEncoding === "euc-kr" ? "euc-kr"
+      : csvDetectedEncoding === "shift_jis" ? "shift_jis" : "utf-8");
     csvColWidths = [];
     csvCurrentSaveId = null;
     clearAllFilters();
     renderGrid();
     setCsvStatus(t("csv.load_done", {name: csvFilename, rows: csvData.length, cols: csvData[0]?.length || 0, detected: csvDetectedEncoding}));
-    csvUploadZone.style.display = "none";
+    $csvUploadZone.hide();
     loadCsvSaves();
   };
   reader.readAsArrayBuffer(file);
@@ -557,8 +522,8 @@ function loadFile(file) {
 async function downloadCsv() {
   if (csvData.length === 0) { setCsvStatus(t("common.no_data"), true); return; }
 
-  const text = serializeCsv(csvData, csvDelimiter.value);
-  const encoding = csvEncoding.value;
+  const text = serializeCsv(csvData, $csvDelimiter.val());
+  const encoding = $csvEncoding.val();
 
   if (encoding === "utf-8") {
     downloadBlob(new Blob([text], { type: "text/csv;charset=utf-8" }));
@@ -591,10 +556,8 @@ async function downloadCsv() {
 
 function downloadBlob(blob) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = csvFilename;
-  a.click();
+  const $a = $("<a>").attr("href", url).attr("download", csvFilename);
+  $a[0].click();
   URL.revokeObjectURL(url);
 }
 
@@ -639,24 +602,25 @@ function addCol(dir) {
 }
 
 // 기본 클릭: 아래/오른쪽 추가
-csvAddRowBtn.addEventListener("click", () => addRow("below"));
-csvAddColBtn.addEventListener("click", () => addCol("right"));
+$csvAddRowBtn.on("click", () => addRow("below"));
+$csvAddColBtn.on("click", () => addCol("right"));
 
 // 드롭다운 메뉴
 function setupSplitMenu(arrowId, menuId, handler) {
-  var arrow = document.getElementById(arrowId);
-  var menu = document.getElementById(menuId);
-  arrow.addEventListener("click", function (e) {
+  var $arrow = $("#" + arrowId);
+  var $menu = $("#" + menuId);
+  $arrow.on("click", function (e) {
     e.stopPropagation();
     // 다른 메뉴 닫기
-    document.querySelectorAll(".csv-split-menu.open").forEach(m => { if (m !== menu) m.classList.remove("open"); });
-    menu.classList.toggle("open");
+    $(".csv-split-menu.open").not($menu).removeClass("open");
+    $menu.toggleClass("open");
   });
-  menu.querySelectorAll("[data-dir]").forEach(function (item) {
-    item.addEventListener("click", function (e) {
+  $menu.find("[data-dir]").each(function () {
+    var $item = $(this);
+    $item.on("click", function (e) {
       e.stopPropagation();
-      menu.classList.remove("open");
-      handler(item.dataset.dir);
+      $menu.removeClass("open");
+      handler($item.data("dir"));
     });
   });
 }
@@ -664,11 +628,11 @@ setupSplitMenu("csvAddRowArrow", "csvAddRowMenu", addRow);
 setupSplitMenu("csvAddColArrow", "csvAddColMenu", addCol);
 
 // 외부 클릭 시 메뉴 닫기
-document.addEventListener("click", function () {
-  document.querySelectorAll(".csv-split-menu.open").forEach(m => m.classList.remove("open"));
+$(document).on("click", function () {
+  $(".csv-split-menu.open").removeClass("open");
 });
 
-csvDelRowBtn.addEventListener("click", () => {
+$csvDelRowBtn.on("click", () => {
   if (csvData.length === 0 || csvFocusRow < 0) { setCsvStatus(t("csv.select_row_delete"), true); return; }
   csvData.splice(csvFocusRow, 1);
   csvFocusRow = Math.min(csvFocusRow, csvData.length - 1);
@@ -677,7 +641,7 @@ csvDelRowBtn.addEventListener("click", () => {
   setCsvStatus(t("csv.row_deleted"));
 });
 
-csvDelColBtn.addEventListener("click", () => {
+$csvDelColBtn.on("click", () => {
   if (csvData.length === 0 || csvFocusCol < 0) { setCsvStatus(t("csv.select_col_delete"), true); return; }
   // 해당 열의 필터 제거
   delete csvFilters[csvFocusCol];
@@ -697,11 +661,11 @@ csvDelColBtn.addEventListener("click", () => {
   setCsvStatus(t("csv.col_deleted"));
 });
 
-csvDownloadBtn.addEventListener("click", downloadCsv);
+$csvDownloadBtn.on("click", downloadCsv);
 
 // --- 임시저장 ---
-const csvSaveBtn = document.getElementById("csvSaveBtn");
-const csvSavesBody = document.querySelector("#csvSavesTable tbody");
+const $csvSaveBtn = $("#csvSaveBtn");
+const $csvSavesBody = $("#csvSavesTable tbody");
 let csvCurrentSaveId = null;
 
 async function saveCsv() {
@@ -714,8 +678,8 @@ async function saveCsv() {
   const payload = {
     name,
     data: csvData,
-    delimiter: csvDelimiter.value,
-    encoding: csvEncoding.value,
+    delimiter: $csvDelimiter.val(),
+    encoding: $csvEncoding.val(),
     col_widths: csvColWidths,
   };
 
@@ -750,16 +714,16 @@ async function loadCsvSaves() {
   try {
     const r = await fetch("/api/csv/saves");
     const res = await r.json();
-    csvSavesBody.innerHTML = "";
+    $csvSavesBody.html("");
     if (!res.items || res.items.length === 0) {
-      csvSavesBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);">${t("csv.no_saved")}</td></tr>`;
+      $csvSavesBody.html(`<tr><td colspan="6" style="text-align:center;color:var(--muted);">${t("csv.no_saved")}</td></tr>`);
       return;
     }
     const delimLabel = (d) => d === "\t" ? t("csv.tab_label") : t("csv.comma_label");
     for (const item of res.items) {
-      const tr = document.createElement("tr");
-      if (csvCurrentSaveId === item.id) tr.classList.add("csv-save-active");
-      tr.innerHTML = `
+      const $tr = $("<tr>");
+      if (csvCurrentSaveId === item.id) $tr.addClass("csv-save-active");
+      $tr.html(`
         <td>${item.id}</td>
         <td>${escapeHtml(item.name)}</td>
         <td>${delimLabel(item.delimiter)}</td>
@@ -769,14 +733,15 @@ async function loadCsvSaves() {
           <button class="csv-load-btn" data-id="${item.id}">${t("common.load")}</button>
           <button class="csv-delete-btn" data-id="${item.id}">${t("common.delete")}</button>
         </td>
-      `;
-      csvSavesBody.appendChild(tr);
+      `);
+      $csvSavesBody.append($tr);
     }
-    csvSavesBody.querySelectorAll(".csv-load-btn").forEach((btn) => {
-      btn.addEventListener("click", () => loadCsvSave(parseInt(btn.dataset.id)));
+    // Event delegation for save table buttons
+    $csvSavesBody.off("click", ".csv-load-btn").on("click", ".csv-load-btn", function() {
+      loadCsvSave(parseInt($(this).data("id")));
     });
-    csvSavesBody.querySelectorAll(".csv-delete-btn").forEach((btn) => {
-      btn.addEventListener("click", () => deleteCsvSave(parseInt(btn.dataset.id)));
+    $csvSavesBody.off("click", ".csv-delete-btn").on("click", ".csv-delete-btn", function() {
+      deleteCsvSave(parseInt($(this).data("id")));
     });
   } catch (e) {
     setCsvStatus(t("common.load_fail") + `: ${e.message}`, true);
@@ -790,13 +755,13 @@ async function loadCsvSave(id) {
     if (!r.ok) { setCsvStatus(res.error || t("common.load_fail"), true); return; }
     csvData = res.data;
     csvFilename = res.name;
-    csvDelimiter.value = res.delimiter;
-    csvEncoding.value = res.encoding;
+    $csvDelimiter.val(res.delimiter);
+    $csvEncoding.val(res.encoding);
     if (res.col_widths) csvColWidths = res.col_widths;
     else csvColWidths = [];
     csvCurrentSaveId = id;
     clearAllFilters();
-    csvUploadZone.style.display = "none";
+    $csvUploadZone.hide();
     renderGrid();
     setCsvStatus(t("csv.load_item_done", {name: res.name, rows: csvData.length, cols: csvData[0]?.length || 0}));
     loadCsvSaves();
@@ -821,21 +786,21 @@ async function deleteCsvSave(id) {
   }
 }
 
-csvSaveBtn.addEventListener("click", saveCsv);
+$csvSaveBtn.on("click", saveCsv);
 i18nReady(loadCsvSaves);
-window.addEventListener("langchange", loadCsvSaves);
+$(window).on("langchange", loadCsvSaves);
 
 // --- 셀 선택 & 복사 ---
 function clearCsvSelection() {
   csvSelectedCells = [];
-  csvGridWrap.querySelectorAll(".csv-cell-selected").forEach((el) => el.classList.remove("csv-cell-selected"));
+  $csvGridWrap.find(".csv-cell-selected").removeClass("csv-cell-selected");
 }
 
 function applyCsvSelection() {
-  csvGridWrap.querySelectorAll(".csv-cell-selected").forEach((el) => el.classList.remove("csv-cell-selected"));
+  $csvGridWrap.find(".csv-cell-selected").removeClass("csv-cell-selected");
   for (const { row, col } of csvSelectedCells) {
-    const td = csvGridWrap.querySelector(`.csv-cell[data-row="${row}"][data-col="${col}"]`);
-    if (td) td.classList.add("csv-cell-selected");
+    const $td = $csvGridWrap.find(`.csv-cell[data-row="${row}"][data-col="${col}"]`);
+    $td.addClass("csv-cell-selected");
   }
 }
 
@@ -885,7 +850,7 @@ function toggleCellSelection(row, col) {
   setCsvStatus(t("csv.cells_selected", {count: csvSelectedCells.length}));
 }
 
-csvGridWrap.addEventListener("keydown", (e) => {
+$csvGridWrap.on("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "c" && csvSelectedCells.length > 0) {
     e.preventDefault();
     // 선택된 셀을 행/열 기준으로 정렬 후 TSV 포맷으로 복사
@@ -905,30 +870,30 @@ csvGridWrap.addEventListener("keydown", (e) => {
 });
 
 // --- 파일 업로드 이벤트 ---
-csvUploadZone.addEventListener("click", () => csvFileInput.click());
-csvFileInput.addEventListener("change", () => {
-  if (csvFileInput.files[0]) loadFile(csvFileInput.files[0]);
+$csvUploadZone.on("click", () => $csvFileInput.trigger("click"));
+$csvFileInput.on("change", function() {
+  if (this.files[0]) loadFile(this.files[0]);
 });
-const csvFileInput2 = document.getElementById("csvFileInput2");
-csvFileInput2.addEventListener("change", () => {
-  if (csvFileInput2.files[0]) loadFile(csvFileInput2.files[0]);
-  csvFileInput2.value = "";
+const $csvFileInput2 = $("#csvFileInput2");
+$csvFileInput2.on("change", function() {
+  if (this.files[0]) loadFile(this.files[0]);
+  $(this).val("");
 });
-csvUploadZone.addEventListener("dragover", (e) => {
+$csvUploadZone.on("dragover", (e) => {
   e.preventDefault();
-  csvUploadZone.classList.add("dragover");
+  $csvUploadZone.addClass("dragover");
 });
-csvUploadZone.addEventListener("dragleave", () => {
-  csvUploadZone.classList.remove("dragover");
+$csvUploadZone.on("dragleave", () => {
+  $csvUploadZone.removeClass("dragover");
 });
-csvUploadZone.addEventListener("drop", (e) => {
+$csvUploadZone.on("drop", (e) => {
   e.preventDefault();
-  csvUploadZone.classList.remove("dragover");
-  if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  $csvUploadZone.removeClass("dragover");
+  if (e.originalEvent.dataTransfer.files[0]) loadFile(e.originalEvent.dataTransfer.files[0]);
 });
 
 // --- 초기화 ---
-document.getElementById("csvResetBtn").addEventListener("click", function () {
+$("#csvResetBtn").on("click", function () {
   if (csvData.length > 0 && !confirm(t("csv.confirm_reset"))) return;
   csvData = [];
   csvFilename = "data.csv";
@@ -939,8 +904,8 @@ document.getElementById("csvResetBtn").addEventListener("click", function () {
   csvSelectedCells = [];
   csvSelAnchor = null;
   clearAllFilters();
-  csvGridWrap.innerHTML = "";
-  csvUploadZone.style.display = "";
+  $csvGridWrap.html("");
+  $csvUploadZone.css("display", "");
   setCsvStatus(t("csv.reset_done"));
 });
 
@@ -950,23 +915,23 @@ function loadFromClipboardText(text) {
   // 구분자 자동 감지 (탭 vs 콤마)
   const firstLine = text.split("\n")[0] || "";
   if (firstLine.split("\t").length > firstLine.split(",").length) {
-    csvDelimiter.value = "\t";
+    $csvDelimiter.val("\t");
   } else {
-    csvDelimiter.value = ",";
+    $csvDelimiter.val(",");
   }
-  csvData = parseCsv(text, csvDelimiter.value);
+  csvData = parseCsv(text, $csvDelimiter.val());
   csvColWidths = [];
   csvCurrentSaveId = null;
   csvFilename = "clipboard.csv";
   clearAllFilters();
   renderGrid();
   setCsvStatus(t("csv.paste_done", {rows: csvData.length, cols: csvData[0]?.length || 0}));
-  csvUploadZone.style.display = "none";
+  $csvUploadZone.hide();
   loadCsvSaves();
 }
 
 // --- 중복 분석 ---
-document.getElementById("csvDupCheckBtn").addEventListener("click", function () {
+$("#csvDupCheckBtn").on("click", function () {
   if (csvData.length <= 1) { setCsvStatus(t("csv.no_data_analysis"), true); return; }
 
   // 선택된 열 추출 (선택된 셀의 고유 열 인덱스)
@@ -1010,16 +975,16 @@ document.getElementById("csvDupCheckBtn").addEventListener("click", function () 
   setCsvStatus(t("csv.dup_done", {desc: header.slice(0, -1).join(", ") + " — " + entries.length + "/" + dataRows.length}));
 });
 
-document.addEventListener("paste", function (e) {
+$(document).on("paste", function (e) {
   // CSV 탭이 활성화 상태인지 확인
-  var csvTab = document.querySelector('.tab-content[data-tab="csv"]');
-  if (!csvTab || !csvTab.classList.contains("active")) return;
+  var $csvTab = $('.tab-content[data-tab="csv"]');
+  if (!$csvTab.length || !$csvTab.hasClass("active")) return;
 
   // 이미 그리드 셀을 편집 중이면 무시 (셀 내부 붙여넣기)
   var active = document.activeElement;
-  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") && active.closest("#csvGridWrap")) return;
+  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") && $(active).closest("#csvGridWrap").length) return;
 
-  var text = (e.clipboardData || window.clipboardData).getData("text");
+  var text = (e.originalEvent.clipboardData || window.clipboardData).getData("text");
   if (!text || !text.trim()) return;
 
   // 최소 2개 이상의 셀이 있는 데이터인지 확인 (탭이나 콤마 포함)
@@ -1028,3 +993,4 @@ document.addEventListener("paste", function (e) {
     loadFromClipboardText(text);
   }
 });
+})();
