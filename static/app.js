@@ -15,21 +15,15 @@ lucide.createIcons();
 // AI Provider 드롭다운 공통 로딩
 var _aiProvidersCache = null;
 function loadAiProviders(selectEl, callback) {
-  if (!selectEl) return;
+  var $sel = $(selectEl);
+  if (!$sel.length) return;
   function populate(providers) {
-    selectEl.innerHTML = "";
+    $sel.empty();
     if (!providers || providers.length === 0) {
-      var opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "No AI Key";
-      opt.disabled = true;
-      selectEl.appendChild(opt);
+      $sel.append($("<option>").val("").text("No AI Key").prop("disabled", true));
     } else {
       providers.forEach(function (p) {
-        var opt = document.createElement("option");
-        opt.value = p.id;
-        opt.textContent = p.label;
-        selectEl.appendChild(opt);
+        $sel.append($("<option>").val(p.id).text(p.label));
       });
     }
     if (callback) callback(providers);
@@ -38,112 +32,106 @@ function loadAiProviders(selectEl, callback) {
     populate(_aiProvidersCache);
     return;
   }
-  fetch("/api/ai/providers").then(function (r) { return r.json(); }).then(function (data) {
+  $.getJSON("/api/ai/providers").done(function (data) {
     _aiProvidersCache = data.ok ? data.providers : [];
     populate(_aiProvidersCache);
-  }).catch(function () { populate([]); });
+  }).fail(function () { populate([]); });
 }
 function refreshAiProviders() {
   _aiProvidersCache = null;
-  document.querySelectorAll(".ai-provider-select").forEach(function (sel) {
-    loadAiProviders(sel);
+  $(".ai-provider-select").each(function () {
+    loadAiProviders(this);
   });
 }
 
 // 사이드바 접기/펼기
 (function initSidebarToggle() {
-  const sidebar = document.getElementById("sidebar");
-  const toggleBtn = document.getElementById("sidebarToggle");
-  const collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+  var $sidebar = $("#sidebar");
+  var $toggleBtn = $("#sidebarToggle");
+  var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
 
   // 툴팁용 data-tooltip 속성 세팅
-  document.querySelectorAll(".nav-btn").forEach((btn) => {
-    const label = btn.querySelector(".nav-label");
-    if (label) btn.setAttribute("data-tooltip", label.textContent.trim());
+  $(".nav-btn").each(function () {
+    var $label = $(this).find(".nav-label");
+    if ($label.length) $(this).attr("data-tooltip", $label.text().trim());
   });
 
   function setSidebarState(collapse) {
-    sidebar.classList.toggle("collapsed", collapse);
+    $sidebar.toggleClass("collapsed", collapse);
     localStorage.setItem("sidebarCollapsed", collapse);
     // 토글 아이콘 변경 — lucide.createIcons()가 <i>를 <svg>로 변환하므로
     // 기존 svg를 제거하고 새 <i>를 삽입한 뒤 다시 createIcons 호출
-    const oldIcon = toggleBtn.querySelector("svg") || toggleBtn.querySelector("i");
-    if (oldIcon) oldIcon.remove();
-    const newIcon = document.createElement("i");
+    $toggleBtn.find("svg, i").remove();
+    var newIcon = document.createElement("i");
     newIcon.setAttribute("data-lucide", collapse ? "chevrons-right" : "chevrons-left");
-    toggleBtn.appendChild(newIcon);
+    $toggleBtn.append(newIcon);
     lucide.createIcons({ nodes: [newIcon] });
-    toggleBtn.title = collapse ? "사이드바 펼치기" : "사이드바 접기";
+    $toggleBtn.attr("title", collapse ? "사이드바 펼치기" : "사이드바 접기");
   }
 
   if (collapsed) setSidebarState(true);
-  toggleBtn.addEventListener("click", () => {
-    setSidebarState(!sidebar.classList.contains("collapsed"));
+  $toggleBtn.on("click", function () {
+    setSidebarState(!$sidebar.hasClass("collapsed"));
   });
 })();
 
 // 네비게이션 전환
 function switchTab(tabName) {
-  document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
-  const btn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
-  if (btn) btn.classList.add("active");
-  const content = document.querySelector(`.tab-content[data-tab="${tabName}"]`);
-  if (content) content.classList.add("active");
+  $(".nav-btn").removeClass("active");
+  $(".tab-content").removeClass("active");
+  var $btn = $(".nav-btn[data-tab='" + tabName + "']");
+  if ($btn.length) $btn.addClass("active");
+  var $content = $(".tab-content[data-tab='" + tabName + "']");
+  if ($content.length) $content.addClass("active");
   localStorage.setItem("activeTab", tabName);
 }
 
-document.querySelectorAll(".nav-btn").forEach((btn) => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+$(document).on("click", ".nav-btn", function () {
+  switchTab($(this).data("tab"));
 });
 
 // 탭 설정 적용 (개발자 모드에서 저장한 이름/순서/표시 반영)
-async function applyTabConfig() {
-  try {
-    const res = await fetch("/api/dev/tabs");
-    const data = await res.json();
+function applyTabConfig() {
+  return $.getJSON("/api/dev/tabs").then(function (data) {
     if (!data.ok) return;
-    const tabs = data.tabs.sort((a, b) => a.order - b.order);
-    const nav = document.querySelector(".nav");
-    tabs.forEach((tab) => {
-      const btn = nav.querySelector(`.nav-btn[data-tab="${tab.id}"]`);
-      const content = document.querySelector(`.tab-content[data-tab="${tab.id}"]`);
-      if (!btn) return;
-      const navLabel = btn.querySelector(".nav-label");
-      if (navLabel) {
-        navLabel.textContent = tab.label;
-        navLabel.removeAttribute("data-i18n");
-        btn.setAttribute("data-tooltip", tab.label);
-        btn.removeAttribute("data-i18n-tooltip");
+    var tabs = data.tabs.sort(function (a, b) { return a.order - b.order; });
+    var $nav = $(".nav");
+    tabs.forEach(function (tab) {
+      var $btn = $nav.find(".nav-btn[data-tab='" + tab.id + "']");
+      var $content = $(".tab-content[data-tab='" + tab.id + "']");
+      if (!$btn.length) return;
+      var $navLabel = $btn.find(".nav-label");
+      if ($navLabel.length) {
+        $navLabel.text(tab.label).removeAttr("data-i18n");
+        $btn.attr("data-tooltip", tab.label).removeAttr("data-i18n-tooltip");
       } else {
-        btn.textContent = tab.label;
-        btn.removeAttribute("data-i18n");
+        $btn.text(tab.label).removeAttr("data-i18n");
       }
-      btn.style.display = tab.visible ? "" : "none";
-      if (content) {
-        content.style.display = tab.visible ? "" : "none";
-        const h2 = content.querySelector("section.panel > h2");
-        if (h2) {
-          h2.removeAttribute("data-i18n");
-          const textNode = [...h2.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-          if (textNode) textNode.textContent = tab.label + " ";
-          else if (!h2.querySelector("span, button")) h2.textContent = tab.label;
+      $btn.css("display", tab.visible ? "" : "none");
+      if ($content.length) {
+        $content.css("display", tab.visible ? "" : "none");
+        var $h2 = $content.find("section.panel > h2");
+        if ($h2.length) {
+          $h2.removeAttr("data-i18n");
+          var textNode = $h2.contents().filter(function () { return this.nodeType === 3; }).first();
+          if (textNode.length) textNode[0].textContent = tab.label + " ";
+          else if (!$h2.find("span, button").length) $h2.text(tab.label);
         }
       }
     });
     // DOM 순서 재정렬 — DEV 버튼과 구분선 앞에 삽입
-    const divider = nav.querySelector(".nav-divider");
-    tabs.forEach((tab) => {
-      const btn = nav.querySelector(`.nav-btn[data-tab="${tab.id}"]`);
-      if (btn && divider) nav.insertBefore(btn, divider);
+    var $divider = $nav.find(".nav-divider");
+    tabs.forEach(function (tab) {
+      var $btn = $nav.find(".nav-btn[data-tab='" + tab.id + "']");
+      if ($btn.length && $divider.length) $divider.before($btn);
     });
-  } catch (_) { /* 서버 미실행 시 무시 */ }
+  }).fail(function () { /* 서버 미실행 시 무시 */ });
 }
 
 // 마지막 선택 탭 복원 + 탭 설정 적용
-applyTabConfig().then(() => {
-  const savedTab = localStorage.getItem("activeTab");
-  if (savedTab && document.querySelector(`.nav-btn[data-tab="${savedTab}"]`)) {
+applyTabConfig().then(function () {
+  var savedTab = localStorage.getItem("activeTab");
+  if (savedTab && $(".nav-btn[data-tab='" + savedTab + "']").length) {
     switchTab(savedTab);
   }
 });
@@ -165,9 +153,8 @@ var _toastMaxStack = 5;
 
 function _initToastContainer() {
   if (_toastContainer) return;
-  _toastContainer = document.createElement("div");
-  _toastContainer.className = "toast-container toast-" + _toastConfig.position + " toast-size-" + _toastConfig.size;
-  document.body.appendChild(_toastContainer);
+  _toastContainer = $("<div>").addClass("toast-container toast-" + _toastConfig.position + " toast-size-" + _toastConfig.size)
+    .appendTo("body")[0];
 }
 
 function _updateToastPosition() {
@@ -176,7 +163,7 @@ function _updateToastPosition() {
 }
 
 function loadToastConfig() {
-  fetch("/api/dev/site-config").then(function (r) { return r.json(); }).then(function (data) {
+  $.getJSON("/api/dev/site-config").done(function (data) {
     if (data.ok && data.config && data.config.toast_config) {
       try {
         var cfg = typeof data.config.toast_config === "string"
@@ -188,63 +175,61 @@ function loadToastConfig() {
         _updateToastPosition();
       } catch (_) {}
     }
-  }).catch(function () {});
+  });
 }
 
 function showToast(message, type) {
   type = type || "info";
   _initToastContainer();
+  var $container = $(_toastContainer);
 
   // Replace mode: remove existing toasts
   if (_toastConfig.mode === "replace") {
-    while (_toastContainer.firstChild) {
-      _toastContainer.removeChild(_toastContainer.firstChild);
-    }
+    $container.empty();
   }
 
   // Stack mode: limit max
   if (_toastConfig.mode === "stack") {
-    var existing = _toastContainer.querySelectorAll(".toast");
-    if (existing.length >= _toastMaxStack) {
-      existing[0].remove();
+    var $existing = $container.find(".toast");
+    if ($existing.length >= _toastMaxStack) {
+      $existing.first().remove();
     }
   }
 
   var iconName = type === "success" ? "check-circle" : type === "error" ? "alert-circle" : "info";
 
-  var toast = document.createElement("div");
-  toast.className = "toast toast-" + type;
-  toast.innerHTML =
-    '<i data-lucide="' + iconName + '" class="toast-icon"></i>' +
-    '<span class="toast-message">' + escapeHtml(message) + '</span>' +
-    '<button class="toast-close">&times;</button>';
+  var $toast = $("<div>").addClass("toast toast-" + type)
+    .html('<i data-lucide="' + iconName + '" class="toast-icon"></i>' +
+      '<span class="toast-message">' + escapeHtml(message) + '</span>' +
+      '<button class="toast-close">&times;</button>');
 
-  _toastContainer.appendChild(toast);
-  lucide.createIcons({ nodes: [toast.querySelector("i")] });
+  $container.append($toast);
+  lucide.createIcons({ nodes: [$toast.find("i")[0]] });
 
   // Trigger enter animation
   requestAnimationFrame(function () {
-    toast.classList.add("toast-show");
+    $toast.addClass("toast-show");
   });
 
   // Close button
-  toast.querySelector(".toast-close").addEventListener("click", function () {
-    _dismissToast(toast);
+  $toast.find(".toast-close").on("click", function () {
+    _dismissToast($toast[0]);
   });
 
   // Auto-dismiss (error = 2x duration)
   var duration = _toastConfig.duration * 1000;
   if (type === "error") duration *= 2;
   setTimeout(function () {
-    _dismissToast(toast);
+    _dismissToast($toast[0]);
   }, duration);
 }
 
 function _dismissToast(toast) {
   if (!toast || !toast.parentNode) return;
-  toast.classList.add("toast-hide");
-  toast.addEventListener("animationend", function () {
-    if (toast.parentNode) toast.remove();
+  var $toast = $(toast);
+  $toast.addClass("toast-hide");
+  $toast.on("animationend", function () {
+    $toast.remove();
   });
 }
 
