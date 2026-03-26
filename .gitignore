@@ -24,7 +24,8 @@ static/vendor/
 node_modules/
 
 # Custom plugins (user-specific)
-custom/
+custom/*
+!custom/.gitkeep
 
 # Misc
 static/CLAUDE.md
