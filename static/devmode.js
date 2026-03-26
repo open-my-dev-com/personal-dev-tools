@@ -925,7 +925,7 @@ function applySiteName(name) {
         $pluginListEl.append($card);
       });
 
-      if (window.lucide) lucide.createIcons({ nameAttr: "data-lucide", attrs: {}, icons: {} });
+      if (window.lucide) lucide.createIcons();
     } catch (e) {
       $pluginListEl.html('<p class="desc">Failed to load plugins</p>');
     }
