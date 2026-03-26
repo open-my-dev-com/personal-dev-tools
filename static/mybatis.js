@@ -1,18 +1,18 @@
 // ── MyBatis 로그 변환 ──
 (function () {
-  var queryInput = document.getElementById("mybatisQuery");
-  var paramsInput = document.getElementById("mybatisParams");
-  var convertBtn = document.getElementById("mybatisConvertBtn");
-  var stripComments = document.getElementById("mybatisStripComments");
-  var formatSql = document.getElementById("mybatisFormatSql");
-  var statusEl = document.getElementById("mybatisStatus");
-  var resultEl = document.getElementById("mybatisResult");
+  var $queryInput = $("#mybatisQuery");
+  var $paramsInput = $("#mybatisParams");
+  var $convertBtn = $("#mybatisConvertBtn");
+  var $stripComments = $("#mybatisStripComments");
+  var $formatSql = $("#mybatisFormatSql");
+  var $statusEl = $("#mybatisStatus");
+  var $resultEl = $("#mybatisResult");
 
-  if (!queryInput || !convertBtn) return;
+  if (!$queryInput.length || !$convertBtn.length) return;
 
   function setStatus(msg, isError) {
-    statusEl.textContent = msg;
-    statusEl.style.color = isError ? "var(--danger)" : "";
+    $statusEl.text(msg);
+    $statusEl.css("color", isError ? "var(--danger)" : "");
   }
 
   // "==>  Preparing: " 또는 "==> Parameters: " 앞의 모든 문자열 포함 제거
@@ -206,15 +206,13 @@
 
   // HTML 이스케이프
   function esc(s) {
-    var d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
+    return $("<div>").text(s).html();
   }
 
   // 변환 실행
   function convert() {
-    var rawQuery = queryInput.value.trim();
-    var rawParams = paramsInput.value.trim();
+    var rawQuery = $queryInput.val().trim();
+    var rawParams = $paramsInput.val().trim();
 
     if (!rawQuery) {
       setStatus(t("mybatis.sql_required"), true);
@@ -230,10 +228,10 @@
     var bound = bindParams(sql, params);
 
     // 옵션 적용
-    if (stripComments.checked) {
+    if ($stripComments.prop("checked")) {
       bound = stripSqlComments(bound);
     }
-    if (formatSql.checked) {
+    if ($formatSql.prop("checked")) {
       bound = formatSqlText(bound);
     }
 
@@ -243,14 +241,14 @@
       : t("mybatis.no_params");
     setStatus(paramInfo);
 
-    resultEl.innerHTML =
+    $resultEl.html(
       '<div class="mybatis-query-block" style="position:relative">' +
       '<pre><code>' + esc(bound) + '</code></pre>' +
       '<button type="button" class="mybatis-copy-btn">' + t("common.copy") + '</button>' +
-      "</div>";
+      "</div>");
 
     // 복사 버튼
-    resultEl.querySelector(".mybatis-copy-btn").addEventListener("click", function () {
+    $resultEl.find(".mybatis-copy-btn").on("click", function () {
       navigator.clipboard.writeText(bound).then(function () {
         setStatus(t("mybatis.copied"));
         showToast(t("mybatis.copied"), "success");
@@ -259,20 +257,20 @@
   }
 
   // 이벤트
-  convertBtn.addEventListener("click", convert);
+  $convertBtn.on("click", convert);
 
   // Ctrl+Enter로 변환
-  queryInput.addEventListener("keydown", function (e) {
+  $queryInput.on("keydown", function (e) {
     if (e.ctrlKey && e.key === "Enter") { e.preventDefault(); convert(); }
   });
-  paramsInput.addEventListener("keydown", function (e) {
+  $paramsInput.on("keydown", function (e) {
     if (e.ctrlKey && e.key === "Enter") { e.preventDefault(); convert(); }
   });
 
   // 쿼리 textarea에 통합 로그를 붙여넣으면 자동 분리
-  queryInput.addEventListener("paste", function (e) {
+  $queryInput.on("paste", function (e) {
     setTimeout(function () {
-      var text = queryInput.value;
+      var text = $queryInput.val();
       var hasQuery = /==>[\s]*Preparing[\s]*:/i.test(text);
       var hasParams = /==>[\s]*Parameters[\s]*:/i.test(text);
 
@@ -290,9 +288,9 @@
           }
         }
 
-        queryInput.value = queryLines.join("\n").trim();
-        paramsInput.value = paramLines.join("\n").trim();
-        paramsInput.focus();
+        $queryInput.val(queryLines.join("\n").trim());
+        $paramsInput.val(paramLines.join("\n").trim());
+        $paramsInput.trigger("focus");
         setStatus(t("mybatis.auto_split"));
       }
     }, 0);
