@@ -67,6 +67,8 @@ python server.py                 # Windows
 
 Open `http://127.0.0.1:8080` in your browser.
 
+![Preview](images/preview-english.png)
+
 ```bash
 # Options
 python3 server.py --port 9090        # Change port
@@ -81,7 +83,6 @@ You can skip this step if you don't need AI features.
 **Supported AI Providers**: OpenAI, Google Gemini, Anthropic Claude, xAI Grok
 
 Register your API key via the onboarding wizard on first run, or later in **DEV > Module Settings**.
-Environment variables (`.env`) are also supported as fallback: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `GROK_API_KEY`
 
 ### Offline Usage
 
@@ -123,7 +124,6 @@ The following packages are auto-installed on first server run:
 │   └── vendor/         # CDN library local cache (gitignore)
 ├── dev-tool.db         # SQLite database (auto-generated, gitignore)
 ├── logs/               # Server logs (gitignore)
-└── .env                # Environment variables (gitignore)
 ```
 
 ## Logs

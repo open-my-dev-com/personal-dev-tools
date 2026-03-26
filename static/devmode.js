@@ -283,6 +283,7 @@ function applySiteName(name) {
     else if (sec === "tabs") loadTabManager();
     else if (sec === "modules") loadModuleSettings();
     else if (sec === "cdn") loadCdnManager();
+    else if (sec === "plugins") loadPluginManager();
   }
 
   // ══════════════════════════════════
@@ -870,6 +871,71 @@ function applySiteName(name) {
       showToast(t("common.save_fail") + ": " + e.message, "error");
     }
   });
+
+  // ══════════════════════════════════
+  // 플러그인 관리
+  // ══════════════════════════════════
+  const pluginListEl = document.getElementById("devPluginList");
+
+  async function loadPluginManager() {
+    if (!pluginListEl) return;
+    try {
+      const res = await fetch("/api/custom/plugins");
+      const data = await res.json();
+      if (!data.ok) return;
+
+      pluginListEl.innerHTML = "";
+
+      if (data.plugins.length === 0) {
+        pluginListEl.innerHTML = '<p class="desc">' + t("dev.plugins_empty") + '</p>';
+        return;
+      }
+
+      data.plugins.forEach(function (plugin) {
+        var card = document.createElement("div");
+        card.className = "plugin-card";
+        card.innerHTML =
+          '<div class="plugin-card-header">' +
+            '<div class="plugin-card-info">' +
+              '<i data-lucide="' + (plugin.icon || "puzzle") + '"></i>' +
+              '<div>' +
+                '<strong>' + escapeHtml(plugin.name) + '</strong>' +
+                '<span class="plugin-version">v' + escapeHtml(plugin.version) + '</span>' +
+                (plugin.author ? '<span class="plugin-author"> · ' + escapeHtml(plugin.author) + '</span>' : '') +
+              '</div>' +
+            '</div>' +
+            '<label class="plugin-toggle">' +
+              '<input type="checkbox" ' + (plugin.enabled ? 'checked' : '') + ' data-plugin-id="' + plugin.id + '">' +
+              '<span class="plugin-toggle-slider"></span>' +
+            '</label>' +
+          '</div>' +
+          (plugin.description ? '<p class="plugin-desc">' + escapeHtml(plugin.description) + '</p>' : '');
+
+        var checkbox = card.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener("change", async function () {
+          var enabled = this.checked;
+          var pid = this.dataset.pluginId;
+          try {
+            await fetch("/api/custom/plugins/toggle", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: pid, enabled: enabled })
+            });
+            showToast(enabled ? t("dev.plugins_enabled") : t("dev.plugins_disabled"), "success");
+          } catch (e) {
+            showToast("Toggle failed", "error");
+            this.checked = !enabled;
+          }
+        });
+
+        pluginListEl.appendChild(card);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    } catch (e) {
+      pluginListEl.innerHTML = '<p class="desc">Failed to load plugins</p>';
+    }
+  }
 
   // ══════════════════════════════════
   // CDN 관리

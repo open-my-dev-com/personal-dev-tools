@@ -621,6 +621,16 @@
   "dev.sec_tabs": "Tab Manager",
   "dev.sec_modules": "Module Settings",
   "dev.sec_cdn": "CDN Manager",
+  "dev.sec_plugins": "Plugins",
+  "dev.plugins_title": "Custom Plugins",
+  "dev.plugins_desc": "Manage plugins in the custom/ directory.",
+  "dev.plugins_hint": "Refresh the page after changes.",
+  "dev.plugins_empty": "No plugins found in custom/ directory.",
+  "dev.plugins_enabled": "Plugin enabled.",
+  "dev.plugins_disabled": "Plugin disabled.",
+  "nav.main_section": "Main Tools",
+  "nav.custom_section": "Plugins",
+  "nav.system_section": "System",
   "dev.general_desc": "Change site general settings.",
   "dev.site_info": "Site Info",
   "dev.site_name": "Toolkit Name",
@@ -829,5 +839,9 @@
   "tutorial.pdfconvert_guide": "<h4>How to Use PDF Converter</h4><ol><li>Drag and drop files or click to upload.</li><li>Set options like paper size, orientation, and margins.</li><li>Click <code>Convert to PDF</code> for individual files or <code>Merge into one PDF</code> to combine.</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 Tip</p><p> Markdown files can be loaded directly from saved items.</p></div>",
   "tutorial.diffcompare_guide": "<h4>How to Use Diff Compare</h4><ol><li>Select comparison mode from the top tabs: <code>Text</code>, <code>File</code>, or <code>Folder</code>.</li><li>Paste content into both sides and click <code>Compare</code>.</li><li>Click a change block to select it, then use <code>Alt+Left/Right</code> to apply to one side.</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 Tip</p><p> Use Alt+Up/Down to quickly navigate between change blocks.</p></div>",
   "tutorial.git_guide": "<h4>How to Use Git Manager</h4><ol><li>Enter a repository path or use <code>Select Folder</code> to choose a Git repository.</li><li>Check the files to commit from the changed files list and enter a message.</li><li>Click <code>Commit</code> to commit. You can also switch branches or create new ones.</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 Tip</p><p> Register commit message templates to auto-replace variables like {branch} and {date}.</p></div>",
-  "tutorial.dataai_guide": "<h4>How to Use Data AI</h4><ol><li>Describe the data you want in natural language (e.g. 'User list 50 rows with name/email/age').</li><li>Set the <code>Output format</code> (CSV, JSON, TSV) and <code>Count</code>.</li><li>Click <code>Generate</code> and AI will create the data for you.</li><li>Send results to CSV Editor or JSON Format, or save to DB.</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 Tip</p><p> The more specific your description (column names, value ranges, etc.), the more accurate the data.</p></div>"
+  "tutorial.dataai_guide": "<h4>How to Use Data AI</h4><ol><li>Describe the data you want in natural language (e.g. 'User list 50 rows with name/email/age').</li><li>Set the <code>Output format</code> (CSV, JSON, TSV) and <code>Count</code>.</li><li>Click <code>Generate</code> and AI will create the data for you.</li><li>Send results to CSV Editor or JSON Format, or save to DB.</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 Tip</p><p> The more specific your description (column names, value ranges, etc.), the more accurate the data.</p></div>",
+  "tutorial.plugin_section": "Other",
+  "tutorial.plugin_title": "Custom Plugins",
+  "tutorial.plugin_desc": "Add your own tools with the plugin system. Plugins are gitignored and managed privately.",
+  "tutorial.plugin_guide": "<h4>Creating a Plugin</h4><ol><li>Copy <code>custom_template/example-tool/</code> to the <code>custom/</code> directory.</li><li>Edit <code>manifest.json</code> to set name, icon, and description.</li><li>Build UI with <code>template.html</code>, logic with <code>main.js</code>, and server API with <code>routes.py</code>.</li><li>Restart the server and it will appear in the sidebar automatically.</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 Tip</p><p>You can use global functions like <code>showToast()</code> and <code>t()</code>. Enable/disable plugins in DEV > Plugins.</p></div>"
 }
