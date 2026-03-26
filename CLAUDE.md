@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-개인 개발 도구 모음 웹 앱. Python 단일 서버 + 순수 바닐라 JavaScript 프론트엔드. 빌드 도구 없음.
+개인 개발 도구 모음 웹 앱. Python 단일 서버 + jQuery 4.x 프론트엔드. 빌드 도구 없음.
 
 ## Commands
 
@@ -32,12 +32,13 @@ python3 server.py --no-open        # 브라우저 자동 오픈 비활성화
 - AI 프로바이더 추상화: `_ai_chat(provider, system_prompt, user_prompt, model=None)` - OpenAI/Gemini/Claude/Grok 지원
 - 누락 패키지 자동 설치 (`cryptography`, `openai`, `anthropic`, `google-genai` 등)
 
-### Frontend: `static/` (빌드 없는 바닐라 JS)
+### Frontend: `static/` (jQuery 4.x, 빌드 없음)
 - **`index.html`** - 메인 SPA, 14개+ 도구 탭이 모두 포함된 단일 HTML
 - **`app.js`** - 공통 로직: 사이드바 토글, 탭 전환, 토스트 시스템, AI 프로바이더 로딩
 - **`i18n.js`** - 다국어(ko/en/ja) 관리, `t(key)` 함수로 번역
 - **`plugin-loader.js`** - 커스텀 플러그인 동적 로딩
 - **각 도구별 JS 파일** - IIFE 패턴 (`(function() { ... })()`)으로 모듈 분리
+- **jQuery 오프라인 폴백** - `static/vendor-default/jquery.min.js` (Git 포함), CDN 버전은 `static/vendor/`에 캐시
 
 ### API 라우트 패턴
 ```
@@ -63,6 +64,26 @@ t(key, params)             // i18n 번역 (예: t("common.save"))
 i18nReady(fn)              // 번역 로드 완료 후 콜백
 escapeHtml(text)           // HTML 이스케이프
 switchTab(tabName)         // 탭 전환
+loadAiProviders(el, cb)    // AI 프로바이더 셀렉트 로딩 (DOM 또는 jQuery 요소)
+```
+
+### jQuery 코딩 패턴
+```javascript
+// DOM 선택 — $ 접두사 컨벤션
+var $input = $("#myInput");
+var $items = $(".item-list");
+
+// AJAX — GET
+$.getJSON("/api/xxx").done(function (data) { ... }).fail(function () { ... });
+
+// AJAX — POST/PUT/DELETE
+$.ajax({ url: "/api/xxx", method: "POST", contentType: "application/json",
+         data: JSON.stringify(obj), dataType: "json" })
+  .done(function (data) { ... });
+
+// 외부 라이브러리에 DOM 요소 전달 시
+lucide.createIcons({ nodes: $el.find("[data-lucide]").toArray() });
+html2pdf().from($el[0])   // $el[0]으로 raw DOM 전달
 ```
 
 ### i18n HTML 속성
@@ -76,5 +97,5 @@ switchTab(tabName)         // 탭 전환
 
 - 모든 UI 텍스트는 i18n 키를 사용해야 함 (`static/lang/ko.json`, `en.json`, `ja.json` 동시 수정)
 - 새 도구 추가 시: `index.html`에 탭 HTML + 별도 JS 파일(IIFE) + `server.py`에 API 라우트 + i18n 키 등록
-- CDN 라이브러리는 `server.py`의 `CDN_LIBS` 리스트에서 관리, `static/vendor/`에 캐시 (gitignored)
+- CDN 라이브러리는 `server.py`의 `CDN_LIBS` 리스트에서 관리, `static/vendor/`에 캐시 (gitignored), jQuery는 `static/vendor-default/`에 오프라인 폴백 포함
 - 커밋 메시지 컨벤션: `[Feature]`, `Fix`, `Merge pull request` 형식

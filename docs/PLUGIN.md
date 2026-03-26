@@ -93,7 +93,7 @@ custom/
 
 ### main.js
 
-글로벌 함수를 자유롭게 사용할 수 있습니다:
+jQuery 4.x 기반으로 작성합니다. 글로벌 함수를 자유롭게 사용할 수 있습니다:
 
 | 함수 | 설명 |
 |------|------|
@@ -105,11 +105,43 @@ custom/
 
 ```javascript
 (function () {
-  var btn = document.getElementById("myToolBtn");
-  btn.addEventListener("click", function () {
+  var $btn = $("#myToolBtn");
+  $btn.on("click", function () {
     showToast(t("custom.my-tool.done"), "success");
   });
 })();
+```
+
+**AJAX 호출 패턴:**
+
+```javascript
+// GET
+$.getJSON("/api/custom/my-tool/items").done(function (data) {
+  if (!data.ok) return;
+  // data.items 처리
+}).fail(function () {
+  showToast("Load failed", "error");
+});
+
+// POST
+$.ajax({
+  url: "/api/custom/my-tool/items",
+  method: "POST",
+  contentType: "application/json",
+  data: JSON.stringify({ name: "test" }),
+  dataType: "json"
+}).done(function (data) {
+  if (data.ok) showToast(t("custom.my-tool.saved"), "success");
+});
+
+// DELETE
+$.ajax({
+  url: "/api/custom/my-tool/items/" + id,
+  method: "DELETE",
+  dataType: "json"
+}).done(function (data) {
+  if (data.ok) showToast(t("custom.my-tool.deleted"), "success");
+});
 ```
 
 ### CSS 스코핑
