@@ -69,6 +69,8 @@ python server.py                 # Windows
 
 브라우저에서 `http://127.0.0.1:8080` 접속.
 
+![Preview](images/preview-korean.png)
+
 ```bash
 # 옵션
 python3 server.py --port 9090        # 포트 변경
@@ -83,7 +85,6 @@ python3 server.py --no-open          # 브라우저 자동 열기 비활성화
 **지원 AI 프로바이더**: OpenAI, Google Gemini, Anthropic Claude, xAI Grok
 
 첫 실행 시 온보딩 위자드에서 API 키를 등록하거나, 이후 **DEV > 모듈 설정**에서 등록할 수 있습니다.
-환경변수(`.env`)로도 설정 가능합니다: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `GROK_API_KEY`
 
 ### 오프라인 사용
 
@@ -114,19 +115,29 @@ python3 server.py --no-open          # 브라우저 자동 열기 비활성화
 ## 프로젝트 구조
 
 ```
-├── server.py           # Python 서버 (전체 백엔드)
-├── start.sh            # macOS/Linux 간편 실행
-├── start.bat           # Windows 간편 실행
+├── server.py              # Python 서버 (전체 백엔드)
+├── start.sh               # macOS/Linux 간편 실행
+├── start.bat              # Windows 간편 실행
 ├── static/
-│   ├── index.html      # 메인 페이지
-│   ├── styles.css      # 스타일
-│   ├── app.js          # 공통 로직
-│   ├── *.js            # 각 도구별 클라이언트 스크립트
-│   └── vendor/         # CDN 라이브러리 로컬 캐시 (gitignore)
-├── dev-tool.db         # SQLite 데이터베이스 (자동 생성, gitignore)
-├── logs/               # 서버 로그 (gitignore)
-└── .env                # 환경변수 (gitignore)
+│   ├── index.html         # 메인 페이지
+│   ├── styles.css         # 스타일
+│   ├── app.js             # 공통 로직
+│   ├── plugin-loader.js   # 커스텀 플러그인 로더
+│   ├── *.js               # 각 도구별 클라이언트 스크립트
+│   ├── lang/              # 다국어 번역 파일 (ko, en, ja)
+│   └── vendor/            # CDN 라이브러리 로컬 캐시 (gitignore)
+├── custom/                # 커스텀 플러그인 디렉토리 (gitignore)
+├── custom_template/       # 플러그인 작성 템플릿
+├── docs/                  # 문서
+│   └── PLUGIN.md          # 플러그인 작성 가이드
+├── dev-tool.db            # SQLite 데이터베이스 (자동 생성, gitignore)
+├── logs/                  # 서버 로그 (gitignore)
 ```
+
+### 커스텀 플러그인
+
+나만의 도구를 `custom/` 디렉토리에 추가할 수 있습니다. `.gitignore`에 포함되어 개인 전용으로 관리됩니다.
+자세한 내용은 [플러그인 가이드](docs/PLUGIN.md)를 참고하세요.
 
 ## 로그
 

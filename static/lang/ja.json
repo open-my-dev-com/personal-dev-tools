@@ -621,6 +621,16 @@
   "dev.sec_tabs": "タブ管理",
   "dev.sec_modules": "モジュール設定",
   "dev.sec_cdn": "CDN管理",
+  "dev.sec_plugins": "プラグイン",
+  "dev.plugins_title": "カスタムプラグイン",
+  "dev.plugins_desc": "custom/ディレクトリのプラグインを管理します。",
+  "dev.plugins_hint": "変更後、ページを更新してください。",
+  "dev.plugins_empty": "custom/ディレクトリにプラグインがありません。",
+  "dev.plugins_enabled": "プラグインが有効になりました。",
+  "dev.plugins_disabled": "プラグインが無効になりました。",
+  "nav.main_section": "メインツール",
+  "nav.custom_section": "プラグイン",
+  "nav.system_section": "システム",
   "dev.general_desc": "サイトの基本設定を変更します。",
   "dev.site_info": "サイト情報",
   "dev.site_name": "ツールキット名",
@@ -829,5 +839,9 @@
   "tutorial.pdfconvert_guide": "<h4>PDF変換の使い方</h4><ol><li>ファイルをドラッグ＆ドロップするか、クリックしてアップロードします。</li><li>用紙サイズ、方向、余白などのオプションを設定します。</li><li><code>PDF変換</code>で個別変換、または<code>1つのPDFに統合</code>で結合します。</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 ヒント</p><p> Markdownファイルは保存済みリストから直接読み込めます。</p></div>",
   "tutorial.diffcompare_guide": "<h4>Diff比較の使い方</h4><ol><li>上部タブから<code>テキスト</code>、<code>ファイル</code>、<code>フォルダ</code>の比較モードを選択します。</li><li>左右のエリアに比較する内容を貼り付けて<code>比較</code>をクリックします。</li><li>変更ブロックをクリックして選択し、<code>Alt+←/→</code>で片側に反映します。</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 ヒント</p><p> Alt+↑/↓キーで変更ブロック間を素早く移動できます。</p></div>",
   "tutorial.git_guide": "<h4>Git管理の使い方</h4><ol><li>リポジトリのパスを入力するか、<code>フォルダ選択</code>でGitリポジトリを指定します。</li><li>変更ファイル一覧からコミットするファイルをチェックし、メッセージを入力します。</li><li><code>コミット</code>ボタンでコミットします。ブランチ切替や新規ブランチ作成も可能です。</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 ヒント</p><p> コミットメッセージテンプレートを登録すると、{branch}や{date}などの変数を自動置換できます。</p></div>",
-  "tutorial.dataai_guide": "<h4>Data AIの使い方</h4><ol><li>欲しいデータを自然言語で説明します（例：「ユーザーリスト50件、名前/メール/年齢」）。</li><li><code>出力形式</code>（CSV、JSON、TSV）と<code>件数</code>を設定します。</li><li><code>生成</code>ボタンをクリックするとAIがデータを作成します。</li><li>結果をCSVエディタやJSON整形に送信したり、DBに保存します。</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 ヒント</p><p> 具体的に説明するほど（カラム名、値の範囲など）、より正確なデータが生成されます。</p></div>"
+  "tutorial.dataai_guide": "<h4>Data AIの使い方</h4><ol><li>欲しいデータを自然言語で説明します（例：「ユーザーリスト50件、名前/メール/年齢」）。</li><li><code>出力形式</code>（CSV、JSON、TSV）と<code>件数</code>を設定します。</li><li><code>生成</code>ボタンをクリックするとAIがデータを作成します。</li><li>結果をCSVエディタやJSON整形に送信したり、DBに保存します。</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 ヒント</p><p> 具体的に説明するほど（カラム名、値の範囲など）、より正確なデータが生成されます。</p></div>",
+  "tutorial.plugin_section": "その他",
+  "tutorial.plugin_title": "カスタムプラグイン",
+  "tutorial.plugin_desc": "プラグインシステムで独自のツールを追加できます。gitignoreされ、個人専用で管理されます。",
+  "tutorial.plugin_guide": "<h4>プラグインの作成</h4><ol><li><code>custom_template/example-tool/</code>を<code>custom/</code>ディレクトリにコピーします。</li><li><code>manifest.json</code>で名前、アイコン、説明を設定します。</li><li><code>template.html</code>でUI、<code>main.js</code>でロジック、<code>routes.py</code>でサーバーAPIを実装します。</li><li>サーバーを再起動すると、サイドバーに自動表示されます。</li></ol><div class='md-alert md-alert-tip'><p class='md-alert-title'>💡 ヒント</p><p><code>showToast()</code>や<code>t()</code>などのグローバル関数が使用できます。DEV > プラグインで有効/無効を切り替えられます。</p></div>"
 }

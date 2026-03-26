@@ -1,0 +1,58 @@
+/* Example Tool — CSS 스코핑 규약: .custom-plugin[data-plugin="example-tool"] 접두사 사용 */
+
+.custom-plugin[data-plugin="example-tool"] .example-tool-wrap {
+  max-width: 700px;
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-tool-header {
+  margin-bottom: 20px;
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-tool-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-tool-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-tool-field textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-note-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--card-bg, #fff);
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-note-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-note-content {
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+}
+
+.custom-plugin[data-plugin="example-tool"] .example-note-date {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  margin-bottom: 6px;
+}

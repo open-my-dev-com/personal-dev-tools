@@ -499,6 +499,117 @@ def _seed_i18n(conn):
             logger.error("[i18n] Failed to seed '%s': %s", filename, e)
 
 
+# ── Custom Plugin System ──
+_custom_plugins = {}  # id -> {manifest, path, routes_module}
+
+
+def discover_custom_plugins():
+    """Scan custom/ directory, load manifests, import routes, create DB tables."""
+    custom_dir = ROOT / "custom"
+    if not custom_dir.exists():
+        custom_dir.mkdir(exist_ok=True)
+        return
+
+    for entry in sorted(custom_dir.iterdir()):
+        if not entry.is_dir() or entry.name.startswith(".") or entry.name.startswith("_"):
+            continue
+        manifest_path = entry / "manifest.json"
+        if not manifest_path.exists():
+            logger.warning("[Plugin] %s has no manifest.json, skipping", entry.name)
+            continue
+        try:
+            manifest = json.loads(manifest_path.read_text("utf-8"))
+        except Exception as e:
+            logger.error("[Plugin] Failed to read manifest for %s: %s", entry.name, e)
+            continue
+
+        plugin_id = manifest.get("id", entry.name)
+        plugin = {"manifest": manifest, "path": entry, "routes_module": None}
+
+        # DB table creation
+        if "db_tables" in manifest:
+            _init_plugin_tables(manifest["db_tables"], plugin_id)
+
+        # Route loading
+        if manifest.get("has_routes", False):
+            routes_path = entry / "routes.py"
+            if routes_path.exists():
+                try:
+                    import importlib.util
+                    spec = importlib.util.spec_from_file_location(
+                        f"custom_plugin_{plugin_id}", str(routes_path))
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                    plugin["routes_module"] = mod
+                    logger.info("[Plugin] Loaded routes for '%s'", plugin_id)
+                except Exception as e:
+                    logger.error("[Plugin] Failed to load routes for '%s': %s", plugin_id, e)
+
+        # i18n seeding
+        lang_dir = entry / "lang"
+        if lang_dir.exists():
+            _seed_plugin_i18n(plugin_id, lang_dir)
+
+        _custom_plugins[plugin_id] = plugin
+        logger.info("[Plugin] Discovered '%s' v%s", plugin_id, manifest.get("version", "?"))
+
+
+def _init_plugin_tables(tables_def, plugin_id):
+    conn = get_conn()
+    for table_name, table_def in tables_def.items():
+        if not table_name.startswith("custom_"):
+            logger.warning("[Plugin:%s] Table '%s' must start with 'custom_', skipping", plugin_id, table_name)
+            continue
+        cols = ", ".join(f"{col} {dtype}" for col, dtype in table_def["columns"].items())
+        sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({cols})"
+        conn.execute(sql)
+    conn.commit()
+    conn.close()
+
+
+def _seed_plugin_i18n(plugin_id, lang_dir):
+    """Seed translations from custom plugin lang/ directory."""
+    conn = get_conn()
+    for filename in os.listdir(lang_dir):
+        if not filename.endswith(".json"):
+            continue
+        lang_code = filename[:-5]
+        try:
+            with open(lang_dir / filename, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for key, value in data.items():
+                full_key = f"custom.{plugin_id}.{key}"
+                conn.execute(
+                    "INSERT OR REPLACE INTO i18n (lang, key, value) VALUES (?, ?, ?)",
+                    (lang_code, full_key, value))
+        except Exception as e:
+            logger.error("[Plugin i18n] Failed to seed %s/%s: %s", plugin_id, filename, e)
+    conn.commit()
+    conn.close()
+
+
+def _get_plugin_enabled_state():
+    """Get enabled/disabled state dict for all plugins."""
+    conn = get_conn()
+    row = conn.execute("SELECT value FROM dev_settings WHERE key='custom_plugins_enabled'").fetchone()
+    conn.close()
+    if row:
+        try:
+            return json.loads(row[0])
+        except Exception:
+            pass
+    return {}
+
+
+def _set_plugin_enabled_state(state):
+    conn = get_conn()
+    conn.execute(
+        "INSERT OR REPLACE INTO dev_settings (key, value) VALUES (?, ?)",
+        ("custom_plugins_enabled", json.dumps(state)))
+    conn.commit()
+    conn.close()
+
+
 def parse_json_or_none(raw):
     if raw is None:
         return None
@@ -1973,6 +2084,15 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._get_translations(m_lang.group(1))
             return
 
+        # ── Custom Plugin routes (GET) ──
+        if path == "/api/custom/plugins":
+            self._custom_list_plugins()
+            return
+        m_custom = re.match(r"^/api/custom/([a-zA-Z0-9_-]+)/(.+)$", path)
+        if m_custom:
+            self._handle_custom_route(m_custom.group(1), m_custom.group(2), "GET")
+            return
+
         if path.startswith("/api/"):
             self._send_json({"ok": False, "error": "unsupported api"}, status=404)
             return
@@ -2085,6 +2205,12 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             self._dev_complete_onboarding()
             return
 
+        # ── Custom Plugin routes (POST) ──
+        m_custom = re.match(r"^/api/custom/([a-zA-Z0-9_-]+)/(.+)$", path)
+        if m_custom:
+            self._handle_custom_route(m_custom.group(1), m_custom.group(2), "POST")
+            return
+
         self._proxy_mock("POST", path)
 
     def do_PUT(self):
@@ -2154,6 +2280,14 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/ai-keys":
             self._dev_save_ai_keys()
             return
+        # ── Custom Plugin routes (PUT) ──
+        if path == "/api/custom/plugins/toggle":
+            self._custom_toggle_plugin()
+            return
+        m_custom = re.match(r"^/api/custom/([a-zA-Z0-9_-]+)/(.+)$", path)
+        if m_custom:
+            self._handle_custom_route(m_custom.group(1), m_custom.group(2), "PUT")
+            return
         self._proxy_mock("PUT", path)
 
     def do_DELETE(self):
@@ -2216,6 +2350,11 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             except ValueError:
                 pass
             self._dev_delete_row(m_dev_del.group(1), row_id)
+            return
+        # ── Custom Plugin routes (DELETE) ──
+        m_custom = re.match(r"^/api/custom/([a-zA-Z0-9_-]+)/(.+)$", path)
+        if m_custom:
+            self._handle_custom_route(m_custom.group(1), m_custom.group(2), "DELETE")
             return
         self._proxy_mock("DELETE", path)
 
@@ -3018,6 +3157,86 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         conn.close()
         self._send_json({"ok": True})
 
+    # ── Custom Plugin Handlers ──
+
+    def _custom_list_plugins(self):
+        """Return list of discovered plugins with enabled state."""
+        enabled_state = _get_plugin_enabled_state()
+        plugins = []
+        for pid, p in _custom_plugins.items():
+            m = p["manifest"]
+            # Default to enabled if not explicitly set
+            is_enabled = enabled_state.get(pid, True)
+            plugins.append({
+                "id": pid,
+                "name": m.get("name", pid),
+                "version": m.get("version", "0.0.0"),
+                "icon": m.get("icon", "puzzle"),
+                "description": m.get("description", ""),
+                "author": m.get("author", ""),
+                "enabled": is_enabled,
+                "has_routes": m.get("has_routes", False),
+            })
+        self._send_json({"ok": True, "plugins": plugins})
+
+    def _custom_toggle_plugin(self):
+        body = self._read_body()
+        if isinstance(body, str):
+            body = json.loads(body)
+        pid = body.get("id", "")
+        enabled = body.get("enabled", True)
+        state = _get_plugin_enabled_state()
+        state[pid] = enabled
+        _set_plugin_enabled_state(state)
+        self._send_json({"ok": True})
+
+    def _handle_custom_route(self, plugin_id, sub_path, method):
+        plugin = _custom_plugins.get(plugin_id)
+        if not plugin:
+            self._send_json({"ok": False, "error": "plugin not found"}, status=404)
+            return
+
+        # Built-in file serving for plugin assets
+        if sub_path == "template":
+            tpl = plugin["path"] / "template.html"
+            if tpl.exists():
+                self._send_text(tpl.read_text("utf-8"), content_type="text/html; charset=utf-8")
+            else:
+                self._send_json({"ok": False, "error": "no template"}, status=404)
+            return
+        if sub_path == "main.js":
+            js = plugin["path"] / "main.js"
+            if js.exists():
+                self._send_text(js.read_text("utf-8"), content_type="application/javascript; charset=utf-8")
+            else:
+                self._send_json({"ok": False, "error": "no js"}, status=404)
+            return
+        if sub_path == "style.css":
+            css = plugin["path"] / "style.css"
+            if css.exists():
+                self._send_text(css.read_text("utf-8"), content_type="text/css; charset=utf-8")
+            else:
+                self._send_json({"ok": False, "error": "no css"}, status=404)
+            return
+
+        # Delegate to routes module
+        mod = plugin.get("routes_module")
+        if not mod:
+            self._send_json({"ok": False, "error": "no routes"}, status=404)
+            return
+
+        handler_name = f"handle_{method.lower()}"
+        handler = getattr(mod, handler_name, None)
+        if not handler:
+            self._send_json({"ok": False, "error": f"method {method} not supported"}, status=405)
+            return
+
+        try:
+            handler(sub_path, self, get_conn)
+        except Exception as e:
+            logger.error("[Plugin:%s] Error in %s %s: %s", plugin_id, method, sub_path, e)
+            self._send_json({"ok": False, "error": str(e)}, status=500)
+
     def _ai_get_providers(self):
         """Return list of providers with configured API keys."""
         providers = _get_available_providers()
@@ -3201,6 +3420,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     init_db()
+    discover_custom_plugins()
     try:
         server = ThreadingHTTPServer((args.host, args.port), MockHandler)
     except OSError as e:

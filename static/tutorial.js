@@ -3,10 +3,15 @@
   "use strict";
 
   var cardsEl = document.getElementById("tutorialCards");
+  var pluginCardsEl = document.getElementById("tutorialPluginCards");
   var detailEl = document.getElementById("tutorialDetail");
   var detailContent = document.getElementById("tutorialDetailContent");
   var backBtn = document.getElementById("tutorialBackBtn");
   if (!cardsEl) return;
+
+  var PLUGINS = [
+    { id: "plugin-system", icon: "puzzle", titleKey: "tutorial.plugin_title", descKey: "tutorial.plugin_desc", guideKey: "tutorial.plugin_guide" },
+  ];
 
   var TOOLS = [
     { id: "mock",         icon: "server",           titleKey: "tutorial.mock_title",      descKey: "tutorial.mock_desc",      guideKey: "tutorial.mock_guide" },
@@ -22,6 +27,8 @@
     { id: "git",          icon: "git-branch",       titleKey: "tutorial.git_title",         descKey: "tutorial.git_desc",       guideKey: "tutorial.git_guide" },
     { id: "dataai",       icon: "sparkles",         titleKey: "tutorial.dataai_title",      descKey: "tutorial.dataai_desc",    guideKey: "tutorial.dataai_guide" },
   ];
+
+  var ALL_ITEMS = TOOLS.concat(PLUGINS);
 
   function renderCards() {
     var html = "";
@@ -41,19 +48,43 @@
         showDetail(card.dataset.tool);
       });
     });
+
+    // 플러그인 카드
+    if (pluginCardsEl) {
+      var pHtml = "";
+      PLUGINS.forEach(function (p) {
+        pHtml +=
+          '<div class="tutorial-card" data-tool="' + p.id + '">' +
+            '<div class="tutorial-card-icon"><i data-lucide="' + p.icon + '"></i></div>' +
+            '<h4>' + t(p.titleKey) + '</h4>' +
+            '<p>' + t(p.descKey) + '</p>' +
+          '</div>';
+      });
+      pluginCardsEl.innerHTML = pHtml;
+      lucide.createIcons({ nodes: pluginCardsEl.querySelectorAll("[data-lucide]") });
+
+      pluginCardsEl.querySelectorAll(".tutorial-card").forEach(function (card) {
+        card.addEventListener("click", function () {
+          showDetail(card.dataset.tool);
+        });
+      });
+    }
   }
 
   function showDetail(toolId) {
-    var tool = TOOLS.find(function (t) { return t.id === toolId; });
+    var tool = ALL_ITEMS.find(function (t) { return t.id === toolId; });
     if (!tool) return;
 
     cardsEl.style.display = "none";
+    if (pluginCardsEl) pluginCardsEl.style.display = "none";
+    document.querySelectorAll(".tutorial-section-title").forEach(function (el) { el.style.display = "none"; });
     detailEl.style.display = "block";
 
     var guideHtml = t(tool.guideKey);
     // If guide key returned as-is (not translated), show fallback
     if (guideHtml === tool.guideKey) guideHtml = "<p>" + t(tool.descKey) + "</p>";
 
+    var isTool = TOOLS.some(function (t) { return t.id === toolId; });
     detailContent.innerHTML =
       '<div class="tutorial-detail-header">' +
         '<div class="tutorial-detail-icon"><i data-lucide="' + tool.icon + '"></i></div>' +
@@ -63,18 +94,23 @@
         '</div>' +
       '</div>' +
       '<div class="tutorial-guide">' + guideHtml + '</div>' +
-      '<button class="tutorial-try-btn" data-tab="' + tool.id + '">' + t("tutorial.try_it") + ' &rarr;</button>';
+      (isTool ? '<button class="tutorial-try-btn" data-tab="' + tool.id + '">' + t("tutorial.try_it") + ' &rarr;</button>' : '');
 
     lucide.createIcons({ nodes: detailContent.querySelectorAll("[data-lucide]") });
 
-    detailContent.querySelector(".tutorial-try-btn").addEventListener("click", function () {
-      switchTab(this.dataset.tab);
-    });
+    var tryBtn = detailContent.querySelector(".tutorial-try-btn");
+    if (tryBtn) {
+      tryBtn.addEventListener("click", function () {
+        switchTab(this.dataset.tab);
+      });
+    }
   }
 
   function showCards() {
     detailEl.style.display = "none";
     cardsEl.style.display = "";
+    if (pluginCardsEl) pluginCardsEl.style.display = "";
+    document.querySelectorAll(".tutorial-section-title").forEach(function (el) { el.style.display = ""; });
   }
 
   backBtn.addEventListener("click", showCards);

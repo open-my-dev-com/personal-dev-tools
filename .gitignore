@@ -22,3 +22,6 @@ static/vendor/
 
 # Node
 node_modules/
+
+# Custom plugins (user-specific)
+custom/

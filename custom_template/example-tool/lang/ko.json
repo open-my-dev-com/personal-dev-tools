@@ -1,0 +1,16 @@
+{
+  "title": "예시 도구",
+  "desc": "커스텀 플러그인 예시입니다. 이 템플릿을 참고하여 나만의 도구를 만들어보세요.",
+  "note_title": "제목",
+  "note_content": "내용",
+  "save": "저장",
+  "list_title": "저장된 메모",
+  "empty": "저장된 메모가 없습니다.",
+  "saved": "메모가 저장되었습니다.",
+  "deleted": "메모가 삭제되었습니다.",
+  "title_required": "제목을 입력해주세요.",
+  "load_error": "메모 불러오기 실패",
+  "save_error": "메모 저장 실패",
+  "delete_error": "메모 삭제 실패",
+  "delete": "삭제"
+}

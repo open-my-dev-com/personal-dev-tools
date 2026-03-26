@@ -1,0 +1,16 @@
+{
+  "title": "Example Tool",
+  "desc": "This is a custom plugin example. Use this template to create your own tool.",
+  "note_title": "Title",
+  "note_content": "Content",
+  "save": "Save",
+  "list_title": "Saved Notes",
+  "empty": "No saved notes.",
+  "saved": "Note saved.",
+  "deleted": "Note deleted.",
+  "title_required": "Please enter a title.",
+  "load_error": "Failed to load notes",
+  "save_error": "Failed to save note",
+  "delete_error": "Failed to delete note",
+  "delete": "Delete"
+}

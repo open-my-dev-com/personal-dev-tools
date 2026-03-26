@@ -67,6 +67,8 @@ python server.py                 # Windows
 
 ブラウザで `http://127.0.0.1:8080` にアクセス。
 
+![Preview](images/preview-japanese.png)
+
 ```bash
 # オプション
 python3 server.py --port 9090        # ポート変更
@@ -81,7 +83,6 @@ AI機能を使用しない場合は、この手順はスキップできます。
 **対応AIプロバイダー**: OpenAI、Google Gemini、Anthropic Claude、xAI Grok
 
 初回起動時のオンボーディングウィザードでAPIキーを登録するか、後から **DEV > モジュール設定** で登録できます。
-環境変数（`.env`）でも設定可能です: `OPENAI_API_KEY`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`、`GROK_API_KEY`
 
 ### オフライン使用
 
@@ -123,7 +124,6 @@ AI機能を使用しない場合は、この手順はスキップできます。
 │   └── vendor/         # CDNライブラリローカルキャッシュ（gitignore）
 ├── dev-tool.db         # SQLiteデータベース（自動生成、gitignore）
 ├── logs/               # サーバーログ（gitignore）
-└── .env                # 環境変数（gitignore）
 ```
 
 ## ログ
