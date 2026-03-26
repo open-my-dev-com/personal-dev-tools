@@ -19,7 +19,8 @@ A collection of personal development tools running locally. Operates as a single
 | Git Manager | Local Git repository status, commit, branch management |
 | Data AI | AI-based mock data generation (CSV/JSON/TSV), DB storage |
 | Tutorial | Step-by-step usage guide for each tool |
-| Developer Mode | Tool name customization, DB explorer, tab management, module settings, AI API key management, CDN library management |
+| Custom Plugins | Add personal tools in `custom/` directory, standardized module convention |
+| Developer Mode | Tool name customization, DB explorer, tab management, module settings, AI API key management, CDN library management, plugin management |
 
 ## Getting Started
 
@@ -113,18 +114,29 @@ The following packages are auto-installed on first server run:
 ## Project Structure
 
 ```
-├── server.py           # Python server (full backend)
-├── start.sh            # macOS/Linux quick launcher
-├── start.bat           # Windows quick launcher
+├── server.py              # Python server (full backend)
+├── start.sh               # macOS/Linux quick launcher
+├── start.bat              # Windows quick launcher
 ├── static/
-│   ├── index.html      # Main page
-│   ├── styles.css      # Styles
-│   ├── app.js          # Common logic
-│   ├── *.js            # Per-tool client scripts
-│   └── vendor/         # CDN library local cache (gitignore)
-├── dev-tool.db         # SQLite database (auto-generated, gitignore)
-├── logs/               # Server logs (gitignore)
+│   ├── index.html         # Main page
+│   ├── styles.css         # Styles
+│   ├── app.js             # Common logic
+│   ├── plugin-loader.js   # Custom plugin loader
+│   ├── *.js               # Per-tool client scripts
+│   ├── lang/              # i18n translation files (ko, en, ja)
+│   └── vendor/            # CDN library local cache (gitignore)
+├── custom/                # Custom plugin directory (gitignore)
+├── custom_template/       # Plugin starter template
+├── docs/                  # Documentation
+│   └── PLUGIN.md          # Plugin creation guide
+├── dev-tool.db            # SQLite database (auto-generated, gitignore)
+├── logs/                  # Server logs (gitignore)
 ```
+
+### Custom Plugins
+
+Add your own tools in the `custom/` directory. Contents are gitignored for personal use only.
+See the [Plugin Guide](docs/PLUGIN.md) for details.
 
 ## Logs
 
