@@ -19,7 +19,8 @@
 | Git管理 | ローカルGitリポジトリの状態確認、コミット、ブランチ管理 |
 | Data AI | AIベースの仮想データ生成（CSV/JSON/TSV）、DB保存 |
 | チュートリアル | 各ツールのステップバイステップ使用ガイド |
-| 開発者モード | ツール名変更、DBエクスプローラー、タブ管理、モジュール設定、AI APIキー管理、CDNライブラリ管理 |
+| カスタムプラグイン | `custom/`ディレクトリに独自ツールを追加、標準化されたモジュール規約 |
+| 開発者モード | ツール名変更、DBエクスプローラー、タブ管理、モジュール設定、AI APIキー管理、CDNライブラリ管理、プラグイン管理 |
 
 ## はじめに
 
@@ -113,18 +114,29 @@ AI機能を使用しない場合は、この手順はスキップできます。
 ## プロジェクト構造
 
 ```
-├── server.py           # Pythonサーバー（バックエンド全体）
-├── start.sh            # macOS/Linux簡単ランチャー
-├── start.bat           # Windows簡単ランチャー
+├── server.py              # Pythonサーバー（バックエンド全体）
+├── start.sh               # macOS/Linux簡単ランチャー
+├── start.bat              # Windows簡単ランチャー
 ├── static/
-│   ├── index.html      # メインページ
-│   ├── styles.css      # スタイル
-│   ├── app.js          # 共通ロジック
-│   ├── *.js            # ツール別クライアントスクリプト
-│   └── vendor/         # CDNライブラリローカルキャッシュ（gitignore）
-├── dev-tool.db         # SQLiteデータベース（自動生成、gitignore）
-├── logs/               # サーバーログ（gitignore）
+│   ├── index.html         # メインページ
+│   ├── styles.css         # スタイル
+│   ├── app.js             # 共通ロジック
+│   ├── plugin-loader.js   # カスタムプラグインローダー
+│   ├── *.js               # ツール別クライアントスクリプト
+│   ├── lang/              # 多言語翻訳ファイル（ko、en、ja）
+│   └── vendor/            # CDNライブラリローカルキャッシュ（gitignore）
+├── custom/                # カスタムプラグインディレクトリ（gitignore）
+├── custom_template/       # プラグイン作成テンプレート
+├── docs/                  # ドキュメント
+│   └── PLUGIN.md          # プラグイン作成ガイド
+├── dev-tool.db            # SQLiteデータベース（自動生成、gitignore）
+├── logs/                  # サーバーログ（gitignore）
 ```
+
+### カスタムプラグイン
+
+独自のツールを`custom/`ディレクトリに追加できます。`.gitignore`に含まれており、個人専用で管理されます。
+詳しくは[プラグインガイド](docs/PLUGIN.md)をご参照ください。
 
 ## ログ
 
