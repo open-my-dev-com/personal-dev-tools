@@ -1,10 +1,11 @@
-const jsonFmtInput = document.getElementById("jsonFmtInput");
-const jsonFmtBtn = document.getElementById("jsonFmtBtn");
-const jsonMinifyBtn = document.getElementById("jsonMinifyBtn");
-const jsonSortKeys = document.getElementById("jsonSortKeys");
-const jsonIndent = document.getElementById("jsonIndent");
-const jsonFmtCopyBtn = document.getElementById("jsonFmtCopyBtn");
-const jsonFmtStatus = document.getElementById("jsonFmtStatus");
+(function() {
+const $jsonFmtInput = $("#jsonFmtInput");
+const $jsonFmtBtn = $("#jsonFmtBtn");
+const $jsonMinifyBtn = $("#jsonMinifyBtn");
+const $jsonSortKeys = $("#jsonSortKeys");
+const $jsonIndent = $("#jsonIndent");
+const $jsonFmtCopyBtn = $("#jsonFmtCopyBtn");
+const $jsonFmtStatus = $("#jsonFmtStatus");
 
 function sortKeysDeep(obj) {
   if (Array.isArray(obj)) return obj.map(sortKeysDeep);
@@ -17,22 +18,22 @@ function sortKeysDeep(obj) {
 }
 
 function setJsonFmtStatus(text, isError = false) {
-  jsonFmtStatus.textContent = text;
-  jsonFmtStatus.style.color = isError ? "#bf233a" : "#65748b";
+  $jsonFmtStatus.text(text);
+  $jsonFmtStatus.css("color", isError ? "#bf233a" : "#65748b");
 }
 
 function formatJson(minify) {
-  const raw = jsonFmtInput.value.trim();
+  const raw = $jsonFmtInput.val().trim();
   if (!raw) { setJsonFmtStatus(""); return; }
   try {
     let parsed = JSON.parse(raw);
-    if (jsonSortKeys.checked) parsed = sortKeysDeep(parsed);
+    if ($jsonSortKeys.prop("checked")) parsed = sortKeysDeep(parsed);
     if (minify) {
-      jsonFmtInput.value = JSON.stringify(parsed);
+      $jsonFmtInput.val(JSON.stringify(parsed));
       setJsonFmtStatus(t("json.minify_done"));
     } else {
-      const indentVal = jsonIndent.value === "tab" ? "\t" : Number(jsonIndent.value);
-      jsonFmtInput.value = JSON.stringify(parsed, null, indentVal);
+      const indentVal = $jsonIndent.val() === "tab" ? "\t" : Number($jsonIndent.val());
+      $jsonFmtInput.val(JSON.stringify(parsed, null, indentVal));
       setJsonFmtStatus(t("json.sort_done"));
     }
   } catch (e) {
@@ -40,22 +41,22 @@ function formatJson(minify) {
   }
 }
 
-jsonFmtBtn.addEventListener("click", () => formatJson(false));
-jsonMinifyBtn.addEventListener("click", () => formatJson(true));
-jsonFmtCopyBtn.addEventListener("click", () => {
-  navigator.clipboard.writeText(jsonFmtInput.value).then(() => {
+$jsonFmtBtn.on("click", () => formatJson(false));
+$jsonMinifyBtn.on("click", () => formatJson(true));
+$jsonFmtCopyBtn.on("click", () => {
+  navigator.clipboard.writeText($jsonFmtInput.val()).then(() => {
     setJsonFmtStatus(t("json.copy_done"));
     showToast(t("json.copy_done"), "success");
   });
 });
-jsonFmtInput.addEventListener("paste", () => setTimeout(() => formatJson(false), 0));
+$jsonFmtInput.on("paste", () => setTimeout(() => formatJson(false), 0));
 
-document.getElementById("jsonFileInput").addEventListener("change", (e) => {
+$("#jsonFileInput").on("change", function(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    jsonFmtInput.value = reader.result;
+    $jsonFmtInput.val(reader.result);
     formatJson(false);
     setJsonFmtStatus(t("json.file_load_done", { name: file.name }));
   };
@@ -64,46 +65,49 @@ document.getElementById("jsonFileInput").addEventListener("change", (e) => {
   e.target.value = "";
 });
 
-document.getElementById("jsonSaveFileBtn").addEventListener("click", () => {
-  const text = jsonFmtInput.value.trim();
+$("#jsonSaveFileBtn").on("click", () => {
+  const text = $jsonFmtInput.val().trim();
   if (!text) { setJsonFmtStatus(t("json.no_content"), true); return; }
   const blob = new Blob([text], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "formatted.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const $a = $("<a>");
+  $a.attr("href", URL.createObjectURL(blob));
+  $a.attr("download", "formatted.json");
+  $a[0].click();
+  URL.revokeObjectURL($a.attr("href"));
   setJsonFmtStatus(t("json.file_save_done"));
   showToast(t("json.file_save_done"), "success");
 });
 
 // --- 임시저장 ---
-const jsonSavesBody = document.querySelector("#jsonSavesTable tbody");
+const $jsonSavesBody = $("#jsonSavesTable tbody");
 let jsonCurrentSaveId = null;
 
 async function saveJsonToDb() {
-  const data = jsonFmtInput.value.trim();
+  const data = $jsonFmtInput.val().trim();
   if (!data) { setJsonFmtStatus(t("json.no_content"), true); return; }
   const defaultName = jsonCurrentSaveId ? "" : new Date().toLocaleString("ko-KR");
   const name = prompt(t("json.enter_name"), defaultName);
   if (name === null) return;
   if (!name.trim()) { setJsonFmtStatus(t("json.name_required"), true); return; }
   try {
-    let r;
+    let res;
     if (jsonCurrentSaveId) {
-      r = await fetch(`/api/json/saves/${jsonCurrentSaveId}`, {
+      res = await $.ajax({
+        url: `/api/json/saves/${jsonCurrentSaveId}`,
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), data }),
+        contentType: "application/json",
+        data: JSON.stringify({ name: name.trim(), data }),
+        dataType: "json"
       });
     } else {
-      r = await fetch("/api/json/saves", {
+      res = await $.ajax({
+        url: "/api/json/saves",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), data }),
+        contentType: "application/json",
+        data: JSON.stringify({ name: name.trim(), data }),
+        dataType: "json"
       });
     }
-    const res = await r.json();
     if (res.id) jsonCurrentSaveId = res.id;
     setJsonFmtStatus(t("json.temp_save_done"));
     showToast(t("json.temp_save_done"), "success");
@@ -116,31 +120,30 @@ async function saveJsonToDb() {
 
 async function loadJsonSaves() {
   try {
-    const r = await fetch("/api/json/saves");
-    const { items } = await r.json();
-    jsonSavesBody.innerHTML = "";
+    const { items } = await $.getJSON("/api/json/saves");
+    $jsonSavesBody.html("");
     if (!items.length) {
-      jsonSavesBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);">${t("json.no_saved")}</td></tr>`;
+      $jsonSavesBody.html(`<tr><td colspan="4" style="text-align:center;color:var(--muted);">${t("json.no_saved")}</td></tr>`);
       return;
     }
     for (const item of items) {
-      const tr = document.createElement("tr");
-      if (jsonCurrentSaveId === item.id) tr.classList.add("json-save-active");
-      tr.innerHTML = `
+      const $tr = $("<tr>");
+      if (jsonCurrentSaveId === item.id) $tr.addClass("json-save-active");
+      $tr.html(`
         <td>${item.id}</td>
         <td>${item.name}</td>
         <td>${item.updated_at}</td>
         <td>
           <button class="json-load-btn" data-id="${item.id}">${t("common.load")}</button>
           <button class="json-delete-btn" data-id="${item.id}">${t("common.delete")}</button>
-        </td>`;
-      jsonSavesBody.appendChild(tr);
+        </td>`);
+      $jsonSavesBody.append($tr);
     }
-    jsonSavesBody.querySelectorAll(".json-load-btn").forEach((btn) => {
-      btn.addEventListener("click", () => loadJsonSave(parseInt(btn.dataset.id)));
+    $jsonSavesBody.find(".json-load-btn").on("click", function() {
+      loadJsonSave(parseInt($(this).data("id")));
     });
-    jsonSavesBody.querySelectorAll(".json-delete-btn").forEach((btn) => {
-      btn.addEventListener("click", () => deleteJsonSave(parseInt(btn.dataset.id)));
+    $jsonSavesBody.find(".json-delete-btn").on("click", function() {
+      deleteJsonSave(parseInt($(this).data("id")));
     });
   } catch (e) {
     console.error("JSON saves load error:", e);
@@ -149,10 +152,9 @@ async function loadJsonSaves() {
 
 async function loadJsonSave(id) {
   try {
-    const r = await fetch(`/api/json/saves/${id}`);
-    const item = await r.json();
+    const item = await $.getJSON(`/api/json/saves/${id}`);
     if (item.error) { setJsonFmtStatus(item.error, true); return; }
-    jsonFmtInput.value = item.data;
+    $jsonFmtInput.val(item.data);
     jsonCurrentSaveId = id;
     setJsonFmtStatus(t("json.load_done", { name: item.name }));
     loadJsonSaves();
@@ -164,7 +166,7 @@ async function loadJsonSave(id) {
 async function deleteJsonSave(id) {
   if (!confirm(t("json.confirm_delete"))) return;
   try {
-    await fetch(`/api/json/saves/${id}`, { method: "DELETE" });
+    await $.ajax({ url: `/api/json/saves/${id}`, method: "DELETE" });
     if (jsonCurrentSaveId === id) jsonCurrentSaveId = null;
     setJsonFmtStatus(t("common.delete_done"));
     showToast(t("common.delete_done"), "success");
@@ -175,9 +177,9 @@ async function deleteJsonSave(id) {
   }
 }
 
-document.getElementById("jsonSaveDbBtn").addEventListener("click", saveJsonToDb);
+$("#jsonSaveDbBtn").on("click", saveJsonToDb);
 i18nReady(loadJsonSaves);
-window.addEventListener("langchange", loadJsonSaves);
+$(window).on("langchange", loadJsonSaves);
 
 // ── 유틸: 빈 값 제거 ──
 function removeEmptyValues(obj) {
@@ -203,16 +205,16 @@ function removeEmptyValues(obj) {
   return obj;
 }
 
-document.getElementById("jsonRemoveEmptyBtn").addEventListener("click", () => {
-  const raw = jsonFmtInput.value.trim();
+$("#jsonRemoveEmptyBtn").on("click", () => {
+  const raw = $jsonFmtInput.val().trim();
   if (!raw) { setJsonFmtStatus(t("common.no_input"), true); return; }
   try {
     const parsed = JSON.parse(raw);
     const cleaned = removeEmptyValues(parsed);
-    const indentVal = jsonIndent.value === "tab" ? "\t" : Number(jsonIndent.value);
+    const indentVal = $jsonIndent.val() === "tab" ? "\t" : Number($jsonIndent.val());
     const before = JSON.stringify(parsed).length;
     const after = JSON.stringify(cleaned).length;
-    jsonFmtInput.value = JSON.stringify(cleaned, null, indentVal);
+    $jsonFmtInput.val(JSON.stringify(cleaned, null, indentVal));
     const diff = before - after;
     setJsonFmtStatus(diff > 0 ? t("json.empty_remove_done", { count: before - after }) : t("json.no_empty"));
   } catch (e) {
@@ -268,8 +270,8 @@ function findDuplicateKeys(jsonStr) {
   return dupes;
 }
 
-document.getElementById("jsonFindDupKeysBtn").addEventListener("click", () => {
-  const raw = jsonFmtInput.value.trim();
+$("#jsonFindDupKeysBtn").on("click", () => {
+  const raw = $jsonFmtInput.val().trim();
   if (!raw) { setJsonFmtStatus(t("common.no_input"), true); return; }
   const dupes = findDuplicateKeys(raw);
   const keys = Object.keys(dupes);
@@ -282,102 +284,84 @@ document.getElementById("jsonFindDupKeysBtn").addEventListener("click", () => {
 });
 
 // ── 유틸 패널 토글 ──
-document.querySelectorAll(".json-util-tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const panelId = btn.dataset.panel;
-    const isActive = btn.classList.contains("active");
-    // 모든 탭/패널 닫기
-    document.querySelectorAll(".json-util-tab").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".json-util-panel").forEach(p => p.style.display = "none");
-    if (!isActive) {
-      btn.classList.add("active");
-      document.getElementById(panelId).style.display = "";
-      // 패널 열릴 때 초기화
-      if (panelId === "jsonTreePanel") refreshTreeView();
-    }
-  });
+$(".json-util-tab").on("click", function() {
+  const panelId = $(this).data("panel");
+  const isActive = $(this).hasClass("active");
+  // 모든 탭/패널 닫기
+  $(".json-util-tab").removeClass("active");
+  $(".json-util-panel").hide();
+  if (!isActive) {
+    $(this).addClass("active");
+    $("#" + panelId).show();
+    // 패널 열릴 때 초기화
+    if (panelId === "jsonTreePanel") refreshTreeView();
+  }
 });
 
 // ── 트리 뷰어 ──
 function refreshTreeView() {
-  const container = document.getElementById("jsonTreeView");
-  container.innerHTML = "";
-  const raw = jsonFmtInput.value.trim();
-  if (!raw) { container.innerHTML = `<span style="color:var(--muted)">${t("json.input_required")}</span>`; return; }
+  const $container = $("#jsonTreeView");
+  $container.html("");
+  const raw = $jsonFmtInput.val().trim();
+  if (!raw) { $container.html(`<span style="color:var(--muted)">${t("json.input_required")}</span>`); return; }
   try {
     const parsed = JSON.parse(raw);
-    container.appendChild(buildTreeNode(parsed, null, true));
+    $container.append(buildTreeNode(parsed, null, true));
   } catch (e) {
-    container.innerHTML = `<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`;
+    $container.html(`<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`);
   }
 }
 
 function buildTreeNode(value, key, expanded) {
-  const wrap = document.createElement("div");
-  wrap.className = "json-tree-item";
+  const $wrap = $("<div>").addClass("json-tree-item");
   if (value !== null && typeof value === "object") {
     const isArr = Array.isArray(value);
     const entries = isArr ? value.map((v, i) => [i, v]) : Object.entries(value);
-    const toggle = document.createElement("span");
-    toggle.className = "json-tree-toggle";
-    toggle.textContent = expanded ? "▼ " : "▶ ";
-    const keySpan = document.createElement("span");
-    keySpan.className = "json-tree-key";
-    keySpan.textContent = key !== null ? `${key}: ` : "";
-    const bracket = document.createElement("span");
-    bracket.className = "json-tree-bracket";
-    bracket.textContent = isArr ? `[${entries.length}]` : `{${entries.length}}`;
-    const header = document.createElement("div");
-    header.className = "json-tree-header";
-    header.appendChild(toggle);
-    header.appendChild(keySpan);
-    header.appendChild(bracket);
-    const children = document.createElement("div");
-    children.className = "json-tree-children";
-    children.style.display = expanded ? "" : "none";
-    children.style.paddingLeft = "20px";
+    const $toggle = $("<span>").addClass("json-tree-toggle").text(expanded ? "▼ " : "▶ ");
+    const $keySpan = $("<span>").addClass("json-tree-key").text(key !== null ? `${key}: ` : "");
+    const $bracket = $("<span>").addClass("json-tree-bracket").text(isArr ? `[${entries.length}]` : `{${entries.length}}`);
+    const $header = $("<div>").addClass("json-tree-header");
+    $header.append($toggle).append($keySpan).append($bracket);
+    const $children = $("<div>").addClass("json-tree-children")
+      .css({ display: expanded ? "" : "none", paddingLeft: "20px" });
     for (const [k, v] of entries) {
-      children.appendChild(buildTreeNode(v, k, false));
+      $children.append(buildTreeNode(v, k, false));
     }
-    toggle.addEventListener("click", () => {
-      const open = children.style.display !== "none";
-      children.style.display = open ? "none" : "";
-      toggle.textContent = open ? "▶ " : "▼ ";
+    $toggle.on("click", () => {
+      const open = $children.css("display") !== "none";
+      $children.css("display", open ? "none" : "");
+      $toggle.text(open ? "▶ " : "▼ ");
     });
-    header.style.cursor = "pointer";
-    header.addEventListener("click", (e) => {
-      if (e.target === toggle) return;
-      toggle.click();
+    $header.css("cursor", "pointer");
+    $header.on("click", (e) => {
+      if (e.target === $toggle[0]) return;
+      $toggle.trigger("click");
     });
-    wrap.appendChild(header);
-    wrap.appendChild(children);
+    $wrap.append($header).append($children);
   } else {
-    const line = document.createElement("div");
-    line.className = "json-tree-leaf";
+    const $line = $("<div>").addClass("json-tree-leaf");
     if (key !== null) {
-      const keySpan = document.createElement("span");
-      keySpan.className = "json-tree-key";
-      keySpan.textContent = `${key}: `;
-      line.appendChild(keySpan);
+      const $keySpan = $("<span>").addClass("json-tree-key").text(`${key}: `);
+      $line.append($keySpan);
     }
-    const valSpan = document.createElement("span");
-    if (value === null) { valSpan.className = "json-tree-null"; valSpan.textContent = "null"; }
-    else if (typeof value === "string") { valSpan.className = "json-tree-string"; valSpan.textContent = `"${value}"`; }
-    else if (typeof value === "number") { valSpan.className = "json-tree-number"; valSpan.textContent = value; }
-    else if (typeof value === "boolean") { valSpan.className = "json-tree-boolean"; valSpan.textContent = value; }
-    line.appendChild(valSpan);
-    wrap.appendChild(line);
+    const $valSpan = $("<span>");
+    if (value === null) { $valSpan.addClass("json-tree-null").text("null"); }
+    else if (typeof value === "string") { $valSpan.addClass("json-tree-string").text(`"${value}"`); }
+    else if (typeof value === "number") { $valSpan.addClass("json-tree-number").text(value); }
+    else if (typeof value === "boolean") { $valSpan.addClass("json-tree-boolean").text(value); }
+    $line.append($valSpan);
+    $wrap.append($line);
   }
-  return wrap;
+  return $wrap;
 }
 
-document.getElementById("jsonTreeExpandAll").addEventListener("click", () => {
-  document.querySelectorAll("#jsonTreeView .json-tree-children").forEach(el => el.style.display = "");
-  document.querySelectorAll("#jsonTreeView .json-tree-toggle").forEach(el => el.textContent = "▼ ");
+$("#jsonTreeExpandAll").on("click", () => {
+  $("#jsonTreeView .json-tree-children").css("display", "");
+  $("#jsonTreeView .json-tree-toggle").text("▼ ");
 });
-document.getElementById("jsonTreeCollapseAll").addEventListener("click", () => {
-  document.querySelectorAll("#jsonTreeView .json-tree-children").forEach(el => el.style.display = "none");
-  document.querySelectorAll("#jsonTreeView .json-tree-toggle").forEach(el => el.textContent = "▶ ");
+$("#jsonTreeCollapseAll").on("click", () => {
+  $("#jsonTreeView .json-tree-children").css("display", "none");
+  $("#jsonTreeView .json-tree-toggle").text("▶ ");
 });
 
 // ── JSON Diff ──
@@ -411,42 +395,38 @@ function deepDiff(a, b, path) {
   return results;
 }
 
-document.getElementById("jsonDiffRunBtn").addEventListener("click", () => {
-  const container = document.getElementById("jsonDiffResult");
-  container.innerHTML = "";
-  const rawA = jsonFmtInput.value.trim();
-  const rawB = document.getElementById("jsonDiffTarget").value.trim();
-  if (!rawA || !rawB) { container.innerHTML = `<span style="color:var(--muted)">${t("json.both_required")}</span>`; return; }
+$("#jsonDiffRunBtn").on("click", () => {
+  const $container = $("#jsonDiffResult");
+  $container.html("");
+  const rawA = $jsonFmtInput.val().trim();
+  const rawB = $("#jsonDiffTarget").val().trim();
+  if (!rawA || !rawB) { $container.html(`<span style="color:var(--muted)">${t("json.both_required")}</span>`); return; }
   try {
     const a = JSON.parse(rawA);
     const b = JSON.parse(rawB);
     const diffs = deepDiff(a, b, "$");
     if (diffs.length === 0) {
-      container.innerHTML = `<div style="color:#0b7611;padding:8px">${t("json.identical")}</div>`;
+      $container.html(`<div style="color:#0b7611;padding:8px">${t("json.identical")}</div>`);
       return;
     }
-    const table = document.createElement("table");
-    table.className = "json-diff-table";
-    table.innerHTML = `<thead><tr><th>${t("json.diff_path")}</th><th>${t("json.diff_change")}</th><th>${t("json.diff_content")}</th></tr></thead>`;
-    const tbody = document.createElement("tbody");
+    const $table = $("<table>").addClass("json-diff-table");
+    $table.html(`<thead><tr><th>${t("json.diff_path")}</th><th>${t("json.diff_change")}</th><th>${t("json.diff_content")}</th></tr></thead>`);
+    const $tbody = $("<tbody>");
     for (const d of diffs) {
-      const tr = document.createElement("tr");
-      tr.className = `json-diff-${d.type}`;
-      const pathTd = document.createElement("td");
-      pathTd.textContent = d.path;
-      const typeTd = document.createElement("td");
-      typeTd.textContent = d.type === "added" ? t("json.diff_added") : d.type === "removed" ? t("json.diff_removed") : t("json.diff_changed");
-      const valTd = document.createElement("td");
-      if (d.type === "added") valTd.textContent = JSON.stringify(d.to);
-      else if (d.type === "removed") valTd.textContent = JSON.stringify(d.from);
-      else valTd.textContent = `${JSON.stringify(d.from)} → ${JSON.stringify(d.to)}`;
-      tr.append(pathTd, typeTd, valTd);
-      tbody.appendChild(tr);
+      const $tr = $("<tr>").addClass(`json-diff-${d.type}`);
+      const $pathTd = $("<td>").text(d.path);
+      const $typeTd = $("<td>").text(d.type === "added" ? t("json.diff_added") : d.type === "removed" ? t("json.diff_removed") : t("json.diff_changed"));
+      const $valTd = $("<td>");
+      if (d.type === "added") $valTd.text(JSON.stringify(d.to));
+      else if (d.type === "removed") $valTd.text(JSON.stringify(d.from));
+      else $valTd.text(`${JSON.stringify(d.from)} → ${JSON.stringify(d.to)}`);
+      $tr.append($pathTd, $typeTd, $valTd);
+      $tbody.append($tr);
     }
-    table.appendChild(tbody);
-    container.appendChild(table);
+    $table.append($tbody);
+    $container.append($table);
   } catch (e) {
-    container.innerHTML = `<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`;
+    $container.html(`<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`);
   }
 });
 
@@ -539,140 +519,132 @@ function evaluateJsonPath(obj, pathStr) {
 
 let jsonPathTimer = null;
 function runJsonPath() {
-  const container = document.getElementById("jsonPathResult");
-  const pathStr = document.getElementById("jsonPathInput").value.trim();
-  const raw = jsonFmtInput.value.trim();
-  if (!raw || !pathStr) { container.innerHTML = ""; return; }
+  const $container = $("#jsonPathResult");
+  const pathStr = $("#jsonPathInput").val().trim();
+  const raw = $jsonFmtInput.val().trim();
+  if (!raw || !pathStr) { $container.html(""); return; }
   try {
     const parsed = JSON.parse(raw);
     const results = evaluateJsonPath(parsed, pathStr);
     if (results.length === 0) {
-      container.innerHTML = `<span style="color:var(--muted)">${t("json.no_match")}</span>`;
+      $container.html(`<span style="color:var(--muted)">${t("json.no_match")}</span>`);
     } else {
-      container.innerHTML = results.map(r =>
+      $container.html(results.map(r =>
         `<div class="json-path-match"><span class="json-path-match-path">${r.path}</span> <span class="json-path-match-value">${JSON.stringify(r.value, null, 2)}</span></div>`
-      ).join("");
+      ).join(""));
     }
   } catch (e) {
-    container.innerHTML = `<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`;
+    $container.html(`<span style="color:#bf233a">${t("json.parse_fail", { msg: e.message })}</span>`);
   }
 }
 
-document.getElementById("jsonPathRunBtn").addEventListener("click", runJsonPath);
-document.getElementById("jsonPathInput").addEventListener("input", () => {
+$("#jsonPathRunBtn").on("click", runJsonPath);
+$("#jsonPathInput").on("input", () => {
   clearTimeout(jsonPathTimer);
   jsonPathTimer = setTimeout(runJsonPath, 300);
 });
 
 // ── K-V 폼 빌더 ──
-const jsonBuilderRows = document.getElementById("jsonBuilderRows");
+const $jsonBuilderRows = $("#jsonBuilderRows");
 
 function createBuilderRow(key, type, value, depth) {
-  const row = document.createElement("div");
-  row.className = "json-builder-row";
-  row.style.paddingLeft = (depth * 24) + "px";
-  row.dataset.depth = depth;
+  const $row = $("<div>").addClass("json-builder-row")
+    .css("paddingLeft", (depth * 24) + "px")
+    .data("depth", depth);
 
-  const keyInput = document.createElement("input");
-  keyInput.className = "json-builder-key";
-  keyInput.placeholder = t("json.key_ph");
-  keyInput.value = key || "";
+  const $keyInput = $("<input>").addClass("json-builder-key")
+    .attr("placeholder", t("json.key_ph"))
+    .val(key || "");
 
-  const typeSelect = document.createElement("select");
-  typeSelect.className = "json-builder-type";
-  ["string", "number", "boolean", "null", "object", "array"].forEach(t => {
-    const opt = document.createElement("option");
-    opt.value = t; opt.textContent = t;
-    if (t === type) opt.selected = true;
-    typeSelect.appendChild(opt);
+  const $typeSelect = $("<select>").addClass("json-builder-type");
+  ["string", "number", "boolean", "null", "object", "array"].forEach(tp => {
+    const $opt = $("<option>").val(tp).text(tp);
+    if (tp === type) $opt.prop("selected", true);
+    $typeSelect.append($opt);
   });
 
-  const valueInput = document.createElement("input");
-  valueInput.className = "json-builder-value";
-  valueInput.placeholder = t("json.value_ph");
+  const $valueInput = $("<input>").addClass("json-builder-value")
+    .attr("placeholder", t("json.value_ph"));
 
-  const boolSelect = document.createElement("select");
-  boolSelect.className = "json-builder-value-bool";
-  boolSelect.innerHTML = '<option value="true">true</option><option value="false">false</option>';
-  boolSelect.style.display = "none";
+  const $boolSelect = $("<select>").addClass("json-builder-value-bool")
+    .html('<option value="true">true</option><option value="false">false</option>')
+    .hide();
 
-  const addChildBtn = document.createElement("button");
-  addChildBtn.className = "json-builder-add-child";
-  addChildBtn.textContent = t("json.add_child");
-  addChildBtn.style.display = "none";
+  const $addChildBtn = $("<button>").addClass("json-builder-add-child")
+    .text(t("json.add_child"))
+    .hide();
 
-  const removeBtn = document.createElement("button");
-  removeBtn.className = "json-builder-remove";
-  removeBtn.textContent = "✕";
+  const $removeBtn = $("<button>").addClass("json-builder-remove")
+    .text("✕");
 
   function updateTypeUI() {
-    const t = typeSelect.value;
-    valueInput.style.display = (t === "string" || t === "number") ? "" : "none";
-    boolSelect.style.display = t === "boolean" ? "" : "none";
-    addChildBtn.style.display = (t === "object" || t === "array") ? "" : "none";
-    if (t === "number") valueInput.type = "number";
-    else { valueInput.type = "text"; }
+    const tp = $typeSelect.val();
+    $valueInput.css("display", (tp === "string" || tp === "number") ? "" : "none");
+    $boolSelect.css("display", tp === "boolean" ? "" : "none");
+    $addChildBtn.css("display", (tp === "object" || tp === "array") ? "" : "none");
+    if (tp === "number") $valueInput.attr("type", "number");
+    else { $valueInput.attr("type", "text"); }
   }
 
   if (type === "boolean") {
-    boolSelect.value = String(value);
+    $boolSelect.val(String(value));
   } else if (type !== "object" && type !== "array" && type !== "null") {
-    valueInput.value = value !== undefined && value !== null ? String(value) : "";
+    $valueInput.val(value !== undefined && value !== null ? String(value) : "");
   }
   updateTypeUI();
 
-  typeSelect.addEventListener("change", updateTypeUI);
-  removeBtn.addEventListener("click", () => {
+  $typeSelect.on("change", updateTypeUI);
+  $removeBtn.on("click", () => {
     // 중첩된 자식 행도 함께 삭제
-    const myDepth = parseInt(row.dataset.depth);
-    let next = row.nextElementSibling;
-    const toRemove = [row];
-    while (next && parseInt(next.dataset.depth) > myDepth) {
-      toRemove.push(next);
-      next = next.nextElementSibling;
+    const myDepth = $row.data("depth");
+    let $next = $row.next();
+    const toRemove = [$row];
+    while ($next.length && $next.data("depth") > myDepth) {
+      toRemove.push($next);
+      $next = $next.next();
     }
-    toRemove.forEach(r => r.remove());
+    toRemove.forEach($r => $r.remove());
   });
-  addChildBtn.addEventListener("click", () => {
-    const childRow = createBuilderRow("", "string", "", depth + 1);
+  $addChildBtn.on("click", () => {
+    const $childRow = createBuilderRow("", "string", "", depth + 1);
     // 자식 행을 현재 행의 마지막 자식 뒤에 삽입
-    const myDepth = parseInt(row.dataset.depth);
-    let insertAfter = row;
-    let next = row.nextElementSibling;
-    while (next && parseInt(next.dataset.depth) > myDepth) {
-      insertAfter = next;
-      next = next.nextElementSibling;
+    const myDepth = $row.data("depth");
+    let $insertAfter = $row;
+    let $next = $row.next();
+    while ($next.length && $next.data("depth") > myDepth) {
+      $insertAfter = $next;
+      $next = $next.next();
     }
-    insertAfter.after(childRow);
+    $insertAfter.after($childRow);
   });
 
-  row.append(keyInput, typeSelect, valueInput, boolSelect, addChildBtn, removeBtn);
-  return row;
+  $row.append($keyInput, $typeSelect, $valueInput, $boolSelect, $addChildBtn, $removeBtn);
+  return $row;
 }
 
 function builderToJson() {
-  const rows = [...jsonBuilderRows.children];
+  const rows = $jsonBuilderRows.children().toArray();
   function buildLevel(startIdx, parentDepth) {
     const obj = {};
     let i = startIdx;
     while (i < rows.length) {
-      const row = rows[i];
-      const d = parseInt(row.dataset.depth);
+      const $row = $(rows[i]);
+      const d = $row.data("depth");
       if (d <= parentDepth) break;
       if (d > parentDepth + 1) { i++; continue; }
-      const key = row.querySelector(".json-builder-key").value || `field${i}`;
-      const type = row.querySelector(".json-builder-type").value;
+      const key = $row.find(".json-builder-key").val() || `field${i}`;
+      const type = $row.find(".json-builder-type").val();
       let val;
-      if (type === "string") val = row.querySelector(".json-builder-value").value;
-      else if (type === "number") val = Number(row.querySelector(".json-builder-value").value) || 0;
-      else if (type === "boolean") val = row.querySelector(".json-builder-value-bool").value === "true";
+      if (type === "string") val = $row.find(".json-builder-value").val();
+      else if (type === "number") val = Number($row.find(".json-builder-value").val()) || 0;
+      else if (type === "boolean") val = $row.find(".json-builder-value-bool").val() === "true";
       else if (type === "null") val = null;
       else if (type === "object") val = buildLevel(i + 1, d);
       else if (type === "array") val = Object.values(buildLevel(i + 1, d));
       obj[key] = val;
       // skip children
       i++;
-      while (i < rows.length && parseInt(rows[i].dataset.depth) > d) i++;
+      while (i < rows.length && $(rows[i]).data("depth") > d) i++;
     }
     return obj;
   }
@@ -689,34 +661,34 @@ function jsonToBuilderRows(obj, depth) {
     else if (typeof v === "boolean") { type = "boolean"; val = v; }
     else if (typeof v === "number") { type = "number"; val = v; }
     else { type = "string"; val = v; }
-    jsonBuilderRows.appendChild(createBuilderRow(k, type, val, depth));
+    $jsonBuilderRows.append(createBuilderRow(k, type, val, depth));
     if (type === "object" || type === "array") {
       jsonToBuilderRows(v, depth + 1);
     }
   }
 }
 
-document.getElementById("jsonBuilderAddBtn").addEventListener("click", () => {
-  jsonBuilderRows.appendChild(createBuilderRow("", "string", "", 0));
+$("#jsonBuilderAddBtn").on("click", () => {
+  $jsonBuilderRows.append(createBuilderRow("", "string", "", 0));
 });
 
-document.getElementById("jsonBuilderInsertBtn").addEventListener("click", () => {
+$("#jsonBuilderInsertBtn").on("click", () => {
   try {
     const json = builderToJson();
-    const indentVal = jsonIndent.value === "tab" ? "\t" : Number(jsonIndent.value);
-    jsonFmtInput.value = JSON.stringify(json, null, indentVal);
+    const indentVal = $jsonIndent.val() === "tab" ? "\t" : Number($jsonIndent.val());
+    $jsonFmtInput.val(JSON.stringify(json, null, indentVal));
     setJsonFmtStatus(t("json.builder_done"));
   } catch (e) {
     setJsonFmtStatus(t("json.builder_fail", { msg: e.message }), true);
   }
 });
 
-document.getElementById("jsonBuilderFromJsonBtn").addEventListener("click", () => {
-  const raw = jsonFmtInput.value.trim();
+$("#jsonBuilderFromJsonBtn").on("click", () => {
+  const raw = $jsonFmtInput.val().trim();
   if (!raw) { setJsonFmtStatus(t("common.no_input"), true); return; }
   try {
     const parsed = JSON.parse(raw);
-    jsonBuilderRows.innerHTML = "";
+    $jsonBuilderRows.html("");
     if (typeof parsed === "object" && parsed !== null) {
       jsonToBuilderRows(parsed, 0);
     }
@@ -725,3 +697,5 @@ document.getElementById("jsonBuilderFromJsonBtn").addEventListener("click", () =
     setJsonFmtStatus(t("json.parse_fail", { msg: e.message }), true);
   }
 });
+
+})();
