@@ -2,12 +2,12 @@
 (function () {
   "use strict";
 
-  var cardsEl = document.getElementById("tutorialCards");
-  var pluginCardsEl = document.getElementById("tutorialPluginCards");
-  var detailEl = document.getElementById("tutorialDetail");
-  var detailContent = document.getElementById("tutorialDetailContent");
-  var backBtn = document.getElementById("tutorialBackBtn");
-  if (!cardsEl) return;
+  var $cardsEl = $("#tutorialCards");
+  var $pluginCardsEl = $("#tutorialPluginCards");
+  var $detailEl = $("#tutorialDetail");
+  var $detailContent = $("#tutorialDetailContent");
+  var $backBtn = $("#tutorialBackBtn");
+  if (!$cardsEl.length) return;
 
   var PLUGINS = [
     { id: "plugin-system", icon: "puzzle", titleKey: "tutorial.plugin_title", descKey: "tutorial.plugin_desc", guideKey: "tutorial.plugin_guide" },
@@ -40,17 +40,15 @@
           '<p>' + t(tool.descKey) + '</p>' +
         '</div>';
     });
-    cardsEl.innerHTML = html;
-    lucide.createIcons({ nodes: cardsEl.querySelectorAll("[data-lucide]") });
+    $cardsEl.html(html);
+    lucide.createIcons({ nodes: $cardsEl.find("[data-lucide]").toArray() });
 
-    cardsEl.querySelectorAll(".tutorial-card").forEach(function (card) {
-      card.addEventListener("click", function () {
-        showDetail(card.dataset.tool);
-      });
+    $cardsEl.find(".tutorial-card").on("click", function () {
+      showDetail($(this).data("tool"));
     });
 
     // 플러그인 카드
-    if (pluginCardsEl) {
+    if ($pluginCardsEl.length) {
       var pHtml = "";
       PLUGINS.forEach(function (p) {
         pHtml +=
@@ -60,13 +58,11 @@
             '<p>' + t(p.descKey) + '</p>' +
           '</div>';
       });
-      pluginCardsEl.innerHTML = pHtml;
-      lucide.createIcons({ nodes: pluginCardsEl.querySelectorAll("[data-lucide]") });
+      $pluginCardsEl.html(pHtml);
+      lucide.createIcons({ nodes: $pluginCardsEl.find("[data-lucide]").toArray() });
 
-      pluginCardsEl.querySelectorAll(".tutorial-card").forEach(function (card) {
-        card.addEventListener("click", function () {
-          showDetail(card.dataset.tool);
-        });
+      $pluginCardsEl.find(".tutorial-card").on("click", function () {
+        showDetail($(this).data("tool"));
       });
     }
   }
@@ -75,17 +71,17 @@
     var tool = ALL_ITEMS.find(function (t) { return t.id === toolId; });
     if (!tool) return;
 
-    cardsEl.style.display = "none";
-    if (pluginCardsEl) pluginCardsEl.style.display = "none";
-    document.querySelectorAll(".tutorial-section-title").forEach(function (el) { el.style.display = "none"; });
-    detailEl.style.display = "block";
+    $cardsEl.hide();
+    if ($pluginCardsEl.length) $pluginCardsEl.hide();
+    $(".tutorial-section-title").hide();
+    $detailEl.show();
 
     var guideHtml = t(tool.guideKey);
     // If guide key returned as-is (not translated), show fallback
     if (guideHtml === tool.guideKey) guideHtml = "<p>" + t(tool.descKey) + "</p>";
 
     var isTool = TOOLS.some(function (t) { return t.id === toolId; });
-    detailContent.innerHTML =
+    $detailContent.html(
       '<div class="tutorial-detail-header">' +
         '<div class="tutorial-detail-icon"><i data-lucide="' + tool.icon + '"></i></div>' +
         '<div>' +
@@ -94,29 +90,27 @@
         '</div>' +
       '</div>' +
       '<div class="tutorial-guide">' + guideHtml + '</div>' +
-      (isTool ? '<button class="tutorial-try-btn" data-tab="' + tool.id + '">' + t("tutorial.try_it") + ' &rarr;</button>' : '');
+      (isTool ? '<button class="tutorial-try-btn" data-tab="' + tool.id + '">' + t("tutorial.try_it") + ' &rarr;</button>' : '')
+    );
 
-    lucide.createIcons({ nodes: detailContent.querySelectorAll("[data-lucide]") });
+    lucide.createIcons({ nodes: $detailContent.find("[data-lucide]").toArray() });
 
-    var tryBtn = detailContent.querySelector(".tutorial-try-btn");
-    if (tryBtn) {
-      tryBtn.addEventListener("click", function () {
-        switchTab(this.dataset.tab);
-      });
-    }
+    $detailContent.find(".tutorial-try-btn").on("click", function () {
+      switchTab($(this).data("tab"));
+    });
   }
 
   function showCards() {
-    detailEl.style.display = "none";
-    cardsEl.style.display = "";
-    if (pluginCardsEl) pluginCardsEl.style.display = "";
-    document.querySelectorAll(".tutorial-section-title").forEach(function (el) { el.style.display = ""; });
+    $detailEl.hide();
+    $cardsEl.show();
+    if ($pluginCardsEl.length) $pluginCardsEl.show();
+    $(".tutorial-section-title").show();
   }
 
-  backBtn.addEventListener("click", showCards);
+  $backBtn.on("click", showCards);
 
   i18nReady(renderCards);
-  window.addEventListener("langchange", function () {
+  $(window).on("langchange", function () {
     renderCards();
     showCards();
   });
