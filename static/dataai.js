@@ -1,21 +1,22 @@
 // --- Data AI ---
-var dataaiPrompt = document.getElementById("dataaiPrompt");
-var dataaiFormat = document.getElementById("dataaiFormat");
-var dataaiCount = document.getElementById("dataaiCount");
-var dataaiGenerateBtn = document.getElementById("dataaiGenerateBtn");
-var dataaiStatus = document.getElementById("dataaiStatus");
-var dataaiResultWrap = document.getElementById("dataaiResultWrap");
-var dataaiResult = document.getElementById("dataaiResult");
-var dataaiCopyBtn = document.getElementById("dataaiCopyBtn");
-var dataaiDownloadBtn = document.getElementById("dataaiDownloadBtn");
-var dataaiToCsvBtn = document.getElementById("dataaiToCsvBtn");
-var dataaiToJsonBtn = document.getElementById("dataaiToJsonBtn");
-var dataaiSaveBtn = document.getElementById("dataaiSaveBtn");
-var dataaiPreviewWrap = document.getElementById("dataaiPreviewWrap");
-var dataaiProvider = document.getElementById("dataaiProvider");
-var dataaiSavesBody = document.querySelector("#dataaiSavesTable tbody");
+(function() {
+var $dataaiPrompt = $("#dataaiPrompt");
+var $dataaiFormat = $("#dataaiFormat");
+var $dataaiCount = $("#dataaiCount");
+var $dataaiGenerateBtn = $("#dataaiGenerateBtn");
+var $dataaiStatus = $("#dataaiStatus");
+var $dataaiResultWrap = $("#dataaiResultWrap");
+var $dataaiResult = $("#dataaiResult");
+var $dataaiCopyBtn = $("#dataaiCopyBtn");
+var $dataaiDownloadBtn = $("#dataaiDownloadBtn");
+var $dataaiToCsvBtn = $("#dataaiToCsvBtn");
+var $dataaiToJsonBtn = $("#dataaiToJsonBtn");
+var $dataaiSaveBtn = $("#dataaiSaveBtn");
+var $dataaiPreviewWrap = $("#dataaiPreviewWrap");
+var $dataaiProvider = $("#dataaiProvider");
+var $dataaiSavesBody = $("#dataaiSavesTable tbody");
 
-loadAiProviders(dataaiProvider);
+loadAiProviders($("#dataaiProvider")[0]);
 
 var _dataaiLastResult = "";
 var _dataaiLastPrompt = "";
@@ -25,37 +26,37 @@ var _dataaiLoadingTimer = null;
 function setDataaiStatus(msg, type) {
   clearInterval(_dataaiLoadingTimer);
   _dataaiLoadingTimer = null;
-  dataaiStatus.style.display = msg ? "block" : "none";
-  dataaiStatus.textContent = msg;
-  dataaiStatus.className = "dataai-status" + (type ? " " + type : "");
+  $dataaiStatus.css("display", msg ? "block" : "none");
+  $dataaiStatus.text(msg);
+  $dataaiStatus.attr("class", "dataai-status" + (type ? " " + type : ""));
 }
 
 function startLoadingAnimation(baseMsg) {
   var dots = 0;
-  dataaiStatus.style.display = "block";
-  dataaiStatus.className = "dataai-status loading";
-  dataaiStatus.textContent = baseMsg;
+  $dataaiStatus.css("display", "block");
+  $dataaiStatus.attr("class", "dataai-status loading");
+  $dataaiStatus.text(baseMsg);
   _dataaiLoadingTimer = setInterval(function () {
     dots = (dots + 1) % 4;
-    dataaiStatus.textContent = baseMsg + ".".repeat(dots);
+    $dataaiStatus.text(baseMsg + ".".repeat(dots));
   }, 400);
 }
 
 // 탭 전환 유틸
 function switchToTab(tabName) {
-  document.querySelectorAll(".nav-btn").forEach(function (b) { b.classList.remove("active"); });
-  document.querySelectorAll(".tab-content").forEach(function (t) { t.classList.remove("active"); });
-  var btn = document.querySelector('.nav-btn[data-tab="' + tabName + '"]');
-  var tab = document.querySelector('.tab-content[data-tab="' + tabName + '"]');
-  if (btn) btn.classList.add("active");
-  if (tab) tab.classList.add("active");
+  $(".nav-btn").removeClass("active");
+  $(".tab-content").removeClass("active");
+  var $btn = $('.nav-btn[data-tab="' + tabName + '"]');
+  var $tab = $('.tab-content[data-tab="' + tabName + '"]');
+  if ($btn.length) $btn.addClass("active");
+  if ($tab.length) $tab.addClass("active");
 }
 
 // 연계 버튼 표시 업데이트
 function updateLinkButtons() {
   var fmt = _dataaiLastFormat;
-  dataaiToCsvBtn.style.display = (fmt === "csv" || fmt === "tsv" || fmt === "json") ? "" : "none";
-  dataaiToJsonBtn.style.display = (fmt === "json") ? "" : "none";
+  $dataaiToCsvBtn.css("display", (fmt === "csv" || fmt === "tsv" || fmt === "json") ? "" : "none");
+  $dataaiToJsonBtn.css("display", (fmt === "json") ? "" : "none");
 }
 
 // CSV/TSV 텍스트를 2D 배열로 파싱
@@ -72,8 +73,8 @@ function parseDataaiCsv(text, delim) {
 
 // 테이블 미리보기 렌더링
 function renderDataaiPreview() {
-  dataaiPreviewWrap.innerHTML = "";
-  if (!_dataaiLastResult) { dataaiPreviewWrap.style.display = "none"; return; }
+  $dataaiPreviewWrap.html("");
+  if (!_dataaiLastResult) { $dataaiPreviewWrap.hide(); return; }
 
   var rows = [];
   var fmt = _dataaiLastFormat;
@@ -95,65 +96,56 @@ function renderDataaiPreview() {
 
   if (rows.length === 0) return;
 
-  var table = document.createElement("table");
-  table.className = "dev-table";
-  var thead = document.createElement("thead");
-  var headerTr = document.createElement("tr");
-  var numTh = document.createElement("th");
-  numTh.textContent = "#";
-  numTh.style.width = "40px";
-  headerTr.appendChild(numTh);
+  var $table = $("<table>").addClass("dev-table");
+  var $thead = $("<thead>");
+  var $headerTr = $("<tr>");
+  var $numTh = $("<th>").text("#").css("width", "40px");
+  $headerTr.append($numTh);
   for (var c = 0; c < rows[0].length; c++) {
-    var th = document.createElement("th");
-    th.textContent = rows[0][c];
-    headerTr.appendChild(th);
+    var $th = $("<th>").text(rows[0][c]);
+    $headerTr.append($th);
   }
-  thead.appendChild(headerTr);
-  table.appendChild(thead);
+  $thead.append($headerTr);
+  $table.append($thead);
 
-  var tbody = document.createElement("tbody");
+  var $tbody = $("<tbody>");
   for (var r = 1; r < rows.length; r++) {
-    var tr = document.createElement("tr");
-    var numTd = document.createElement("td");
-    numTd.textContent = r;
-    numTd.style.color = "var(--muted)";
-    tr.appendChild(numTd);
+    var $tr = $("<tr>");
+    var $numTd = $("<td>").text(r).css("color", "var(--muted)");
+    $tr.append($numTd);
     for (var c2 = 0; c2 < rows[0].length; c2++) {
-      var td = document.createElement("td");
-      td.textContent = (rows[r] && rows[r][c2]) || "";
-      tr.appendChild(td);
+      var $td = $("<td>").text((rows[r] && rows[r][c2]) || "");
+      $tr.append($td);
     }
-    tbody.appendChild(tr);
+    $tbody.append($tr);
   }
-  table.appendChild(tbody);
+  $table.append($tbody);
 
-  var wrap = document.createElement("div");
-  wrap.className = "dev-table-wrap";
-  wrap.style.maxHeight = "400px";
-  wrap.appendChild(table);
-  dataaiPreviewWrap.appendChild(wrap);
-  dataaiPreviewWrap.style.display = "block";
+  var $wrap = $("<div>").addClass("dev-table-wrap").css("maxHeight", "400px");
+  $wrap.append($table);
+  $dataaiPreviewWrap.append($wrap);
+  $dataaiPreviewWrap.css("display", "block");
 }
 
 // 생성
-dataaiGenerateBtn.addEventListener("click", async function () {
-  var prompt = dataaiPrompt.value.trim();
+$dataaiGenerateBtn.on("click", async function () {
+  var prompt = $dataaiPrompt.val().trim();
   if (!prompt) { setDataaiStatus(t("dataai.input_required"), "error"); return; }
 
-  var fmt = dataaiFormat.value;
-  var count = parseInt(dataaiCount.value) || 10;
+  var fmt = $dataaiFormat.val();
+  var count = parseInt($dataaiCount.val()) || 10;
 
   startLoadingAnimation(t("dataai.generating"));
-  dataaiGenerateBtn.disabled = true;
-  dataaiResultWrap.style.display = "none";
-  dataaiPreviewWrap.style.display = "none";
+  $dataaiGenerateBtn.prop("disabled", true);
+  $dataaiResultWrap.hide();
+  $dataaiPreviewWrap.hide();
   var startTime = Date.now();
 
   try {
     var r = await fetch("/api/dataai/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: prompt, format: fmt, count: count, provider: dataaiProvider.value }),
+      body: JSON.stringify({ prompt: prompt, format: fmt, count: count, provider: $dataaiProvider.val() }),
     });
     var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     var res = await r.json();
@@ -164,8 +156,8 @@ dataaiGenerateBtn.addEventListener("click", async function () {
     _dataaiLastResult = res.result;
     _dataaiLastPrompt = prompt;
     _dataaiLastFormat = fmt;
-    dataaiResult.textContent = res.result;
-    dataaiResultWrap.style.display = "block";
+    $dataaiResult.text(res.result);
+    $dataaiResultWrap.css("display", "block");
     updateLinkButtons();
     renderDataaiPreview();
     var actualCount = res.count || count;
@@ -175,12 +167,12 @@ dataaiGenerateBtn.addEventListener("click", async function () {
   } catch (e) {
     setDataaiStatus(t("dataai.request_fail", {msg: e.message}), "error");
   } finally {
-    dataaiGenerateBtn.disabled = false;
+    $dataaiGenerateBtn.prop("disabled", false);
   }
 });
 
 // 복사
-dataaiCopyBtn.addEventListener("click", function () {
+$dataaiCopyBtn.on("click", function () {
   navigator.clipboard.writeText(_dataaiLastResult).then(function () {
     setDataaiStatus(t("common.copy_done"), "success");
     showToast(t("common.copy_done"), "success");
@@ -188,23 +180,21 @@ dataaiCopyBtn.addEventListener("click", function () {
 });
 
 // 다운로드
-dataaiDownloadBtn.addEventListener("click", function () {
+$dataaiDownloadBtn.on("click", function () {
   if (!_dataaiLastResult) return;
   var ext = _dataaiLastFormat === "json" ? "json" : _dataaiLastFormat === "tsv" ? "tsv" : "csv";
   var mime = ext === "json" ? "application/json" : "text/csv";
   var blob = new Blob([_dataaiLastResult], { type: mime + ";charset=utf-8" });
   var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "data-ai." + ext;
-  a.click();
+  var $a = $("<a>").attr("href", url).attr("download", "data-ai." + ext);
+  $a[0].click();
   URL.revokeObjectURL(url);
   setDataaiStatus(t("dataai.download_done"), "success");
   showToast(t("dataai.download_done"), "success");
 });
 
 // CSV 편집기로 보내기
-dataaiToCsvBtn.addEventListener("click", function () {
+$dataaiToCsvBtn.on("click", function () {
   if (!_dataaiLastResult) return;
   var text = _dataaiLastResult;
 
@@ -239,22 +229,22 @@ dataaiToCsvBtn.addEventListener("click", function () {
 });
 
 // JSON 정렬로 보내기
-dataaiToJsonBtn.addEventListener("click", function () {
+$dataaiToJsonBtn.on("click", function () {
   if (!_dataaiLastResult) return;
-  var jsonInput = document.getElementById("jsonFmtInput");
-  if (jsonInput) {
-    jsonInput.value = _dataaiLastResult;
+  var $jsonInput = $("#jsonFmtInput");
+  if ($jsonInput.length) {
+    $jsonInput.val(_dataaiLastResult);
     switchToTab("jsonformat");
     // 자동 정렬
-    var fmtBtn = document.getElementById("jsonFmtBtn");
-    if (fmtBtn) fmtBtn.click();
+    var $fmtBtn = $("#jsonFmtBtn");
+    if ($fmtBtn.length) $fmtBtn[0].click();
   } else {
     setDataaiStatus(t("dataai.no_json_editor"), "error");
   }
 });
 
 // DB 저장
-dataaiSaveBtn.addEventListener("click", async function () {
+$dataaiSaveBtn.on("click", async function () {
   if (!_dataaiLastResult) { setDataaiStatus(t("dataai.no_data_save"), "error"); return; }
   try {
     var r = await fetch("/api/dataai/saves", {
@@ -263,7 +253,7 @@ dataaiSaveBtn.addEventListener("click", async function () {
       body: JSON.stringify({
         prompt: _dataaiLastPrompt,
         format: _dataaiLastFormat,
-        count: parseInt(dataaiCount.value) || 10,
+        count: parseInt($dataaiCount.val()) || 10,
         result: _dataaiLastResult,
       }),
     });
@@ -281,18 +271,17 @@ dataaiSaveBtn.addEventListener("click", async function () {
 // 저장 목록 로드
 async function loadDataaiSaves() {
   try {
-    var r = await fetch("/api/dataai/saves");
-    var res = await r.json();
-    dataaiSavesBody.innerHTML = "";
+    var res = await $.getJSON("/api/dataai/saves");
+    $dataaiSavesBody.html("");
     if (!res.items || res.items.length === 0) {
-      dataaiSavesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">' + t("dataai.no_saved") + '</td></tr>';
+      $dataaiSavesBody.html('<tr><td colspan="5" style="text-align:center;color:var(--muted);">' + t("dataai.no_saved") + '</td></tr>');
       return;
     }
     for (var i = 0; i < res.items.length; i++) {
       var item = res.items[i];
-      var tr = document.createElement("tr");
+      var $tr = $("<tr>");
       var promptText = item.prompt.length > 40 ? item.prompt.substring(0, 40) + "..." : item.prompt;
-      tr.innerHTML =
+      $tr.html(
         "<td>" + item.id + "</td>" +
         "<td title=\"" + item.prompt.replace(/"/g, "&quot;") + "\">" + escapeHtml(promptText) + "</td>" +
         "<td>" + item.format.toUpperCase() + "</td>" +
@@ -300,14 +289,15 @@ async function loadDataaiSaves() {
         '<td class="row-actions">' +
         '<button class="dataai-load-btn" data-id="' + item.id + '">' + t("common.load") + '</button>' +
         '<button class="dataai-del-btn" data-id="' + item.id + '">' + t("common.delete") + '</button>' +
-        "</td>";
-      dataaiSavesBody.appendChild(tr);
+        "</td>"
+      );
+      $dataaiSavesBody.append($tr);
     }
-    dataaiSavesBody.querySelectorAll(".dataai-load-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { loadDataaiSave(parseInt(btn.dataset.id)); });
+    $dataaiSavesBody.find(".dataai-load-btn").on("click", function () {
+      loadDataaiSave(parseInt($(this).data("id")));
     });
-    dataaiSavesBody.querySelectorAll(".dataai-del-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { deleteDataaiSave(parseInt(btn.dataset.id)); });
+    $dataaiSavesBody.find(".dataai-del-btn").on("click", function () {
+      deleteDataaiSave(parseInt($(this).data("id")));
     });
   } catch (e) {
     // 목록 로드 실패 무시
@@ -316,17 +306,16 @@ async function loadDataaiSaves() {
 
 async function loadDataaiSave(id) {
   try {
-    var r = await fetch("/api/dataai/saves/" + id);
-    var res = await r.json();
+    var res = await $.getJSON("/api/dataai/saves/" + id);
     if (res.error) { setDataaiStatus(res.error, "error"); return; }
-    dataaiPrompt.value = res.prompt;
-    dataaiFormat.value = res.format;
-    dataaiCount.value = res.count;
+    $dataaiPrompt.val(res.prompt);
+    $dataaiFormat.val(res.format);
+    $dataaiCount.val(res.count);
     _dataaiLastResult = res.result;
     _dataaiLastPrompt = res.prompt;
     _dataaiLastFormat = res.format;
-    dataaiResult.textContent = res.result;
-    dataaiResultWrap.style.display = "block";
+    $dataaiResult.text(res.result);
+    $dataaiResultWrap.css("display", "block");
     updateLinkButtons();
     renderDataaiPreview();
     setDataaiStatus(t("dataai.load_done", {id: id}), "success");
@@ -338,8 +327,11 @@ async function loadDataaiSave(id) {
 async function deleteDataaiSave(id) {
   if (!confirm(t("dataai.confirm_delete"))) return;
   try {
-    var r = await fetch("/api/dataai/saves/" + id, { method: "DELETE" });
-    var res = await r.json();
+    var res = await $.ajax({
+      url: "/api/dataai/saves/" + id,
+      method: "DELETE",
+      dataType: "json"
+    });
     if (!res.ok) { setDataaiStatus(res.error || t("common.delete_fail"), "error"); showToast(res.error || t("common.delete_fail"), "error"); return; }
     setDataaiStatus(t("common.delete_done"), "success");
     showToast(t("common.delete_done"), "success");
@@ -351,13 +343,14 @@ async function deleteDataaiSave(id) {
 }
 
 // Ctrl+Enter로 생성
-dataaiPrompt.addEventListener("keydown", function (e) {
+$dataaiPrompt.on("keydown", function (e) {
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
     e.preventDefault();
-    dataaiGenerateBtn.click();
+    $dataaiGenerateBtn[0].click();
   }
 });
 
 // 초기 로드
 i18nReady(loadDataaiSaves);
-window.addEventListener("langchange", loadDataaiSaves);
+$(window).on("langchange", loadDataaiSaves);
+})();
