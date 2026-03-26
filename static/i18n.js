@@ -22,51 +22,50 @@
 
   // HTML 요소에 번역 적용
   function applyDOM() {
-    document.querySelectorAll("[data-i18n]").forEach(function (el) {
-      var key = el.getAttribute("data-i18n");
+    $("[data-i18n]").each(function () {
+      var key = $(this).attr("data-i18n");
       var val = t(key);
-      if (val === key) return;
-      el.textContent = val;
+      if (val !== key) $(this).text(val);
     });
-    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
-      var key = el.getAttribute("data-i18n-placeholder");
+    $("[data-i18n-placeholder]").each(function () {
+      var key = $(this).attr("data-i18n-placeholder");
       var val = t(key);
-      if (val !== key) el.placeholder = val;
+      if (val !== key) $(this).attr("placeholder", val);
     });
-    document.querySelectorAll("[data-i18n-title]").forEach(function (el) {
-      var key = el.getAttribute("data-i18n-title");
+    $("[data-i18n-title]").each(function () {
+      var key = $(this).attr("data-i18n-title");
       var val = t(key);
-      if (val !== key) el.title = val;
+      if (val !== key) $(this).attr("title", val);
     });
-    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
-      var key = el.getAttribute("data-i18n-html");
+    $("[data-i18n-html]").each(function () {
+      var key = $(this).attr("data-i18n-html");
       var val = t(key);
-      if (val !== key) el.innerHTML = val;
+      if (val !== key) $(this).html(val);
     });
     // data-tooltip (sidebar)
-    document.querySelectorAll("[data-i18n-tooltip]").forEach(function (el) {
-      var key = el.getAttribute("data-i18n-tooltip");
+    $("[data-i18n-tooltip]").each(function () {
+      var key = $(this).attr("data-i18n-tooltip");
       var val = t(key);
-      if (val !== key) el.setAttribute("data-tooltip", val);
+      if (val !== key) $(this).attr("data-tooltip", val);
     });
     // <title>
-    var titleKey = document.querySelector("title");
-    if (titleKey && titleKey.getAttribute("data-i18n")) {
-      var val = t(titleKey.getAttribute("data-i18n"));
-      if (val !== titleKey.getAttribute("data-i18n")) document.title = val;
+    var $title = $("title[data-i18n]");
+    if ($title.length) {
+      var val = t($title.attr("data-i18n"));
+      if (val !== $title.attr("data-i18n")) document.title = val;
     }
   }
 
   // 언어 로드
   function loadLang(code, cb) {
-    fetch("/api/lang/" + code).then(function (r) { return r.json(); }).then(function (data) {
+    $.getJSON("/api/lang/" + code).done(function (data) {
       if (data.ok && data.translations) {
         _dict = data.translations;
         _lang = code;
         applyDOM();
       }
       if (cb) cb();
-    }).catch(function () {
+    }).fail(function () {
       if (cb) cb();
     });
   }
@@ -75,13 +74,13 @@
   window.i18nSetLang = function (code) {
     loadLang(code, function () {
       // 커스텀 이벤트 발행 (JS에서 동적 텍스트 갱신용)
-      window.dispatchEvent(new CustomEvent("langchange", { detail: { lang: code } }));
+      $(window).trigger("langchange", { lang: code });
     });
   };
 
   // 초기화: 서버에서 현재 언어 설정 조회 후 로드
   function init() {
-    fetch("/api/dev/site-config").then(function (r) { return r.json(); }).then(function (data) {
+    $.getJSON("/api/dev/site-config").done(function (data) {
       var lang = "ko";
       if (data.ok && data.config && data.config.lang) {
         lang = data.config.lang;
@@ -91,7 +90,7 @@
         _queue.forEach(function (fn) { fn(); });
         _queue = [];
       });
-    }).catch(function () {
+    }).fail(function () {
       loadLang("ko", function () {
         _ready = true;
       });
@@ -111,9 +110,5 @@
   };
 
   // DOM 로드 후 초기화
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  $(init);
 })();
