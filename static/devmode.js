@@ -2,21 +2,21 @@
 function applySiteName(name) {
   if (!name) return;
   document.title = name;
-  var logo = document.querySelector(".logo");
-  if (logo) logo.textContent = name;
+  var $logo = $(".logo");
+  if ($logo.length) $logo.text(name);
 }
 
 // 페이지 로드 시 사이트 이름 불러오기
 (function () {
-  fetch("/api/dev/site-config").then(function (r) { return r.json(); }).then(function (data) {
+  $.getJSON("/api/dev/site-config").done(function (data) {
     if (data.ok && data.config && data.config.siteName) applySiteName(data.config.siteName);
-  }).catch(function () {});
+  }).fail(function () {});
 })();
 
 // ── 개발자 모드 (탭 방식) ──
 (function () {
-  const authBadge = document.getElementById("devAuthBadge");
-  const lockBtn = document.getElementById("devLockBtn");
+  const $authBadge = $("#devAuthBadge");
+  const $lockBtn = $("#devLockBtn");
 
   let devToken = sessionStorage.getItem("devToken") || "";
   let authRegistered = false;
@@ -31,8 +31,8 @@ function applySiteName(name) {
       initDevMode();
     } else if (tabName === "devmode") {
       // 재진입 시 현재 활성 섹션 리로드
-      const activeSec = document.querySelector(".dev-sec-btn.active");
-      if (activeSec) loadDevSection(activeSec.dataset.sec);
+      const $activeSec = $(".dev-sec-btn.active");
+      if ($activeSec.length) loadDevSection($activeSec.data("sec"));
     }
   };
 
@@ -44,35 +44,35 @@ function applySiteName(name) {
   // ══════════════════════════════════
   // 일반 설정 (사이트 이름 등)
   // ══════════════════════════════════
-  const siteNameInput = document.getElementById("devSiteName");
-  const siteLangSelect = document.getElementById("devSiteLang");
-  const siteConfigSaveBtn = document.getElementById("devSiteConfigSave");
-  const toastPositionGrid = document.getElementById("devToastPosition");
-  const toastModeSelect = document.getElementById("devToastMode");
-  const toastSizeSelect = document.getElementById("devToastSize");
-  const toastDurationInput = document.getElementById("devToastDuration");
-  const toastPreviewBtn = document.getElementById("devToastPreview");
+  const $siteNameInput = $("#devSiteName");
+  const $siteLangSelect = $("#devSiteLang");
+  const $siteConfigSaveBtn = $("#devSiteConfigSave");
+  const $toastPositionGrid = $("#devToastPosition");
+  const $toastModeSelect = $("#devToastMode");
+  const $toastSizeSelect = $("#devToastSize");
+  const $toastDurationInput = $("#devToastDuration");
+  const $toastPreviewBtn = $("#devToastPreview");
 
   // Toast preview button — temporarily apply selected settings and show a test toast
   var _previewRestoreTimer = null;
-  toastPreviewBtn.addEventListener("click", () => {
+  $toastPreviewBtn.on("click", function () {
     if (_previewRestoreTimer) clearTimeout(_previewRestoreTimer);
     _toastConfig.position = _toastSelectedPosition;
-    _toastConfig.mode = toastModeSelect.value;
-    _toastConfig.size = toastSizeSelect.value;
-    _toastConfig.duration = parseInt(toastDurationInput.value) || 3;
+    _toastConfig.mode = $toastModeSelect.val();
+    _toastConfig.size = $toastSizeSelect.val();
+    _toastConfig.duration = parseInt($toastDurationInput.val()) || 3;
     _updateToastPosition();
     showToast(t("toast.preview_message"), "success");
   });
 
   // Toast position grid click handler
   var _toastSelectedPosition = "bottom-right";
-  toastPositionGrid.addEventListener("click", (e) => {
-    const btn = e.target.closest(".toast-pos-btn");
-    if (!btn) return;
-    toastPositionGrid.querySelectorAll(".toast-pos-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    _toastSelectedPosition = btn.dataset.pos;
+  $toastPositionGrid.on("click", function (e) {
+    const $btn = $(e.target).closest(".toast-pos-btn");
+    if (!$btn.length) return;
+    $toastPositionGrid.find(".toast-pos-btn").removeClass("active");
+    $btn.addClass("active");
+    _toastSelectedPosition = $btn.data("pos");
   });
 
   async function loadSiteConfig() {
@@ -80,8 +80,8 @@ function applySiteName(name) {
       const res = await fetch("/api/dev/site-config");
       const data = await res.json();
       if (data.ok) {
-        siteNameInput.value = data.config.siteName || "";
-        if (data.config.lang) siteLangSelect.value = data.config.lang;
+        $siteNameInput.val(data.config.siteName || "");
+        if (data.config.lang) $siteLangSelect.val(data.config.lang);
         // Toast config
         if (data.config.toast_config) {
           try {
@@ -89,13 +89,13 @@ function applySiteName(name) {
               ? JSON.parse(data.config.toast_config) : data.config.toast_config;
             if (tc.position) {
               _toastSelectedPosition = tc.position;
-              toastPositionGrid.querySelectorAll(".toast-pos-btn").forEach(b => {
-                b.classList.toggle("active", b.dataset.pos === tc.position);
+              $toastPositionGrid.find(".toast-pos-btn").each(function () {
+                $(this).toggleClass("active", $(this).data("pos") === tc.position);
               });
             }
-            if (tc.mode) toastModeSelect.value = tc.mode;
-            if (tc.size) toastSizeSelect.value = tc.size;
-            if (tc.duration) toastDurationInput.value = tc.duration;
+            if (tc.mode) $toastModeSelect.val(tc.mode);
+            if (tc.size) $toastSizeSelect.val(tc.size);
+            if (tc.duration) $toastDurationInput.val(tc.duration);
           } catch (_) {}
         }
       }
@@ -104,26 +104,26 @@ function applySiteName(name) {
     }
   }
 
-  siteConfigSaveBtn.addEventListener("click", async () => {
+  $siteConfigSaveBtn.on("click", async function () {
     try {
       const res = await fetch("/api/dev/site-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          siteName: siteNameInput.value.trim(),
-          lang: siteLangSelect.value,
+          siteName: $siteNameInput.val().trim(),
+          lang: $siteLangSelect.val(),
           toast_config: JSON.stringify({
             position: _toastSelectedPosition,
-            mode: toastModeSelect.value,
-            size: toastSizeSelect.value,
-            duration: parseInt(toastDurationInput.value) || 3,
+            mode: $toastModeSelect.val(),
+            size: $toastSizeSelect.val(),
+            duration: parseInt($toastDurationInput.val()) || 3,
           }),
         }),
       });
       const data = await res.json();
       if (data.ok) {
-        applySiteName(siteNameInput.value.trim());
-        if (typeof i18nSetLang === "function") i18nSetLang(siteLangSelect.value);
+        applySiteName($siteNameInput.val().trim());
+        if (typeof i18nSetLang === "function") i18nSetLang($siteLangSelect.val());
         // Apply toast config immediately
         if (typeof loadToastConfig === "function") loadToastConfig();
         showToast(t("dev.site_saved"), "success");
@@ -138,15 +138,13 @@ function applySiteName(name) {
   loadSiteConfig();
 
   // ── 섹션 탭 전환 ──
-  document.querySelectorAll(".dev-sec-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".dev-sec-btn").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".dev-section").forEach((s) => s.classList.remove("active"));
-      btn.classList.add("active");
-      const sec = document.querySelector(`.dev-section[data-sec="${btn.dataset.sec}"]`);
-      if (sec) sec.classList.add("active");
-      loadDevSection(btn.dataset.sec);
-    });
+  $(".dev-sec-btn").on("click", function () {
+    $(".dev-sec-btn").removeClass("active");
+    $(".dev-section").removeClass("active");
+    $(this).addClass("active");
+    const $sec = $(`.dev-section[data-sec="${$(this).data("sec")}"]`);
+    if ($sec.length) $sec.addClass("active");
+    loadDevSection($(this).data("sec"));
   });
 
   // ── 인증 상태 확인 ──
@@ -162,53 +160,54 @@ function applySiteName(name) {
   }
 
   function updateAuthBadge() {
-    if (!authBadge) return;
+    if (!$authBadge.length) return;
     if (!authRegistered) {
-      authBadge.textContent = "";
-      authBadge.title = "";
-      lockBtn.style.display = "none";
+      $authBadge.text("");
+      $authBadge.attr("title", "");
+      $lockBtn.hide();
     } else if (devToken) {
-      authBadge.textContent = "\uD83D\uDD12";
-      authBadge.title = t("dev.auth_badge_on");
-      lockBtn.style.display = "inline-block";
+      $authBadge.text("\uD83D\uDD12");
+      $authBadge.attr("title", t("dev.auth_badge_on"));
+      $lockBtn.css("display", "inline-block");
     } else {
-      authBadge.textContent = "\uD83D\uDD13";
-      authBadge.title = t("dev.auth_badge_off");
-      lockBtn.style.display = "none";
+      $authBadge.text("\uD83D\uDD13");
+      $authBadge.attr("title", t("dev.auth_badge_off"));
+      $lockBtn.hide();
     }
   }
 
-  lockBtn.addEventListener("click", () => {
+  $lockBtn.on("click", function () {
     devToken = "";
     sessionStorage.removeItem("devToken");
     updateAuthBadge();
     // 현재 활성 섹션 리로드하여 인증 게이트 표시
-    const activeSec = document.querySelector(".dev-sec-btn.active");
-    if (activeSec) loadDevSection(activeSec.dataset.sec);
+    const $activeSec = $(".dev-sec-btn.active");
+    if ($activeSec.length) loadDevSection($activeSec.data("sec"));
   });
 
   // ── 인증 게이트: 민감 섹션 접근 시 ──
   function showAuthGate(gateEl, onSuccess) {
-    gateEl.style.display = "block";
-    const msgEl = gateEl.querySelector(".dev-auth-msg");
-    const formEl = gateEl.querySelector(".dev-auth-form");
+    var $gate = $(gateEl);
+    $gate.show();
+    const $msgEl = $gate.find(".dev-auth-msg");
+    const $formEl = $gate.find(".dev-auth-form");
 
     if (!authRegistered) {
-      msgEl.textContent = t("dev.register_msg");
-      formEl.innerHTML = `
+      $msgEl.text(t("dev.register_msg"));
+      $formEl.html(`
         <input type="text" id="devRegUser" placeholder="${t("dev.register_id_ph")}" class="dev-input">
         <input type="password" id="devRegPass" placeholder="${t("dev.register_pw_ph")}" class="dev-input">
         <input type="password" id="devRegPass2" placeholder="${t("dev.register_pw2_ph")}" class="dev-input">
         <button class="dev-btn dev-btn-primary" id="devRegBtn">${t("dev.register_btn")}</button>
         <span class="dev-auth-error" id="devRegError"></span>
-      `;
+      `);
       const doRegister = async () => {
-        const user = formEl.querySelector("#devRegUser").value.trim();
-        const pass = formEl.querySelector("#devRegPass").value;
-        const pass2 = formEl.querySelector("#devRegPass2").value;
-        const errEl = formEl.querySelector("#devRegError");
-        if (!user || !pass) { errEl.textContent = t("dev.id_pw_required"); return; }
-        if (pass !== pass2) { errEl.textContent = t("dev.pw_mismatch"); return; }
+        const user = $formEl.find("#devRegUser").val().trim();
+        const pass = $formEl.find("#devRegPass").val();
+        const pass2 = $formEl.find("#devRegPass2").val();
+        const $errEl = $formEl.find("#devRegError");
+        if (!user || !pass) { $errEl.text(t("dev.id_pw_required")); return; }
+        if (pass !== pass2) { $errEl.text(t("dev.pw_mismatch")); return; }
         try {
           const res = await fetch("/api/dev/auth/register", {
             method: "POST",
@@ -221,30 +220,30 @@ function applySiteName(name) {
             sessionStorage.setItem("devToken", devToken);
             authRegistered = true;
             updateAuthBadge();
-            gateEl.style.display = "none";
+            $gate.hide();
             onSuccess();
           } else {
-            errEl.textContent = data.error;
+            $errEl.text(data.error);
           }
         } catch (e) {
-          errEl.textContent = t("dev.register_fail", { msg: e.message });
+          $errEl.text(t("dev.register_fail", { msg: e.message }));
         }
       };
-      formEl.querySelector("#devRegBtn").addEventListener("click", doRegister);
-      formEl.querySelectorAll("input").forEach((inp) => inp.addEventListener("keydown", (e) => { if (e.key === "Enter") doRegister(); }));
+      $formEl.find("#devRegBtn").on("click", doRegister);
+      $formEl.find("input").on("keydown", function (e) { if (e.key === "Enter") doRegister(); });
     } else {
-      msgEl.textContent = t("dev.login_msg");
-      formEl.innerHTML = `
+      $msgEl.text(t("dev.login_msg"));
+      $formEl.html(`
         <input type="text" id="devLoginUser" placeholder="${t("dev.register_id_ph")}" class="dev-input">
         <input type="password" id="devLoginPass" placeholder="${t("dev.register_pw_ph")}" class="dev-input">
         <button class="dev-btn dev-btn-primary" id="devLoginBtn">${t("dev.login_btn")}</button>
         <span class="dev-auth-error" id="devLoginError"></span>
-      `;
+      `);
       const doLogin = async () => {
-        const user = formEl.querySelector("#devLoginUser").value.trim();
-        const pass = formEl.querySelector("#devLoginPass").value;
-        const errEl = formEl.querySelector("#devLoginError");
-        if (!user || !pass) { errEl.textContent = t("dev.id_pw_required"); return; }
+        const user = $formEl.find("#devLoginUser").val().trim();
+        const pass = $formEl.find("#devLoginPass").val();
+        const $errEl = $formEl.find("#devLoginError");
+        if (!user || !pass) { $errEl.text(t("dev.id_pw_required")); return; }
         try {
           const res = await fetch("/api/dev/auth/login", {
             method: "POST",
@@ -256,17 +255,17 @@ function applySiteName(name) {
             devToken = data.token;
             sessionStorage.setItem("devToken", devToken);
             updateAuthBadge();
-            gateEl.style.display = "none";
+            $gate.hide();
             onSuccess();
           } else {
-            errEl.textContent = data.error;
+            $errEl.text(data.error);
           }
         } catch (e) {
-          errEl.textContent = t("dev.login_fail", { msg: e.message });
+          $errEl.text(t("dev.login_fail", { msg: e.message }));
         }
       };
-      formEl.querySelector("#devLoginBtn").addEventListener("click", doLogin);
-      formEl.querySelectorAll("input").forEach((inp) => inp.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); }));
+      $formEl.find("#devLoginBtn").on("click", doLogin);
+      $formEl.find("input").on("keydown", function (e) { if (e.key === "Enter") doLogin(); });
     }
   }
 
@@ -289,27 +288,27 @@ function applySiteName(name) {
   // ══════════════════════════════════
   // DB 탐색기
   // ══════════════════════════════════
-  const tableSelect = document.getElementById("devTableSelect");
-  const tableLoadBtn = document.getElementById("devTableLoad");
-  const tableResult = document.getElementById("devTableResult");
-  const sqlInput = document.getElementById("devSqlInput");
-  const sqlRunBtn = document.getElementById("devSqlRun");
-  const sqlResult = document.getElementById("devSqlResult");
-  const dbAuthGate = document.getElementById("devDbAuthGate");
-  const dbContent = document.getElementById("devDbContent");
+  const $tableSelect = $("#devTableSelect");
+  const $tableLoadBtn = $("#devTableLoad");
+  const $tableResult = $("#devTableResult");
+  const $sqlInput = $("#devSqlInput");
+  const $sqlRunBtn = $("#devSqlRun");
+  const $sqlResult = $("#devSqlResult");
+  const $dbAuthGate = $("#devDbAuthGate");
+  const $dbContent = $("#devDbContent");
 
   async function loadDbExplorer() {
     // 인증 필요 확인
     if (authRegistered && !devToken) {
-      dbContent.style.display = "none";
-      showAuthGate(dbAuthGate, () => {
-        dbContent.style.display = "";
+      $dbContent.hide();
+      showAuthGate($dbAuthGate[0], () => {
+        $dbContent.show();
         loadDbExplorer();
       });
       return;
     }
-    dbAuthGate.style.display = "none";
-    dbContent.style.display = "";
+    $dbAuthGate.hide();
+    $dbContent.show();
 
     try {
       const res = await devFetch("/api/dev/tables");
@@ -317,44 +316,41 @@ function applySiteName(name) {
         devToken = "";
         sessionStorage.removeItem("devToken");
         updateAuthBadge();
-        dbContent.style.display = "none";
-        showAuthGate(dbAuthGate, () => { dbContent.style.display = ""; loadDbExplorer(); });
+        $dbContent.hide();
+        showAuthGate($dbAuthGate[0], () => { $dbContent.show(); loadDbExplorer(); });
         return;
       }
       const data = await res.json();
       if (data.ok) {
-        tableSelect.innerHTML = '<option value="">' + t("dev.table_select") + '</option>';
-        data.tables.forEach((t) => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          tableSelect.appendChild(opt);
+        $tableSelect.html('<option value="">' + t("dev.table_select") + '</option>');
+        data.tables.forEach((tbl) => {
+          $tableSelect.append($("<option>").val(tbl).text(tbl));
         });
       }
     } catch (e) {
-      tableResult.innerHTML = `<p class="dev-error">${t("dev.table_fail")}: ${e.message}</p>`;
+      $tableResult.html(`<p class="dev-error">${t("dev.table_fail")}: ${e.message}</p>`);
     }
   }
 
-  tableLoadBtn.addEventListener("click", async () => {
-    const name = tableSelect.value;
+  $tableLoadBtn.on("click", async function () {
+    const name = $tableSelect.val();
     if (!name) return;
     try {
       const res = await devFetch(`/api/dev/tables/${name}`);
       const data = await res.json();
       if (data.ok) {
-        renderSchemaAccordion(tableResult, data.columns, name);
-        renderTable(tableResult, data.columns, data.data, name, true);
+        renderSchemaAccordion($tableResult, data.columns, name);
+        renderTable($tableResult, data.columns, data.data, name, true);
       } else {
-        tableResult.innerHTML = `<p class="dev-error">${data.error}</p>`;
+        $tableResult.html(`<p class="dev-error">${data.error}</p>`);
       }
     } catch (e) {
-      tableResult.innerHTML = `<p class="dev-error">${e.message}</p>`;
+      $tableResult.html(`<p class="dev-error">${e.message}</p>`);
     }
   });
 
-  sqlRunBtn.addEventListener("click", async () => {
-    const sql = sqlInput.value.trim();
+  $sqlRunBtn.on("click", async function () {
+    const sql = $sqlInput.val().trim();
     if (!sql) return;
     try {
       const res = await devFetch("/api/dev/query", {
@@ -364,12 +360,12 @@ function applySiteName(name) {
       });
       const data = await res.json();
       if (data.ok) {
-        renderReadonlyTable(sqlResult, data.columns, data.data);
+        renderReadonlyTable($sqlResult, data.columns, data.data);
       } else {
-        sqlResult.innerHTML = `<p class="dev-error">${data.error}</p>`;
+        $sqlResult.html(`<p class="dev-error">${data.error}</p>`);
       }
     } catch (e) {
-      sqlResult.innerHTML = `<p class="dev-error">${e.message}</p>`;
+      $sqlResult.html(`<p class="dev-error">${e.message}</p>`);
     }
   });
 
@@ -378,7 +374,7 @@ function applySiteName(name) {
   }
 
   // ── 테이블 스키마 아코디언 ──
-  function renderSchemaAccordion(container, columns, tableName) {
+  function renderSchemaAccordion($container, columns, tableName) {
     let html = `<details class="dev-schema-accordion">
       <summary>${t("dev.table_info", { name: esc(tableName), count: columns.length })}</summary>
       <div class="dev-schema-content">
@@ -397,14 +393,14 @@ function applySiteName(name) {
       </tr>`;
     });
     html += "</tbody></table></div></details>";
-    container.innerHTML = html;
+    $container.html(html);
   }
 
-  function renderTable(container, columns, data, tableName, append) {
+  function renderTable($container, columns, data, tableName, append) {
     if (!data.length) {
       const msg = "<p>" + t("dev.no_data") + "</p>";
-      if (append) container.insertAdjacentHTML("beforeend", msg);
-      else container.innerHTML = msg;
+      if (append) $container.append(msg);
+      else $container.html(msg);
       return;
     }
     const colNames = columns.map((c) => c.name);
@@ -426,31 +422,31 @@ function applySiteName(name) {
       </td></tr>`;
     });
     html += "</tbody></table></div>";
-    if (append) container.insertAdjacentHTML("beforeend", html);
-    else container.innerHTML = html;
+    if (append) $container.append(html);
+    else $container.html(html);
 
     // 카드 열기 공통 함수
-    function openDetailCard(tr, editMode) {
-      const existing = tr.nextElementSibling;
-      if (existing && existing.classList.contains("dev-row-detail")) {
+    function openDetailCard($tr, editMode) {
+      const $existing = $tr.next();
+      if ($existing.hasClass("dev-row-detail")) {
         // 같은 모드면 토글(닫기), 다른 모드면 교체
-        const wasEdit = !!existing.querySelector(".dev-detail-save");
-        existing.remove();
-        tr.classList.remove("dev-row-selected");
+        const wasEdit = !!$existing.find(".dev-detail-save").length;
+        $existing.remove();
+        $tr.removeClass("dev-row-selected");
         if (wasEdit === editMode) return;
       }
-      container.querySelectorAll(".dev-row-detail").forEach(el => {
-        el.previousElementSibling?.classList.remove("dev-row-selected");
-        el.remove();
+      $container.find(".dev-row-detail").each(function () {
+        $(this).prev().removeClass("dev-row-selected");
+        $(this).remove();
       });
-      tr.classList.add("dev-row-selected");
-      const cells = tr.querySelectorAll(".dev-cell");
-      const rowId = tr.dataset.id;
+      $tr.addClass("dev-row-selected");
+      const $cells = $tr.find(".dev-cell");
+      const rowId = $tr.data("id");
       let detailHtml = '<td colspan="' + (colNames.length + 1) + '"><div class="dev-detail-wrap">';
-      cells.forEach((cell) => {
-        const col = cell.dataset.col;
+      $cells.each(function () {
+        const col = $(this).data("col");
         let val;
-        try { val = JSON.parse(cell.dataset.full); } catch(_) { val = cell.dataset.full; }
+        try { val = JSON.parse($(this).attr("data-full")); } catch(_) { val = $(this).attr("data-full"); }
         const strVal = val == null ? "" : (typeof val === "string" ? val : JSON.stringify(val, null, 2));
         const needsTextarea = strVal.length > 60 || strVal.includes("\n");
         detailHtml += `<div class="dev-detail-field">
@@ -472,19 +468,17 @@ function applySiteName(name) {
       }
       detailHtml += `<button class="dev-btn dev-detail-cancel">${t("common.close")}</button></div>`;
       detailHtml += '</div></td>';
-      const detailRow = document.createElement("tr");
-      detailRow.className = "dev-row-detail";
-      detailRow.innerHTML = detailHtml;
-      tr.after(detailRow);
+      const $detailRow = $("<tr>").addClass("dev-row-detail").html(detailHtml);
+      $tr.after($detailRow);
 
       if (editMode) {
-        detailRow.querySelector(".dev-detail-save").addEventListener("click", async () => {
-          const inputs = detailRow.querySelectorAll(".dev-detail-edit");
+        $detailRow.find(".dev-detail-save").on("click", async function () {
+          const $inputs = $detailRow.find(".dev-detail-edit");
           const updates = {};
-          inputs.forEach((inp) => {
-            let val = inp.value;
+          $inputs.each(function () {
+            let val = $(this).val();
             try { val = JSON.parse(val); } catch (_) {}
-            updates[inp.dataset.col] = val;
+            updates[$(this).data("col")] = val;
           });
           const res = await devFetch(`/api/dev/tables/${encodeURIComponent(tableName)}/${encodeURIComponent(rowId)}`, {
             method: "PUT",
@@ -492,48 +486,51 @@ function applySiteName(name) {
             body: JSON.stringify(updates),
           });
           const d = await res.json();
-          if (d.ok) { showToast(t("dev.edit_success"), "success"); tableLoadBtn.click(); }
+          if (d.ok) { showToast(t("dev.edit_success"), "success"); $tableLoadBtn.trigger("click"); }
           else showToast(t("dev.edit_fail", { msg: d.error }), "error");
         });
       }
 
-      detailRow.querySelector(".dev-detail-cancel").addEventListener("click", () => {
-        detailRow.remove();
-        tr.classList.remove("dev-row-selected");
+      $detailRow.find(".dev-detail-cancel").on("click", function () {
+        $detailRow.remove();
+        $tr.removeClass("dev-row-selected");
       });
     }
 
     // 행 클릭 → 읽기 전용 상세보기
-    container.querySelectorAll(".dev-table tbody tr").forEach((tr) => {
-      tr.style.cursor = "pointer";
-      tr.addEventListener("click", (e) => {
-        if (e.target.closest("button")) return;
-        openDetailCard(tr, false);
+    $container.find(".dev-table tbody tr").each(function () {
+      const $tr = $(this);
+      $tr.css("cursor", "pointer");
+      $tr.on("click", function (e) {
+        if ($(e.target).closest("button").length) return;
+        openDetailCard($tr, false);
       });
     });
 
     // 수정 버튼 → 편집 모드 카드
-    container.querySelectorAll(".dev-edit-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tr = btn.closest("tr");
-        openDetailCard(tr, true);
+    $container.find(".dev-edit-btn").each(function () {
+      const $btn = $(this);
+      $btn.on("click", function () {
+        const $tr = $btn.closest("tr");
+        openDetailCard($tr, true);
       });
     });
 
     // 삭제 버튼
-    container.querySelectorAll(".dev-del-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm(t("dev.confirm_delete", { id: btn.dataset.id }))) return;
-        const res = await devFetch(`/api/dev/tables/${encodeURIComponent(btn.dataset.table)}/${encodeURIComponent(btn.dataset.id)}`, { method: "DELETE" });
+    $container.find(".dev-del-btn").each(function () {
+      const $btn = $(this);
+      $btn.on("click", async function () {
+        if (!confirm(t("dev.confirm_delete", { id: $btn.data("id") }))) return;
+        const res = await devFetch(`/api/dev/tables/${encodeURIComponent($btn.data("table"))}/${encodeURIComponent($btn.data("id"))}`, { method: "DELETE" });
         const d = await res.json();
-        if (d.ok) { showToast(t("dev.delete_success"), "success"); tableLoadBtn.click(); }
+        if (d.ok) { showToast(t("dev.delete_success"), "success"); $tableLoadBtn.trigger("click"); }
         else showToast(t("dev.delete_fail", { msg: d.error }), "error");
       });
     });
   }
 
-  function renderReadonlyTable(container, columns, data) {
-    if (!data.length) { container.innerHTML = "<p>" + t("dev.no_result") + "</p>"; return; }
+  function renderReadonlyTable($container, columns, data) {
+    if (!data.length) { $container.html("<p>" + t("dev.no_result") + "</p>"); return; }
     let html = '<div class="dev-table-wrap"><table class="dev-table"><thead><tr>';
     columns.forEach((c) => (html += `<th>${esc(c)}</th>`));
     html += "</tr></thead><tbody>";
@@ -547,29 +544,30 @@ function applySiteName(name) {
       html += "</tr>";
     });
     html += "</tbody></table></div>";
-    container.innerHTML = html;
+    $container.html(html);
 
     // 행 클릭 → 상세보기
-    container.querySelectorAll(".dev-table tbody tr").forEach((tr) => {
-      tr.style.cursor = "pointer";
-      tr.addEventListener("click", (e) => {
-        const existing = tr.nextElementSibling;
-        if (existing && existing.classList.contains("dev-row-detail")) {
-          existing.remove();
-          tr.classList.remove("dev-row-selected");
+    $container.find(".dev-table tbody tr").each(function () {
+      const $tr = $(this);
+      $tr.css("cursor", "pointer");
+      $tr.on("click", function (e) {
+        const $existing = $tr.next();
+        if ($existing.hasClass("dev-row-detail")) {
+          $existing.remove();
+          $tr.removeClass("dev-row-selected");
           return;
         }
-        container.querySelectorAll(".dev-row-detail").forEach(el => {
-          el.previousElementSibling?.classList.remove("dev-row-selected");
-          el.remove();
+        $container.find(".dev-row-detail").each(function () {
+          $(this).prev().removeClass("dev-row-selected");
+          $(this).remove();
         });
-        tr.classList.add("dev-row-selected");
-        const cells = tr.querySelectorAll(".dev-ro-cell");
+        $tr.addClass("dev-row-selected");
+        const $cells = $tr.find(".dev-ro-cell");
         let detailHtml = '<td colspan="' + columns.length + '"><div class="dev-detail-wrap">';
-        cells.forEach((cell) => {
-          const col = cell.dataset.col;
+        $cells.each(function () {
+          const col = $(this).data("col");
           let val;
-          try { val = JSON.parse(cell.dataset.full); } catch(_) { val = cell.dataset.full; }
+          try { val = JSON.parse($(this).attr("data-full")); } catch(_) { val = $(this).attr("data-full"); }
           const displayVal = val == null ? '<span style="color:#999">NULL</span>' : esc(typeof val === "string" ? val : JSON.stringify(val, null, 2));
           const isLong = typeof val === "string" && val.length > 100;
           detailHtml += `<div class="dev-detail-field">
@@ -578,10 +576,8 @@ function applySiteName(name) {
           </div>`;
         });
         detailHtml += '</div></td>';
-        const detailRow = document.createElement("tr");
-        detailRow.className = "dev-row-detail";
-        detailRow.innerHTML = detailHtml;
-        tr.after(detailRow);
+        const $detailRow = $("<tr>").addClass("dev-row-detail").html(detailHtml);
+        $tr.after($detailRow);
       });
     });
   }
@@ -589,8 +585,8 @@ function applySiteName(name) {
   // ══════════════════════════════════
   // 탭 관리
   // ══════════════════════════════════
-  const tabsList = document.getElementById("devTabsList");
-  const tabsSaveBtn = document.getElementById("devTabsSave");
+  const $tabsList = $("#devTabsList");
+  const $tabsSaveBtn = $("#devTabsSave");
 
   async function loadTabManager() {
     try {
@@ -610,82 +606,80 @@ function applySiteName(name) {
         </div>`;
       });
       html += "</div>";
-      tabsList.innerHTML = html;
+      $tabsList.html(html);
 
       // 드래그 & 드롭
       let dragRow = null;
-      tabsList.querySelectorAll(".dev-tab-row").forEach((row) => {
-        row.addEventListener("dragstart", (e) => {
+      $tabsList.find(".dev-tab-row").each(function () {
+        const row = this;
+        const $row = $(this);
+        $row.on("dragstart", function (e) {
           dragRow = row;
-          row.classList.add("dev-tab-dragging");
-          e.dataTransfer.effectAllowed = "move";
+          $row.addClass("dev-tab-dragging");
+          e.originalEvent.dataTransfer.effectAllowed = "move";
         });
-        row.addEventListener("dragend", () => {
-          row.classList.remove("dev-tab-dragging");
-          tabsList.querySelectorAll(".dev-tab-row").forEach((r) => r.classList.remove("dev-tab-dragover"));
+        $row.on("dragend", function () {
+          $row.removeClass("dev-tab-dragging");
+          $tabsList.find(".dev-tab-row").removeClass("dev-tab-dragover");
           dragRow = null;
           refreshTabButtons();
         });
-        row.addEventListener("dragover", (e) => {
+        $row.on("dragover", function (e) {
           e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          if (row !== dragRow) row.classList.add("dev-tab-dragover");
+          e.originalEvent.dataTransfer.dropEffect = "move";
+          if (row !== dragRow) $row.addClass("dev-tab-dragover");
         });
-        row.addEventListener("dragleave", () => {
-          row.classList.remove("dev-tab-dragover");
+        $row.on("dragleave", function () {
+          $row.removeClass("dev-tab-dragover");
         });
-        row.addEventListener("drop", (e) => {
+        $row.on("drop", function (e) {
           e.preventDefault();
-          row.classList.remove("dev-tab-dragover");
+          $row.removeClass("dev-tab-dragover");
           if (!dragRow || dragRow === row) return;
-          const list = row.parentNode;
-          const rows = [...list.querySelectorAll(".dev-tab-row")];
+          const $list = $row.parent();
+          const rows = $list.find(".dev-tab-row").toArray();
           const fromIdx = rows.indexOf(dragRow);
           const toIdx = rows.indexOf(row);
-          if (fromIdx < toIdx) list.insertBefore(dragRow, row.nextSibling);
-          else list.insertBefore(dragRow, row);
+          if (fromIdx < toIdx) $(dragRow).insertAfter($row);
+          else $(dragRow).insertBefore($row);
           refreshTabButtons();
         });
       });
 
       // 위/아래 버튼
-      tabsList.querySelectorAll(".dev-tab-up").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const row = btn.closest(".dev-tab-row");
-          const prev = row.previousElementSibling;
-          if (prev) row.parentNode.insertBefore(row, prev);
-          refreshTabButtons();
-        });
+      $tabsList.find(".dev-tab-up").on("click", function () {
+        const $row = $(this).closest(".dev-tab-row");
+        const $prev = $row.prev();
+        if ($prev.length) $row.insertBefore($prev);
+        refreshTabButtons();
       });
-      tabsList.querySelectorAll(".dev-tab-down").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const row = btn.closest(".dev-tab-row");
-          const next = row.nextElementSibling;
-          if (next) row.parentNode.insertBefore(next, row);
-          refreshTabButtons();
-        });
+      $tabsList.find(".dev-tab-down").on("click", function () {
+        const $row = $(this).closest(".dev-tab-row");
+        const $next = $row.next();
+        if ($next.length) $row.insertAfter($next);
+        refreshTabButtons();
       });
     } catch (e) {
-      tabsList.innerHTML = `<p class="dev-error">${e.message}</p>`;
+      $tabsList.html(`<p class="dev-error">${e.message}</p>`);
     }
   }
 
   function refreshTabButtons() {
-    const rows = tabsList.querySelectorAll(".dev-tab-row");
-    rows.forEach((row, i) => {
-      row.querySelector(".dev-tab-up").disabled = i === 0;
-      row.querySelector(".dev-tab-down").disabled = i === rows.length - 1;
+    const $rows = $tabsList.find(".dev-tab-row");
+    $rows.each(function (i) {
+      $(this).find(".dev-tab-up").prop("disabled", i === 0);
+      $(this).find(".dev-tab-down").prop("disabled", i === $rows.length - 1);
     });
   }
 
-  tabsSaveBtn.addEventListener("click", async () => {
-    const rows = tabsList.querySelectorAll(".dev-tab-row");
+  $tabsSaveBtn.on("click", async function () {
+    const $rows = $tabsList.find(".dev-tab-row");
     const tabs = [];
-    rows.forEach((row, i) => {
+    $rows.each(function (i) {
       tabs.push({
-        id: row.dataset.id,
-        label: row.querySelector(".dev-tab-label").value.trim(),
-        visible: row.querySelector(".dev-tab-visible").checked,
+        id: $(this).data("id"),
+        label: $(this).find(".dev-tab-label").val().trim(),
+        visible: $(this).find(".dev-tab-visible").prop("checked"),
         order: i,
       });
     });
@@ -710,9 +704,9 @@ function applySiteName(name) {
   // ══════════════════════════════════
   // 모듈 설정
   // ══════════════════════════════════
-  const modContent = document.getElementById("devModContent");
-  const modSaveBtn = document.getElementById("devModSave");
-  const modAuthGate = document.getElementById("devModAuthGate");
+  const $modContent = $("#devModContent");
+  const $modSaveBtn = $("#devModSave");
+  const $modAuthGate = $("#devModAuthGate");
 
   var AI_PROVIDERS_META = {
     openai:  { label: "OpenAI",  placeholder: "sk-..." },
@@ -745,17 +739,17 @@ function applySiteName(name) {
     await checkAuthStatus();
 
     if (authRegistered && !devToken) {
-      modContent.style.display = "none";
-      modSaveBtn.style.display = "none";
-      showAuthGate(modAuthGate, () => {
-        modContent.style.display = "";
-        modSaveBtn.style.display = "";
+      $modContent.hide();
+      $modSaveBtn.hide();
+      showAuthGate($modAuthGate[0], () => {
+        $modContent.show();
+        $modSaveBtn.show();
         loadModuleSettings();
       });
       return;
     }
-    modAuthGate.style.display = "none";
-    modContent.style.display = "";
+    $modAuthGate.hide();
+    $modContent.show();
 
     try {
       const res = await devFetch("/api/dev/modules");
@@ -763,14 +757,14 @@ function applySiteName(name) {
         devToken = "";
         sessionStorage.removeItem("devToken");
         updateAuthBadge();
-        modContent.style.display = "none";
-        modSaveBtn.style.display = "none";
-        showAuthGate(modAuthGate, () => { modContent.style.display = ""; modSaveBtn.style.display = ""; loadModuleSettings(); });
+        $modContent.hide();
+        $modSaveBtn.hide();
+        showAuthGate($modAuthGate[0], () => { $modContent.show(); $modSaveBtn.show(); loadModuleSettings(); });
         return;
       }
       const data = await res.json();
       if (!data.ok) {
-        modContent.innerHTML = `<p class="dev-error">${data.error || t("dev.modules_fail")}</p>`;
+        $modContent.html(`<p class="dev-error">${data.error || t("dev.modules_fail")}</p>`);
         return;
       }
       const modules = data.modules || {};
@@ -813,32 +807,33 @@ function applySiteName(name) {
         }
         html += "</div></div>";
       }
-      modContent.innerHTML = html;
-      modSaveBtn.style.display = "";
+      $modContent.html(html);
+      $modSaveBtn.show();
     } catch (e) {
-      modContent.innerHTML = `<p class="dev-error">${e.message}</p>`;
+      $modContent.html(`<p class="dev-error">${e.message}</p>`);
     }
   }
 
-  modSaveBtn.addEventListener("click", async () => {
+  $modSaveBtn.on("click", async function () {
     // Save module settings
-    const inputs = modContent.querySelectorAll(".dev-mod-input");
+    const $inputs = $modContent.find(".dev-mod-input");
     const modules = {};
-    inputs.forEach((input) => {
-      const mod = input.dataset.mod;
-      const key = input.dataset.key;
+    $inputs.each(function () {
+      const $input = $(this);
+      const mod = $input.data("mod");
+      const key = $input.data("key");
       if (!modules[mod]) modules[mod] = {};
-      let val = input.value;
-      if (input.type === "number") val = parseFloat(val) || 0;
+      let val = $input.val();
+      if ($input.attr("type") === "number") val = parseFloat(val) || 0;
       modules[mod][key] = val;
     });
 
     // Save AI API keys (only non-empty ones)
-    var aiKeyInputs = modContent.querySelectorAll(".dev-ai-key-input");
+    var $aiKeyInputs = $modContent.find(".dev-ai-key-input");
     var aiKeys = {};
-    aiKeyInputs.forEach(function (input) {
-      var val = input.value.trim();
-      if (val) aiKeys[input.dataset.provider] = val;
+    $aiKeyInputs.each(function () {
+      var val = $(this).val().trim();
+      if (val) aiKeys[$(this).data("provider")] = val;
     });
 
     try {
@@ -875,26 +870,25 @@ function applySiteName(name) {
   // ══════════════════════════════════
   // 플러그인 관리
   // ══════════════════════════════════
-  const pluginListEl = document.getElementById("devPluginList");
+  const $pluginListEl = $("#devPluginList");
 
   async function loadPluginManager() {
-    if (!pluginListEl) return;
+    if (!$pluginListEl.length) return;
     try {
       const res = await fetch("/api/custom/plugins");
       const data = await res.json();
       if (!data.ok) return;
 
-      pluginListEl.innerHTML = "";
+      $pluginListEl.empty();
 
       if (data.plugins.length === 0) {
-        pluginListEl.innerHTML = '<p class="desc">' + t("dev.plugins_empty") + '</p>';
+        $pluginListEl.html('<p class="desc">' + t("dev.plugins_empty") + '</p>');
         return;
       }
 
       data.plugins.forEach(function (plugin) {
-        var card = document.createElement("div");
-        card.className = "plugin-card";
-        card.innerHTML =
+        var $card = $("<div>").addClass("plugin-card");
+        $card.html(
           '<div class="plugin-card-header">' +
             '<div class="plugin-card-info">' +
               '<i data-lucide="' + (plugin.icon || "puzzle") + '"></i>' +
@@ -909,12 +903,12 @@ function applySiteName(name) {
               '<span class="plugin-toggle-slider"></span>' +
             '</label>' +
           '</div>' +
-          (plugin.description ? '<p class="plugin-desc">' + escapeHtml(plugin.description) + '</p>' : '');
+          (plugin.description ? '<p class="plugin-desc">' + escapeHtml(plugin.description) + '</p>' : ''));
 
-        var checkbox = card.querySelector('input[type="checkbox"]');
-        checkbox.addEventListener("change", async function () {
-          var enabled = this.checked;
-          var pid = this.dataset.pluginId;
+        var $checkbox = $card.find('input[type="checkbox"]');
+        $checkbox.on("change", async function () {
+          var enabled = $(this).prop("checked");
+          var pid = $(this).data("pluginId");
           try {
             await fetch("/api/custom/plugins/toggle", {
               method: "PUT",
@@ -924,53 +918,53 @@ function applySiteName(name) {
             showToast(enabled ? t("dev.plugins_enabled") : t("dev.plugins_disabled"), "success");
           } catch (e) {
             showToast("Toggle failed", "error");
-            this.checked = !enabled;
+            $(this).prop("checked", !enabled);
           }
         });
 
-        pluginListEl.appendChild(card);
+        $pluginListEl.append($card);
       });
 
       if (window.lucide) lucide.createIcons();
     } catch (e) {
-      pluginListEl.innerHTML = '<p class="desc">Failed to load plugins</p>';
+      $pluginListEl.html('<p class="desc">Failed to load plugins</p>');
     }
   }
 
   // ══════════════════════════════════
   // CDN 관리
   // ══════════════════════════════════
-  const cdnContent = document.getElementById("devCdnContent");
-  const cdnAuthGate = document.getElementById("devCdnAuthGate");
-  const cdnSyncBtn = document.getElementById("devCdnSync");
-  const cdnSyncLatestBtn = document.getElementById("devCdnSyncLatest");
-  const cdnCheckLatestBtn = document.getElementById("devCdnCheckLatest");
-  const cdnStatus = document.getElementById("devCdnStatus");
-  const cdnList = document.getElementById("devCdnList");
+  const $cdnContent = $("#devCdnContent");
+  const $cdnAuthGate = $("#devCdnAuthGate");
+  const $cdnSyncBtn = $("#devCdnSync");
+  const $cdnSyncLatestBtn = $("#devCdnSyncLatest");
+  const $cdnCheckLatestBtn = $("#devCdnCheckLatest");
+  const $cdnStatus = $("#devCdnStatus");
+  const $cdnList = $("#devCdnList");
 
   async function loadCdnManager() {
     await checkAuthStatus();
     if (authRegistered && !devToken) {
-      cdnContent.style.display = "none";
-      showAuthGate(cdnAuthGate, () => { cdnContent.style.display = ""; loadCdnManager(); });
+      $cdnContent.hide();
+      showAuthGate($cdnAuthGate[0], () => { $cdnContent.show(); loadCdnManager(); });
       return;
     }
-    cdnAuthGate.style.display = "none";
-    cdnContent.style.display = "";
+    $cdnAuthGate.hide();
+    $cdnContent.show();
 
     try {
       var res = await devFetch("/api/dev/cdn/status");
       if (res.status === 401) {
         devToken = ""; sessionStorage.removeItem("devToken"); updateAuthBadge();
-        cdnContent.style.display = "none";
-        showAuthGate(cdnAuthGate, () => { cdnContent.style.display = ""; loadCdnManager(); });
+        $cdnContent.hide();
+        showAuthGate($cdnAuthGate[0], () => { $cdnContent.show(); loadCdnManager(); });
         return;
       }
       var data = await res.json();
-      if (!data.ok) { cdnList.innerHTML = '<p class="dev-error">' + t("dev.cdn_status_fail") + '</p>'; return; }
+      if (!data.ok) { $cdnList.html('<p class="dev-error">' + t("dev.cdn_status_fail") + '</p>'); return; }
       renderCdnList(data.libs);
     } catch (e) {
-      cdnList.innerHTML = '<p class="dev-error">' + e.message + '</p>';
+      $cdnList.html('<p class="dev-error">' + e.message + '</p>');
     }
   }
 
@@ -983,20 +977,20 @@ function applySiteName(name) {
       html += '<tr><td>' + esc(lib.name) + '</td><td><code>' + esc(lib.file) + '</code></td><td>' + esc(verText) + '</td><td>' + statusText + '</td><td>' + sizeText + '</td></tr>';
     });
     html += '</tbody></table>';
-    cdnList.innerHTML = html;
+    $cdnList.html(html);
   }
 
   function setCdnButtonsDisabled(disabled) {
-    cdnSyncBtn.disabled = disabled;
-    cdnSyncLatestBtn.disabled = disabled;
-    cdnCheckLatestBtn.disabled = disabled;
+    $cdnSyncBtn.prop("disabled", disabled);
+    $cdnSyncLatestBtn.prop("disabled", disabled);
+    $cdnCheckLatestBtn.prop("disabled", disabled);
   }
 
   // 최신 버전 확인
-  cdnCheckLatestBtn.addEventListener("click", async function() {
+  $cdnCheckLatestBtn.on("click", async function() {
     setCdnButtonsDisabled(true);
-    cdnStatus.textContent = t("dev.cdn_checking");
-    cdnStatus.style.color = "#f59e0b";
+    $cdnStatus.text(t("dev.cdn_checking"));
+    $cdnStatus.css("color", "#f59e0b");
     try {
       var res = await devFetch("/api/dev/cdn/check-latest");
       var data = await res.json();
@@ -1010,16 +1004,16 @@ function applySiteName(name) {
           html += '<tr><td>' + esc(r.npm) + '</td><td>' + esc(r.current) + '</td><td>' + esc(r.latest) + '</td><td>' + stText + '</td></tr>';
         });
         html += '</tbody></table>';
-        cdnList.innerHTML = html;
-        cdnStatus.textContent = t("dev.cdn_check_done");
-        cdnStatus.style.color = "#22c55e";
+        $cdnList.html(html);
+        $cdnStatus.text(t("dev.cdn_check_done"));
+        $cdnStatus.css("color", "#22c55e");
       } else {
-        cdnStatus.textContent = t("dev.cdn_check_error");
-        cdnStatus.style.color = "#ef4444";
+        $cdnStatus.text(t("dev.cdn_check_error"));
+        $cdnStatus.css("color", "#ef4444");
       }
     } catch (e) {
-      cdnStatus.textContent = t("common.error") + ": " + e.message;
-      cdnStatus.style.color = "#ef4444";
+      $cdnStatus.text(t("common.error") + ": " + e.message);
+      $cdnStatus.css("color", "#ef4444");
     }
     setCdnButtonsDisabled(false);
   });
@@ -1027,8 +1021,8 @@ function applySiteName(name) {
   // 현재 버전 다운로드
   async function doSync(useLatest) {
     setCdnButtonsDisabled(true);
-    cdnStatus.textContent = (useLatest ? t("dev.cdn_latest_ver") : t("dev.cdn_config_ver")) + " " + t("dev.cdn_downloading");
-    cdnStatus.style.color = "#f59e0b";
+    $cdnStatus.text((useLatest ? t("dev.cdn_latest_ver") : t("dev.cdn_config_ver")) + " " + t("dev.cdn_downloading"));
+    $cdnStatus.css("color", "#f59e0b");
     try {
       var res = await devFetch("/api/dev/cdn/sync", {
         method: "POST",
@@ -1037,28 +1031,28 @@ function applySiteName(name) {
       });
       var data = await res.json();
       if (data.ok) {
-        cdnStatus.textContent = data.summary;
-        cdnStatus.style.color = "#22c55e";
+        $cdnStatus.text(data.summary);
+        $cdnStatus.css("color", "#22c55e");
         var libs = data.results.map(function(r) {
           return { name: r.name, file: r.file, exists: r.ok, size: r.size || 0, currentVersion: r.version || "", configVersion: "" };
         });
         renderCdnList(libs);
         var failed = data.results.filter(function(r) { return !r.ok; });
         if (failed.length > 0) {
-          cdnStatus.textContent += t("dev.cdn_fail_count", { count: failed.map(function(f) { return f.name; }).join(", ") });
-          cdnStatus.style.color = "#ef4444";
+          $cdnStatus.text($cdnStatus.text() + t("dev.cdn_fail_count", { count: failed.map(function(f) { return f.name; }).join(", ") }));
+          $cdnStatus.css("color", "#ef4444");
         }
       } else {
-        cdnStatus.textContent = t("dev.cdn_sync_fail");
-        cdnStatus.style.color = "#ef4444";
+        $cdnStatus.text(t("dev.cdn_sync_fail"));
+        $cdnStatus.css("color", "#ef4444");
       }
     } catch (e) {
-      cdnStatus.textContent = t("common.error") + ": " + e.message;
-      cdnStatus.style.color = "#ef4444";
+      $cdnStatus.text(t("common.error") + ": " + e.message);
+      $cdnStatus.css("color", "#ef4444");
     }
     setCdnButtonsDisabled(false);
   }
 
-  cdnSyncBtn.addEventListener("click", function() { doSync(false); });
-  cdnSyncLatestBtn.addEventListener("click", function() { doSync(true); });
+  $cdnSyncBtn.on("click", function() { doSync(false); });
+  $cdnSyncLatestBtn.on("click", function() { doSync(true); });
 })();

@@ -1,121 +1,128 @@
-const translateInput = document.getElementById("translateInput");
-const translateBtn = document.getElementById("translateBtn");
-const translateSource = document.getElementById("translateSource");
-const translateProvider = document.getElementById("translateProvider");
-const translateStatus = document.getElementById("translateStatus");
-const translateResultsWrap = document.getElementById("translateResults");
-const translateTargetChecks = document.querySelectorAll(".translate-target");
-const translateSelectAll = document.getElementById("translateSelectAll");
+var $translateInput = $("#translateInput");
+var $translateBtn = $("#translateBtn");
+var $translateSource = $("#translateSource");
+var $translateProvider = $("#translateProvider");
+var $translateStatus = $("#translateStatus");
+var $translateResultsWrap = $("#translateResults");
+var $translateTargetChecks = $(".translate-target");
+var $translateSelectAll = $("#translateSelectAll");
 
-loadAiProviders(translateProvider);
+loadAiProviders($("#translateProvider")[0]);
 
 function getLangLabel(code) { return t("translate." + code) || code; }
 
-function setTranslateStatus(text, isError = false) {
-  translateStatus.textContent = text;
-  translateStatus.style.color = isError ? "#bf233a" : "#65748b";
+function setTranslateStatus(text, isError) {
+  $translateStatus.text(text).css("color", isError ? "#bf233a" : "#65748b");
 }
 
 function syncTargetChecks() {
-  const src = translateSource.value;
-  translateTargetChecks.forEach((cb) => {
-    if (cb.value === src) {
-      cb.checked = false;
-      cb.disabled = true;
+  var src = $translateSource.val();
+  $translateTargetChecks.each(function () {
+    if ($(this).val() === src) {
+      $(this).prop({ checked: false, disabled: true });
     } else {
-      cb.disabled = false;
+      $(this).prop("disabled", false);
     }
   });
   syncSelectAll();
 }
 
 function syncSelectAll() {
-  const enabled = [...translateTargetChecks].filter((cb) => !cb.disabled);
-  const allChecked = enabled.length > 0 && enabled.every((cb) => cb.checked);
-  const someChecked = enabled.some((cb) => cb.checked);
-  translateSelectAll.checked = allChecked;
-  translateSelectAll.indeterminate = !allChecked && someChecked;
+  var $enabled = $translateTargetChecks.filter(":not(:disabled)");
+  var allChecked = $enabled.length > 0 && $enabled.filter(":checked").length === $enabled.length;
+  var someChecked = $enabled.filter(":checked").length > 0;
+  $translateSelectAll.prop({ checked: allChecked, indeterminate: !allChecked && someChecked });
 }
 
 function getSelectedTargets() {
-  return [...translateTargetChecks]
-    .filter((cb) => cb.checked && !cb.disabled)
-    .map((cb) => cb.value);
+  var targets = [];
+  $translateTargetChecks.filter(":checked:not(:disabled)").each(function () {
+    targets.push($(this).val());
+  });
+  return targets;
 }
 
-async function doTranslate() {
-  const text = translateInput.value.trim();
+function doTranslate() {
+  var text = $translateInput.val().trim();
   if (!text) {
     setTranslateStatus(t("translate.input_required"), true);
     return;
   }
-  const targets = getSelectedTargets();
+  var targets = getSelectedTargets();
   if (targets.length === 0) {
     setTranslateStatus(t("translate.select_target"), true);
     return;
   }
 
-  translateBtn.disabled = true;
+  $translateBtn.prop("disabled", true);
   setTranslateStatus(t("translate.translating", { count: targets.length }));
-  translateResultsWrap.innerHTML = "";
+  $translateResultsWrap.html("");
 
-  const results = await Promise.allSettled(
-    targets.map((target) =>
-      fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, source: translateSource.value, target, provider: translateProvider.value }),
-      }).then((r) => r.json().then((data) => ({ target, ok: r.ok && data.ok, result: data.result, error: data.error })))
-    )
-  );
+  var promises = targets.map(function (target) {
+    return $.ajax({
+      url: "/api/translate",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ text: text, source: $translateSource.val(), target: target, provider: $translateProvider.val() }),
+      dataType: "json"
+    }).then(
+      function (data) { return { target: target, ok: data.ok, result: data.result, error: data.error }; },
+      function () { return { target: target, ok: false, error: t("translate.request_fail") }; }
+    );
+  });
 
-  let successCount = 0;
-  for (const r of results) {
-    const data = r.status === "fulfilled" ? r.value : { target: "?", ok: false, error: r.reason?.message || t("translate.request_fail") };
-    const block = document.createElement("div");
-    block.className = "translate-block";
+  Promise.allSettled(promises).then(function (results) {
+    var successCount = 0;
+    results.forEach(function (r) {
+      var data = r.status === "fulfilled" ? r.value : { target: "?", ok: false, error: t("translate.request_fail") };
 
-    if (data.ok) {
-      successCount++;
-      block.innerHTML = `
-        <div class="translate-block-header">
-          <span class="badge">${getLangLabel(data.target)}</span>
-          <button class="translate-copy-btn">${t("common.copy")}</button>
-        </div>
-        <textarea readonly rows="6">${escapeHtml(data.result)}</textarea>
-      `;
-      block.querySelector(".translate-copy-btn").addEventListener("click", (e) => {
-        navigator.clipboard.writeText(data.result).then(() => {
-          e.target.textContent = "OK!";
-          setTimeout(() => { e.target.textContent = t("common.copy"); }, 1000);
-          showToast(t("common.copy_done"), "success");
+      var $block = $("<div>").addClass("translate-block");
+
+      if (data.ok) {
+        successCount++;
+        $block.html(
+          '<div class="translate-block-header">' +
+            '<span class="badge">' + getLangLabel(data.target) + '</span>' +
+            '<button class="translate-copy-btn">' + t("common.copy") + '</button>' +
+          '</div>' +
+          '<textarea readonly rows="6">' + escapeHtml(data.result) + '</textarea>'
+        );
+        $block.find(".translate-copy-btn").on("click", function () {
+          var $btn = $(this);
+          navigator.clipboard.writeText(data.result).then(function () {
+            $btn.text("OK!");
+            setTimeout(function () { $btn.text(t("common.copy")); }, 1000);
+            showToast(t("common.copy_done"), "success");
+          });
         });
-      });
-    } else {
-      block.innerHTML = `
-        <div class="translate-block-header">
-          <span class="badge">${getLangLabel(data.target)}</span>
-        </div>
-        <div class="translate-error">${escapeHtml(data.error || t("translate.fail"))}</div>
-      `;
-    }
-    translateResultsWrap.appendChild(block);
-  }
+      } else {
+        $block.html(
+          '<div class="translate-block-header">' +
+            '<span class="badge">' + getLangLabel(data.target) + '</span>' +
+          '</div>' +
+          '<div class="translate-error">' + escapeHtml(data.error || t("translate.fail")) + '</div>'
+        );
+      }
+      $translateResultsWrap.append($block);
+    });
 
-  translateBtn.disabled = false;
-  if (successCount === targets.length) {
-    setTranslateStatus(t("translate.done", { count: successCount }));
-  } else {
-    setTranslateStatus(t("translate.partial", { done: successCount, total: targets.length }), true);
-  }
+    $translateBtn.prop("disabled", false);
+    if (successCount === targets.length) {
+      setTranslateStatus(t("translate.done", { count: successCount }));
+    } else {
+      setTranslateStatus(t("translate.partial", { done: successCount, total: targets.length }), true);
+    }
+  });
 }
 
-translateBtn.addEventListener("click", doTranslate);
-translateSource.addEventListener("change", syncTargetChecks);
-translateSelectAll.addEventListener("change", () => {
-  const checked = translateSelectAll.checked;
-  translateTargetChecks.forEach((cb) => { if (!cb.disabled) cb.checked = checked; });
-  translateSelectAll.indeterminate = false;
+$translateBtn.on("click", doTranslate);
+$translateSource.on("change", syncTargetChecks);
+$translateSelectAll.on("change", function () {
+  var checked = $translateSelectAll.prop("checked");
+  $translateTargetChecks.each(function () {
+    if (!$(this).prop("disabled")) $(this).prop("checked", checked);
+  });
+  $translateSelectAll.prop("indeterminate", false);
 });
-translateTargetChecks.forEach((cb) => cb.addEventListener("change", syncSelectAll));
+$translateTargetChecks.on("change", syncSelectAll);
 syncTargetChecks();

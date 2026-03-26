@@ -1,22 +1,20 @@
 // ── 문자수 체크 ──
 (function () {
-  var input = document.getElementById("charCountInput");
-  var resultEl = document.getElementById("charCountResult");
-  if (!input || !resultEl) return;
+  var $input = $("#charCountInput");
+  var $resultEl = $("#charCountResult");
+  if (!$input.length || !$resultEl.length) return;
 
   var sortCol = null; // "num", "text", "count"
   var sortAsc = true;
 
   function esc(s) {
-    var d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
+    return $("<div>").text(s).html();
   }
 
   function render() {
-    var text = input.value;
+    var text = $input.val();
     if (!text.trim()) {
-      resultEl.innerHTML = "";
+      $resultEl.html("");
       return;
     }
 
@@ -56,20 +54,18 @@
     });
     html += "</tbody></table>";
 
-    resultEl.innerHTML = html;
+    $resultEl.html(html);
 
-    // 정렬 이벤트
-    resultEl.querySelectorAll(".sortable").forEach(function (th) {
-      th.addEventListener("click", function () {
-        var col = this.dataset.col;
-        if (sortCol === col) {
-          sortAsc = !sortAsc;
-        } else {
-          sortCol = col;
-          sortAsc = true;
-        }
-        render();
-      });
+    // 정렬 이벤트 (이벤트 위임)
+    $resultEl.find(".sortable").on("click", function () {
+      var col = $(this).data("col");
+      if (sortCol === col) {
+        sortAsc = !sortAsc;
+      } else {
+        sortCol = col;
+        sortAsc = true;
+      }
+      render();
     });
   }
 
@@ -78,8 +74,8 @@
     return sortAsc ? " ▲" : " ▼";
   }
 
-  input.addEventListener("input", render);
-  input.addEventListener("paste", function () {
+  $input.on("input", render);
+  $input.on("paste", function () {
     setTimeout(render, 0);
   });
 })();

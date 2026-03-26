@@ -47,6 +47,8 @@ import urllib.request
 _VENDOR_DIR = Path(__file__).parent / "static" / "vendor"
 
 CDN_LIBS = [
+    {"name": "jquery", "file": "jquery.min.js", "npm": "jquery", "version": "4.0.0",
+     "url_tpl": "https://cdn.jsdelivr.net/npm/jquery@{v}/dist/jquery.min.js"},
     {"name": "lucide", "file": "lucide.min.js", "npm": "lucide", "version": "0.460.0",
      "url_tpl": "https://cdn.jsdelivr.net/npm/lucide@{v}/dist/umd/lucide.min.js"},
     {"name": "marked", "file": "marked.min.js", "npm": "marked", "version": "latest",
@@ -691,7 +693,14 @@ class MockHandler(BaseHTTPRequestHandler):
             file_path = STATIC_DIR / path[1:]
 
         if not file_path.exists() or not file_path.is_file():
-            return False
+            if path.startswith("/vendor/"):
+                fallback = STATIC_DIR / "vendor-default" / path[len("/vendor/"):]
+                if fallback.exists() and fallback.is_file():
+                    file_path = fallback
+                else:
+                    return False
+            else:
+                return False
 
         ext = file_path.suffix.lower()
         ctype = {

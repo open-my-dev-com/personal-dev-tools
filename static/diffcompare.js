@@ -3,37 +3,37 @@
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-  // DOM refs
-  const modeRadios = document.querySelectorAll('input[name="diffMode"]');
-  const textInputs = document.getElementById("diffTextInputs");
-  const fileInputs = document.getElementById("diffFileInputs");
-  const folderInputs = document.getElementById("diffFolderInputs");
-  const compareBtn = document.getElementById("diffCompareBtn");
-  const clearBtn = document.getElementById("diffClearBtn");
-  const copyLeftBtn = document.getElementById("diffCopyLeftBtn");
-  const copyRightBtn = document.getElementById("diffCopyRightBtn");
-  const saveLeftBtn = document.getElementById("diffSaveLeftBtn");
-  const saveRightBtn = document.getElementById("diffSaveRightBtn");
-  const statusEl = document.getElementById("diffStatus");
-  const leftTextEl = document.getElementById("diffLeftText");
-  const rightTextEl = document.getElementById("diffRightText");
-  const leftFileNameEl = document.getElementById("diffLeftFileName");
-  const rightFileNameEl = document.getElementById("diffRightFileName");
-  const leftFilePathEl = document.getElementById("diffLeftFilePath");
-  const rightFilePathEl = document.getElementById("diffRightFilePath");
-  const leftFilePickBtn = document.getElementById("diffLeftFilePickBtn");
-  const rightFilePickBtn = document.getElementById("diffRightFilePickBtn");
-  const leftFolderEl = document.getElementById("diffLeftFolder");
-  const rightFolderEl = document.getElementById("diffRightFolder");
-  const leftFolderBtn = document.getElementById("diffLeftFolderBtn");
-  const rightFolderBtn = document.getElementById("diffRightFolderBtn");
-  const leftFolderNameEl = document.getElementById("diffLeftFolderName");
-  const rightFolderNameEl = document.getElementById("diffRightFolderName");
-  const fileTreeEl = document.getElementById("diffFileTree");
-  const resultEl = document.getElementById("diffResult");
-  const statsEl = document.getElementById("diffStats");
-  const viewLeftEl = document.getElementById("diffViewLeft");
-  const viewRightEl = document.getElementById("diffViewRight");
+  // DOM refs (jQuery)
+  const $modeRadios = $('input[name="diffMode"]');
+  const $textInputs = $("#diffTextInputs");
+  const $fileInputs = $("#diffFileInputs");
+  const $folderInputs = $("#diffFolderInputs");
+  const $compareBtn = $("#diffCompareBtn");
+  const $clearBtn = $("#diffClearBtn");
+  const $copyLeftBtn = $("#diffCopyLeftBtn");
+  const $copyRightBtn = $("#diffCopyRightBtn");
+  const $saveLeftBtn = $("#diffSaveLeftBtn");
+  const $saveRightBtn = $("#diffSaveRightBtn");
+  const $statusEl = $("#diffStatus");
+  const $leftTextEl = $("#diffLeftText");
+  const $rightTextEl = $("#diffRightText");
+  const $leftFileNameEl = $("#diffLeftFileName");
+  const $rightFileNameEl = $("#diffRightFileName");
+  const $leftFilePathEl = $("#diffLeftFilePath");
+  const $rightFilePathEl = $("#diffRightFilePath");
+  const $leftFilePickBtn = $("#diffLeftFilePickBtn");
+  const $rightFilePickBtn = $("#diffRightFilePickBtn");
+  const $leftFolderEl = $("#diffLeftFolder");
+  const $rightFolderEl = $("#diffRightFolder");
+  const $leftFolderBtn = $("#diffLeftFolderBtn");
+  const $rightFolderBtn = $("#diffRightFolderBtn");
+  const $leftFolderNameEl = $("#diffLeftFolderName");
+  const $rightFolderNameEl = $("#diffRightFolderName");
+  const $fileTreeEl = $("#diffFileTree");
+  const $resultEl = $("#diffResult");
+  const $statsEl = $("#diffStats");
+  const $viewLeftEl = $("#diffViewLeft");
+  const $viewRightEl = $("#diffViewRight");
 
   // State
   let currentMode = "text";
@@ -45,54 +45,52 @@
   // ── Utility ──
 
   function setStatus(msg, isError) {
-    statusEl.textContent = msg;
-    statusEl.style.color = isError ? "#bf233a" : "#65748b";
+    $statusEl.text(msg);
+    $statusEl.css("color", isError ? "#bf233a" : "#65748b");
   }
 
   function isTabActive() {
-    const tab = document.querySelector('.tab-content[data-tab="diffcompare"]');
-    return tab && tab.classList.contains("active");
+    var $tab = $('.tab-content[data-tab="diffcompare"]');
+    return $tab.length && $tab.hasClass("active");
   }
 
   // ── Mode switching ──
 
   function switchMode(mode) {
     currentMode = mode;
-    textInputs.style.display = mode === "text" ? "" : "none";
-    fileInputs.style.display = mode === "file" ? "" : "none";
-    folderInputs.style.display = mode === "folder" ? "" : "none";
-    fileTreeEl.style.display = "none";
+    $textInputs.css("display", mode === "text" ? "" : "none");
+    $fileInputs.css("display", mode === "file" ? "" : "none");
+    $folderInputs.css("display", mode === "folder" ? "" : "none");
+    $fileTreeEl.hide();
   }
 
-  modeRadios.forEach(function (radio) {
-    radio.addEventListener("change", function () {
-      switchMode(radio.value);
-    });
+  $modeRadios.on("change", function () {
+    switchMode($(this).val());
   });
 
   // ── File mode: 서버 네이티브 파일 선택 ──
 
-  async function pickFile(inputEl) {
+  async function pickFile($inputEl) {
     try {
       var res = await fetch("/api/diff/pick-file", { method: "POST" });
       var data = await res.json();
       if (data.ok) {
-        inputEl.value = data.path;
+        $inputEl.val(data.path);
       }
     } catch (e) {
       setStatus(t("diff.file_select_fail", { msg: e.message }), true);
     }
   }
 
-  leftFilePickBtn.addEventListener("click", function () { pickFile(leftFilePathEl); });
-  rightFilePickBtn.addEventListener("click", function () { pickFile(rightFilePathEl); });
+  $leftFilePickBtn.on("click", function () { pickFile($leftFilePathEl); });
+  $rightFilePickBtn.on("click", function () { pickFile($rightFilePathEl); });
 
   // ── Compare button ──
 
-  compareBtn.addEventListener("click", function () {
+  $compareBtn.on("click", function () {
     if (currentMode === "text") {
-      var left = leftTextEl.value;
-      var right = rightTextEl.value;
+      var left = $leftTextEl.val();
+      var right = $rightTextEl.val();
       if (!left && !right) {
         setStatus(t("diff.input_required"), true);
         return;
@@ -206,44 +204,44 @@
     activeBlockIndex = -1;
     renderDiff();
     renderStats();
-    resultEl.style.display = "";
-    copyLeftBtn.style.display = "";
-    copyRightBtn.style.display = "";
+    $resultEl.css("display", "");
+    $copyLeftBtn.css("display", "");
+    $copyRightBtn.css("display", "");
     // 파일 모드에서만 저장 버튼 표시
     var showSave = currentMode === "file" || currentMode === "folder";
-    saveLeftBtn.style.display = showSave ? "" : "none";
-    saveRightBtn.style.display = showSave ? "" : "none";
+    $saveLeftBtn.css("display", showSave ? "" : "none");
+    $saveRightBtn.css("display", showSave ? "" : "none");
     setStatus(t("diff.done"), false);
   }
 
   // ── Render side-by-side ──
 
   function renderDiff() {
-    viewLeftEl.innerHTML = "";
-    viewRightEl.innerHTML = "";
+    $viewLeftEl.html("");
+    $viewRightEl.html("");
 
     for (var i = 0; i < alignedLeft.length; i++) {
-      viewLeftEl.appendChild(createLineEl(alignedLeft[i], i, "left"));
-      viewRightEl.appendChild(createLineEl(alignedRight[i], i, "right"));
+      $viewLeftEl.append(createLineEl(alignedLeft[i], i, "left"));
+      $viewRightEl.append(createLineEl(alignedRight[i], i, "right"));
     }
 
     // 좌우 라인 높이 동기화
     requestAnimationFrame(function () {
-      var leftLines = viewLeftEl.children;
-      var rightLines = viewRightEl.children;
+      var leftLines = $viewLeftEl.children();
+      var rightLines = $viewRightEl.children();
       var len = Math.min(leftLines.length, rightLines.length);
       for (var i = 0; i < len; i++) {
-        leftLines[i].style.minHeight = "";
-        rightLines[i].style.minHeight = "";
+        $(leftLines[i]).css("minHeight", "");
+        $(rightLines[i]).css("minHeight", "");
       }
-      viewLeftEl.offsetHeight;
+      $viewLeftEl[0].offsetHeight;
       for (var i = 0; i < len; i++) {
         var lh = leftLines[i].offsetHeight;
         var rh = rightLines[i].offsetHeight;
         if (lh !== rh) {
           var maxH = Math.max(lh, rh) + "px";
-          leftLines[i].style.minHeight = maxH;
-          rightLines[i].style.minHeight = maxH;
+          $(leftLines[i]).css("minHeight", maxH);
+          $(rightLines[i]).css("minHeight", maxH);
         }
       }
     });
@@ -252,9 +250,9 @@
   }
 
   function createLineEl(lineData, idx, side) {
-    var div = document.createElement("div");
-    div.className = "diff-line";
-    div.dataset.idx = idx;
+    var $div = $("<div>");
+    $div.addClass("diff-line");
+    $div.attr("data-idx", idx);
 
     var typeClass = "";
     if (lineData.type === "added") typeClass = "diff-line-added";
@@ -262,29 +260,29 @@
     else if (lineData.type === "changed") typeClass = "diff-line-changed";
     else if (lineData.type === "empty") typeClass = "diff-line-empty";
 
-    if (typeClass) div.classList.add(typeClass);
+    if (typeClass) $div.addClass(typeClass);
 
     if (activeBlockIndex >= 0 && activeBlockIndex < diffBlocks.length) {
       var block = diffBlocks[activeBlockIndex];
       if (idx >= block.startIdx && idx <= block.endIdx) {
-        div.classList.add("diff-active");
+        $div.addClass("diff-active");
       }
     }
 
-    var numSpan = document.createElement("span");
-    numSpan.className = "diff-line-num";
-    numSpan.textContent = lineData.lineNum !== null ? lineData.lineNum : "";
+    var $numSpan = $("<span>");
+    $numSpan.addClass("diff-line-num");
+    $numSpan.text(lineData.lineNum !== null ? lineData.lineNum : "");
 
-    var textSpan = document.createElement("span");
-    textSpan.className = "diff-line-text";
-    textSpan.innerHTML = lineData.text ? escapeHtml(lineData.text) : "&nbsp;";
+    var $textSpan = $("<span>");
+    $textSpan.addClass("diff-line-text");
+    $textSpan.html(lineData.text ? escapeHtml(lineData.text) : "&nbsp;");
 
-    div.appendChild(numSpan);
-    div.appendChild(textSpan);
+    $div.append($numSpan);
+    $div.append($textSpan);
 
     if (lineData.type !== "equal") {
-      div.style.cursor = "pointer";
-      div.addEventListener("click", function () {
+      $div.css("cursor", "pointer");
+      $div.on("click", function () {
         var blockIdx = findBlockForLine(idx);
         if (blockIdx >= 0) {
           activeBlockIndex = blockIdx;
@@ -293,7 +291,7 @@
       });
     }
 
-    return div;
+    return $div;
   }
 
   function findBlockForLine(lineIdx) {
@@ -306,21 +304,15 @@
   }
 
   function updateActiveHighlight() {
-    viewLeftEl.querySelectorAll(".diff-active").forEach(function (el) {
-      el.classList.remove("diff-active");
-    });
-    viewRightEl.querySelectorAll(".diff-active").forEach(function (el) {
-      el.classList.remove("diff-active");
-    });
+    $viewLeftEl.find(".diff-active").removeClass("diff-active");
+    $viewRightEl.find(".diff-active").removeClass("diff-active");
 
     if (activeBlockIndex < 0 || activeBlockIndex >= diffBlocks.length) return;
 
     var block = diffBlocks[activeBlockIndex];
     for (var i = block.startIdx; i <= block.endIdx; i++) {
-      var leftEl = viewLeftEl.querySelector('[data-idx="' + i + '"]');
-      var rightEl = viewRightEl.querySelector('[data-idx="' + i + '"]');
-      if (leftEl) leftEl.classList.add("diff-active");
-      if (rightEl) rightEl.classList.add("diff-active");
+      $viewLeftEl.find('[data-idx="' + i + '"]').addClass("diff-active");
+      $viewRightEl.find('[data-idx="' + i + '"]').addClass("diff-active");
     }
 
     scrollToBlock(block.startIdx);
@@ -335,33 +327,33 @@
     if (scrollSetup) return;
     scrollSetup = true;
 
-    viewLeftEl.addEventListener("scroll", function () {
+    $viewLeftEl.on("scroll", function () {
       if (scrollSyncing) return;
       scrollSyncing = true;
-      viewRightEl.scrollTop = viewLeftEl.scrollTop;
-      viewRightEl.scrollLeft = viewLeftEl.scrollLeft;
+      $viewRightEl[0].scrollTop = $viewLeftEl[0].scrollTop;
+      $viewRightEl[0].scrollLeft = $viewLeftEl[0].scrollLeft;
       scrollSyncing = false;
     });
 
-    viewRightEl.addEventListener("scroll", function () {
+    $viewRightEl.on("scroll", function () {
       if (scrollSyncing) return;
       scrollSyncing = true;
-      viewLeftEl.scrollTop = viewRightEl.scrollTop;
-      viewLeftEl.scrollLeft = viewRightEl.scrollLeft;
+      $viewLeftEl[0].scrollTop = $viewRightEl[0].scrollTop;
+      $viewLeftEl[0].scrollLeft = $viewRightEl[0].scrollLeft;
       scrollSyncing = false;
     });
   }
 
   function scrollToBlock(blockStartIdx) {
-    var firstEl = viewLeftEl.querySelector('[data-idx="' + blockStartIdx + '"]');
-    if (!firstEl) return;
-    var containerTop = viewLeftEl.getBoundingClientRect().top;
-    var elTop = firstEl.getBoundingClientRect().top;
+    var $firstEl = $viewLeftEl.find('[data-idx="' + blockStartIdx + '"]');
+    if (!$firstEl.length) return;
+    var containerTop = $viewLeftEl[0].getBoundingClientRect().top;
+    var elTop = $firstEl[0].getBoundingClientRect().top;
     var offset = elTop - containerTop;
-    var scrollTo = viewLeftEl.scrollTop + offset - viewLeftEl.clientHeight / 3;
+    var scrollTo = $viewLeftEl[0].scrollTop + offset - $viewLeftEl[0].clientHeight / 3;
     scrollSyncing = true;
-    viewLeftEl.scrollTop = scrollTo;
-    viewRightEl.scrollTop = scrollTo;
+    $viewLeftEl[0].scrollTop = scrollTo;
+    $viewRightEl[0].scrollTop = scrollTo;
     scrollSyncing = false;
   }
 
@@ -380,14 +372,14 @@
     }
 
     var total = diffBlocks.length;
-    statsEl.innerHTML =
+    $statsEl.html(
       "<strong>" + t("diff.block") + "</strong> " + total + " &nbsp;|&nbsp; " +
       '<span style="color:#16a34a">' + t("diff.added") + " " + added + "</span> &nbsp;|&nbsp; " +
       '<span style="color:#dc2626">' + t("diff.deleted") + " " + removed + "</span> &nbsp;|&nbsp; " +
-      '<span style="color:#d97706">' + t("diff.changed") + " " + changed + "</span>";
+      '<span style="color:#d97706">' + t("diff.changed") + " " + changed + "</span>");
 
     if (activeBlockIndex >= 0) {
-      statsEl.innerHTML += " &nbsp;|&nbsp; " + (activeBlockIndex + 1) + "/" + total;
+      $statsEl.html($statsEl.html() + " &nbsp;|&nbsp; " + (activeBlockIndex + 1) + "/" + total);
     }
   }
 
@@ -410,7 +402,7 @@
 
   // ── Keyboard shortcuts (블록 탐색만) ──
 
-  document.addEventListener("keydown", function (e) {
+  $(document).on("keydown", function (e) {
     if (!isTabActive()) return;
 
     // Ctrl+↑/↓ 또는 Alt+↑/↓ 로 블록 이동
@@ -483,14 +475,14 @@
     return lines.join("\n");
   }
 
-  copyLeftBtn.addEventListener("click", function () {
+  $copyLeftBtn.on("click", function () {
     navigator.clipboard.writeText(getTextFromAligned(alignedLeft)).then(function () {
       setStatus(t("diff.left_copied"), false);
       showToast(t("diff.left_copied"), "success");
     });
   });
 
-  copyRightBtn.addEventListener("click", function () {
+  $copyRightBtn.on("click", function () {
     navigator.clipboard.writeText(getTextFromAligned(alignedRight)).then(function () {
       setStatus(t("diff.right_copied"), false);
       showToast(t("diff.right_copied"), "success");
@@ -501,17 +493,17 @@
 
   function getFilePath(side) {
     if (currentMode === "file") {
-      return side === "left" ? leftFilePathEl.value.trim() : rightFilePathEl.value.trim();
+      return side === "left" ? $leftFilePathEl.val().trim() : $rightFilePathEl.val().trim();
     }
     // 폴더 모드: 현재 선택된 파일의 전체 경로
-    var basePath = side === "left" ? leftFolderEl.value.trim() : rightFolderEl.value.trim();
-    var activeItem = fileTreeEl.querySelector(".diff-file-tree-item.active");
-    if (!activeItem || !basePath) return "";
-    var relPath = activeItem.querySelector("span:last-child").textContent;
+    var basePath = side === "left" ? $leftFolderEl.val().trim() : $rightFolderEl.val().trim();
+    var $activeItem = $fileTreeEl.find(".diff-file-tree-item.active");
+    if (!$activeItem.length || !basePath) return "";
+    var relPath = $activeItem.find("span:last-child").text();
     return basePath + "/" + relPath;
   }
 
-  async function saveFile(side) {
+  function saveFile(side) {
     var filePath = getFilePath(side);
     if (!filePath) {
       setStatus(t("diff.no_file_path"), true);
@@ -519,13 +511,13 @@
     }
     var aligned = side === "left" ? alignedLeft : alignedRight;
     var content = getTextFromAligned(aligned);
-    try {
-      var res = await fetch("/api/diff/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: filePath, content: content }),
-      });
-      var data = await res.json();
+    $.ajax({
+      url: "/api/diff/save",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ path: filePath, content: content }),
+      dataType: "json"
+    }).done(function (data) {
       if (data.ok) {
         setStatus(t("diff.file_saved", { path: filePath }), false);
         showToast(t("diff.file_saved", { path: filePath }), "success");
@@ -533,74 +525,78 @@
         setStatus(data.error, true);
         showToast(data.error, "error");
       }
-    } catch (e) {
-      setStatus(t("diff.file_save_fail", { msg: e.message }), true);
-      showToast(t("diff.file_save_fail", { msg: e.message }), "error");
-    }
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+      var msg = errorThrown || textStatus;
+      setStatus(t("diff.file_save_fail", { msg: msg }), true);
+      showToast(t("diff.file_save_fail", { msg: msg }), "error");
+    });
   }
 
-  saveLeftBtn.addEventListener("click", function () { saveFile("left"); });
-  saveRightBtn.addEventListener("click", function () { saveFile("right"); });
+  $saveLeftBtn.on("click", function () { saveFile("left"); });
+  $saveRightBtn.on("click", function () { saveFile("right"); });
 
   // ── File mode: path or upload ──
 
-  async function fetchFileByPath(path) {
-    var res = await fetch("/api/diff/file", {
+  function fetchFileByPath(path) {
+    return $.ajax({
+      url: "/api/diff/file",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: path }),
+      contentType: "application/json",
+      data: JSON.stringify({ path: path }),
+      dataType: "json"
     });
-    return await res.json();
   }
 
-  async function compareFiles() {
-    var leftPath = leftFilePathEl.value.trim();
-    var rightPath = rightFilePathEl.value.trim();
+  function compareFiles() {
+    var leftPath = $leftFilePathEl.val().trim();
+    var rightPath = $rightFilePathEl.val().trim();
 
     if (!leftPath || !rightPath) {
       setStatus(t("diff.both_path_required"), true);
       return;
     }
 
-    try {
-      setStatus(t("diff.reading"), false);
-      var lr = await fetchFileByPath(leftPath);
+    setStatus(t("diff.reading"), false);
+    fetchFileByPath(leftPath).done(function (lr) {
       if (!lr.ok) { setStatus(lr.error, true); return; }
-      leftFileNameEl.textContent = lr.name;
+      $leftFileNameEl.text(lr.name);
 
-      var rr = await fetchFileByPath(rightPath);
-      if (!rr.ok) { setStatus(rr.error, true); return; }
-      rightFileNameEl.textContent = rr.name;
+      fetchFileByPath(rightPath).done(function (rr) {
+        if (!rr.ok) { setStatus(rr.error, true); return; }
+        $rightFileNameEl.text(rr.name);
 
-      runDiff(lr.content, rr.content);
-    } catch (e) {
-      setStatus(t("diff.read_fail", { msg: e.message }), true);
-    }
+        runDiff(lr.content, rr.content);
+      }).fail(function (jqXHR, textStatus, errorThrown) {
+        setStatus(t("diff.read_fail", { msg: errorThrown || textStatus }), true);
+      });
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+      setStatus(t("diff.read_fail", { msg: errorThrown || textStatus }), true);
+    });
   }
 
   // ── Clear ──
 
-  clearBtn.addEventListener("click", function () {
-    leftTextEl.value = "";
-    rightTextEl.value = "";
-    leftFilePathEl.value = "";
-    rightFilePathEl.value = "";
-    leftFileNameEl.textContent = "";
-    rightFileNameEl.textContent = "";
-    leftFolderEl.value = "";
-    rightFolderEl.value = "";
-    leftFolderNameEl.textContent = "";
-    rightFolderNameEl.textContent = "";
-    fileTreeEl.style.display = "none";
-    fileTreeEl.innerHTML = "";
-    resultEl.style.display = "none";
-    copyLeftBtn.style.display = "none";
-    copyRightBtn.style.display = "none";
-    saveLeftBtn.style.display = "none";
-    saveRightBtn.style.display = "none";
-    viewLeftEl.innerHTML = "";
-    viewRightEl.innerHTML = "";
-    statsEl.innerHTML = "";
+  $clearBtn.on("click", function () {
+    $leftTextEl.val("");
+    $rightTextEl.val("");
+    $leftFilePathEl.val("");
+    $rightFilePathEl.val("");
+    $leftFileNameEl.text("");
+    $rightFileNameEl.text("");
+    $leftFolderEl.val("");
+    $rightFolderEl.val("");
+    $leftFolderNameEl.text("");
+    $rightFolderNameEl.text("");
+    $fileTreeEl.hide();
+    $fileTreeEl.html("");
+    $resultEl.hide();
+    $copyLeftBtn.hide();
+    $copyRightBtn.hide();
+    $saveLeftBtn.hide();
+    $saveRightBtn.hide();
+    $viewLeftEl.html("");
+    $viewRightEl.html("");
+    $statsEl.html("");
     diffBlocks = [];
     activeBlockIndex = -1;
     alignedLeft = [];
@@ -611,25 +607,25 @@
   // ── Folder mode ──
 
   // 서버 네이티브 폴더 선택
-  async function pickFolder(inputEl) {
+  async function pickFolder($inputEl) {
     try {
       var res = await fetch("/api/diff/pick-folder", { method: "POST" });
       var data = await res.json();
       if (data.ok) {
-        inputEl.value = data.path;
+        $inputEl.val(data.path);
       }
     } catch (e) {
       setStatus(t("diff.folder_select_fail", { msg: e.message }), true);
     }
   }
 
-  leftFolderBtn.addEventListener("click", function () { pickFolder(leftFolderEl); });
-  rightFolderBtn.addEventListener("click", function () { pickFolder(rightFolderEl); });
+  $leftFolderBtn.on("click", function () { pickFolder($leftFolderEl); });
+  $rightFolderBtn.on("click", function () { pickFolder($rightFolderEl); });
 
-  async function compareFolders() {
+  function compareFolders() {
     // 경로 → 서버 비교
-    var leftPath = leftFolderEl.value.trim();
-    var rightPath = rightFolderEl.value.trim();
+    var leftPath = $leftFolderEl.val().trim();
+    var rightPath = $rightFolderEl.val().trim();
 
     if (!leftPath || !rightPath) {
       setStatus(t("diff.both_folder_required"), true);
@@ -638,14 +634,13 @@
 
     setStatus(t("diff.comparing"), false);
 
-    try {
-      var res = await fetch("/api/diff/folder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ left: leftPath, right: rightPath }),
-      });
-      var data = await res.json();
-
+    $.ajax({
+      url: "/api/diff/folder",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ left: leftPath, right: rightPath }),
+      dataType: "json"
+    }).done(function (data) {
       if (!data.ok) {
         setStatus(data.error || t("diff.folder_fail"), true);
         return;
@@ -653,57 +648,55 @@
 
       renderFileTree(data.files, leftPath, rightPath);
       setStatus(t("diff.folder_done", { count: data.files.length }), false);
-    } catch (e) {
-      setStatus(t("diff.folder_request_fail", { msg: e.message }), true);
-    }
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+      setStatus(t("diff.folder_request_fail", { msg: errorThrown || textStatus }), true);
+    });
   }
 
   function renderFileTree(files, leftPath, rightPath) {
-    fileTreeEl.innerHTML = "";
-    fileTreeEl.style.display = "";
+    $fileTreeEl.html("");
+    $fileTreeEl.css("display", "");
 
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
-      var item = document.createElement("div");
-      item.className = "diff-file-tree-item";
+      var $item = $("<div>");
+      $item.addClass("diff-file-tree-item");
 
-      var statusSpan = document.createElement("span");
-      statusSpan.className = "diff-ft-status";
+      var $statusSpan = $("<span>");
+      $statusSpan.addClass("diff-ft-status");
 
       if (file.status === "modified") {
-        statusSpan.classList.add("diff-ft-modified");
-        statusSpan.textContent = t("diff.status_changed");
+        $statusSpan.addClass("diff-ft-modified");
+        $statusSpan.text(t("diff.status_changed"));
       } else if (file.status === "added") {
-        statusSpan.classList.add("diff-ft-added");
-        statusSpan.textContent = t("diff.status_added");
+        $statusSpan.addClass("diff-ft-added");
+        $statusSpan.text(t("diff.status_added"));
       } else if (file.status === "removed") {
-        statusSpan.classList.add("diff-ft-removed");
-        statusSpan.textContent = t("diff.status_deleted");
+        $statusSpan.addClass("diff-ft-removed");
+        $statusSpan.text(t("diff.status_deleted"));
       } else {
-        statusSpan.classList.add("diff-ft-same");
-        statusSpan.textContent = t("diff.status_same");
+        $statusSpan.addClass("diff-ft-same");
+        $statusSpan.text(t("diff.status_same"));
       }
 
-      var nameSpan = document.createElement("span");
-      nameSpan.textContent = file.path;
+      var $nameSpan = $("<span>");
+      $nameSpan.text(file.path);
 
-      item.appendChild(statusSpan);
-      item.appendChild(nameSpan);
+      $item.append($statusSpan);
+      $item.append($nameSpan);
 
-      (function (f) {
-        item.addEventListener("click", function () {
+      (function (f, $el) {
+        $el.on("click", function () {
           // Highlight active
-          fileTreeEl.querySelectorAll(".diff-file-tree-item").forEach(function (el) {
-            el.classList.remove("active");
-          });
-          item.classList.add("active");
+          $fileTreeEl.find(".diff-file-tree-item").removeClass("active");
+          $el.addClass("active");
 
           // Fetch file contents and diff
           loadFolderFileDiff(f);
         });
-      })(file);
+      })(file, $item);
 
-      fileTreeEl.appendChild(item);
+      $fileTreeEl.append($item);
     }
   }
 

@@ -1,14 +1,13 @@
-const paramInput = document.getElementById("paramInput");
-const paramOutput = document.getElementById("paramOutput");
-const paramDelimiter = document.getElementById("paramDelimiter");
-const paramFormat = document.getElementById("paramFormat");
-const paramConvertBtn = document.getElementById("paramConvertBtn");
-const paramCopyBtn = document.getElementById("paramCopyBtn");
-const paramStatus = document.getElementById("paramStatus");
+var $paramInput = $("#paramInput");
+var $paramOutput = $("#paramOutput");
+var $paramDelimiter = $("#paramDelimiter");
+var $paramFormat = $("#paramFormat");
+var $paramConvertBtn = $("#paramConvertBtn");
+var $paramCopyBtn = $("#paramCopyBtn");
+var $paramStatus = $("#paramStatus");
 
-function setParamStatus(text, isError = false) {
-  paramStatus.textContent = text;
-  paramStatus.style.color = isError ? "#bf233a" : "#65748b";
+function setParamStatus(text, isError) {
+  $paramStatus.text(text).css("color", isError ? "#bf233a" : "#65748b");
 }
 
 function detectDelimiter(text) {
@@ -19,48 +18,51 @@ function detectDelimiter(text) {
 }
 
 function parseItems(text) {
-  const raw = text.trim();
+  var raw = text.trim();
   if (!raw) return [];
-  const sel = paramDelimiter.value;
-  let delim;
+  var sel = $paramDelimiter.val();
+  var delim;
   if (sel === "auto") {
     delim = detectDelimiter(raw);
   } else {
     delim = sel === "\\n" ? "\n" : sel === "\\t" ? "\t" : sel;
   }
-  return raw.split(delim).map((s) => s.trim()).filter(Boolean);
+  return raw.split(delim).map(function (s) { return s.trim(); }).filter(Boolean);
 }
 
 function convertParams() {
-  const items = parseItems(paramInput.value);
+  var items = parseItems($paramInput.val());
   if (!items.length) {
-    paramOutput.value = "";
+    $paramOutput.val("");
     setParamStatus(t("common.no_input"), true);
     return;
   }
-  const fmt = paramFormat.value;
-  let result;
+  var fmt = $paramFormat.val();
+  var result;
   switch (fmt) {
     case "comma":   result = items.join(","); break;
-    case "sq":      result = items.map((v) => `'${v}'`).join(","); break;
-    case "dq":      result = items.map((v) => `"${v}"`).join(","); break;
-    case "sql":     result = `(${items.map((v) => `'${v}'`).join(",")})`;  break;
+    case "sq":      result = items.map(function (v) { return "'" + v + "'"; }).join(","); break;
+    case "dq":      result = items.map(function (v) { return '"' + v + '"'; }).join(","); break;
+    case "sql":     result = "(" + items.map(function (v) { return "'" + v + "'"; }).join(",") + ")"; break;
     case "newline": result = items.join("\n"); break;
     case "space":   result = items.join(" "); break;
     case "tab":     result = items.join("\t"); break;
     default:        result = items.join(",");
   }
-  paramOutput.value = result;
+  $paramOutput.val(result);
   setParamStatus(t("param.convert_done", {count: items.length}));
 }
 
-paramConvertBtn.addEventListener("click", convertParams);
-paramInput.addEventListener("input", convertParams);
-paramFormat.addEventListener("change", convertParams);
-paramDelimiter.addEventListener("change", convertParams);
+$paramConvertBtn.on("click", convertParams);
+$paramInput.on("input", convertParams);
+$paramFormat.on("change", convertParams);
+$paramDelimiter.on("change", convertParams);
 
-paramCopyBtn.addEventListener("click", () => {
-  const text = paramOutput.value;
+$paramCopyBtn.on("click", function () {
+  var text = $paramOutput.val();
   if (!text) { setParamStatus(t("param.no_copy"), true); return; }
-  navigator.clipboard.writeText(text).then(() => { setParamStatus(t("param.copy_done")); showToast(t("param.copy_done"), "success"); });
+  navigator.clipboard.writeText(text).then(function () {
+    setParamStatus(t("param.copy_done"));
+    showToast(t("param.copy_done"), "success");
+  });
 });

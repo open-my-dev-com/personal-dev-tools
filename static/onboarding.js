@@ -5,31 +5,28 @@
   var currentStep = 0;
   var selectedLang = "";
   var tabsData = [];
-  var overlay = null;
+  var $overlay = null;
 
   // ── Check onboarding status ──
-  async function checkOnboarding() {
-    try {
-      var res = await fetch("/api/dev/onboarding");
-      var data = await res.json();
+  function checkOnboarding() {
+    $.getJSON("/api/dev/onboarding").done(function (data) {
       if (data.ok && !data.completed) {
         showWizard();
       }
-    } catch (_) { /* server unreachable */ }
+    }).fail(function () { /* server unreachable */ });
   }
 
   // ── Create overlay ──
   function showWizard() {
-    overlay = document.createElement("div");
-    overlay.id = "onboardingOverlay";
-    overlay.className = "onboarding-overlay";
-    overlay.innerHTML =
+    $overlay = $("<div>").attr("id", "onboardingOverlay").addClass("onboarding-overlay");
+    $overlay.html(
       '<div class="onboarding-wizard">' +
         '<div class="onboarding-progress" id="onboardingProgress"></div>' +
         '<div class="onboarding-body" id="onboardingBody"></div>' +
         '<div class="onboarding-footer" id="onboardingFooter"></div>' +
-      '</div>';
-    document.body.appendChild(overlay);
+      '</div>'
+    );
+    $("body").append($overlay);
     renderStep(0);
   }
 
@@ -44,19 +41,19 @@
       else if (i === step) cls += " active";
       html += '<div class="' + cls + '"></div>';
     }
-    document.getElementById("onboardingProgress").innerHTML = html;
+    $("#onboardingProgress").html(html);
   }
 
   // ── Step router ──
   function renderStep(step) {
     currentStep = step;
     updateProgress(step);
-    var body = document.getElementById("onboardingBody");
-    var footer = document.getElementById("onboardingFooter");
-    if (step === 0) renderWelcome(body, footer);
-    else if (step === 1) renderTabs(body, footer);
-    else if (step === 2) renderApiKeys(body, footer);
-    else if (step === 3) renderComplete(body, footer);
+    var $body = $("#onboardingBody");
+    var $footer = $("#onboardingFooter");
+    if (step === 0) renderWelcome($body, $footer);
+    else if (step === 1) renderTabs($body, $footer);
+    else if (step === 2) renderApiKeys($body, $footer);
+    else if (step === 3) renderComplete($body, $footer);
   }
 
   // ── Step 1: Welcome + Language ──
@@ -66,10 +63,10 @@
     ja: { title: "Personal Dev Toolsへようこそ", desc: "簡単な初期設定を始めましょう。<br>下から言語を選択してください。", next: "次へ" }
   };
 
-  function renderWelcome(body, footer) {
+  function renderWelcome($body, $footer) {
     var lang = selectedLang || "en";
     var txt = WELCOME_TEXT[lang] || WELCOME_TEXT.en;
-    body.innerHTML =
+    $body.html(
       '<div class="onboarding-welcome-icon"><i data-lucide="wrench"></i></div>' +
       '<h2 id="onboardingTitle">' + txt.title + '</h2>' +
       '<p id="onboardingDesc" style="color:var(--muted);line-height:1.6;margin-bottom:20px">' + txt.desc + '</p>' +
@@ -77,59 +74,66 @@
         '<button class="onboarding-lang-btn" data-lang="ko"><b>한국어</b></button>' +
         '<button class="onboarding-lang-btn" data-lang="en"><b>English</b></button>' +
         '<button class="onboarding-lang-btn" data-lang="ja"><b>日本語</b></button>' +
-      '</div>';
+      '</div>'
+    );
     initLucideInOverlay();
-    var btns = body.querySelectorAll(".onboarding-lang-btn");
-    btns.forEach(function (btn) {
-      if (btn.dataset.lang === lang) btn.classList.add("selected");
-      btn.addEventListener("click", function () {
-        btns.forEach(function (b) { b.classList.remove("selected"); });
-        btn.classList.add("selected");
-        selectedLang = btn.dataset.lang;
+    var $btns = $body.find(".onboarding-lang-btn");
+    $btns.each(function () {
+      var $btn = $(this);
+      if ($btn.data("lang") === lang) $btn.addClass("selected");
+      $btn.on("click", function () {
+        $btns.removeClass("selected");
+        $btn.addClass("selected");
+        selectedLang = $btn.data("lang");
         // Update wizard text only
         var t = WELCOME_TEXT[selectedLang] || WELCOME_TEXT.en;
-        document.getElementById("onboardingTitle").textContent = t.title;
-        document.getElementById("onboardingDesc").innerHTML = t.desc;
-        document.getElementById("onboardingNext1").textContent = t.next + " →";
+        $("#onboardingTitle").text(t.title);
+        $("#onboardingDesc").html(t.desc);
+        $("#onboardingNext1").text(t.next + " →");
       });
     });
-    footer.innerHTML =
+    $footer.html(
       '<div></div>' +
-      '<button class="onboarding-btn-primary" id="onboardingNext1">' + txt.next + ' &rarr;</button>';
-    document.getElementById("onboardingNext1").addEventListener("click", async function () {
+      '<button class="onboarding-btn-primary" id="onboardingNext1">' + txt.next + ' &rarr;</button>'
+    );
+    $("#onboardingNext1").on("click", function () {
       // Save language + apply i18n on proceed
       if (selectedLang && selectedLang !== i18nLang()) {
         i18nSetLang(selectedLang);
-        try {
-          await fetch("/api/dev/site-config", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lang: selectedLang })
-          });
-        } catch (_) {}
-        await new Promise(function (r) { setTimeout(r, 300); });
+        $.ajax({
+          url: "/api/dev/site-config",
+          method: "PUT",
+          contentType: "application/json",
+          data: JSON.stringify({ lang: selectedLang }),
+          dataType: "json"
+        }).always(function () {
+          setTimeout(function () { renderStep(1); }, 300);
+        });
+      } else {
+        renderStep(1);
       }
-      renderStep(1);
     });
   }
 
   // ── Step 2: Tabs ──
-  function renderTabs(body, footer) {
-    body.innerHTML =
+  function renderTabs($body, $footer) {
+    $body.html(
       '<h2>' + t("onboarding.tabs_title") + '</h2>' +
       '<p>' + t("onboarding.tabs_desc") + '</p>' +
       '<div class="onboarding-tabs-list" id="onboardingTabsList">' +
         '<div style="text-align:center;color:var(--muted);">Loading...</div>' +
-      '</div>';
-    footer.innerHTML =
+      '</div>'
+    );
+    $footer.html(
       '<button id="onboardingBack2">' + t("onboarding.btn_back") + '</button>' +
       '<div>' +
         '<button id="onboardingSkip2" style="margin-right:8px">' + t("onboarding.btn_skip") + '</button>' +
         '<button class="onboarding-btn-primary" id="onboardingNext2">' + t("onboarding.btn_next") + ' &rarr;</button>' +
-      '</div>';
-    document.getElementById("onboardingBack2").addEventListener("click", function () { renderStep(0); });
-    document.getElementById("onboardingSkip2").addEventListener("click", function () { renderStep(2); });
-    document.getElementById("onboardingNext2").addEventListener("click", saveTabs);
+      '</div>'
+    );
+    $("#onboardingBack2").on("click", function () { renderStep(0); });
+    $("#onboardingSkip2").on("click", function () { renderStep(2); });
+    $("#onboardingNext2").on("click", saveTabs);
 
     loadTabs();
   }
@@ -142,44 +146,43 @@
     diffcompare: "nav.diff", git: "nav.git", dataai: "nav.dataai"
   };
 
-  async function loadTabs() {
-    try {
-      var res = await fetch("/api/dev/tabs");
-      var data = await res.json();
+  function loadTabs() {
+    $.getJSON("/api/dev/tabs").done(function (data) {
       if (!data.ok) return;
       tabsData = data.tabs.sort(function (a, b) { return a.order - b.order; });
-      var list = document.getElementById("onboardingTabsList");
-      list.innerHTML = "";
+      var $list = $("#onboardingTabsList");
+      $list.html("");
       tabsData.forEach(function (tab) {
         var i18nKey = TAB_I18N[tab.id];
         var label = i18nKey ? t(i18nKey) : tab.label;
         if (label === i18nKey) label = tab.label; // fallback if key not translated
-        var item = document.createElement("div");
-        item.className = "onboarding-tab-item";
-        item.innerHTML =
+        var $item = $("<div>").addClass("onboarding-tab-item");
+        $item.html(
           '<input type="checkbox" data-id="' + tab.id + '"' + (tab.visible ? ' checked' : '') + '>' +
-          '<label>' + escOnb(label) + '</label>';
-        list.appendChild(item);
+          '<label>' + escOnb(label) + '</label>'
+        );
+        $list.append($item);
       });
-    } catch (_) {}
+    }).fail(function () { /* ignore */ });
   }
 
-  async function saveTabs() {
-    var checks = document.querySelectorAll("#onboardingTabsList input[type=checkbox]");
-    checks.forEach(function (cb) {
-      var tab = tabsData.find(function (t) { return t.id === cb.dataset.id; });
-      if (tab) tab.visible = cb.checked;
+  function saveTabs() {
+    $("#onboardingTabsList input[type=checkbox]").each(function () {
+      var $cb = $(this);
+      var tab = tabsData.find(function (t) { return t.id === $cb.data("id"); });
+      if (tab) tab.visible = $cb.prop("checked");
     });
-    try {
-      await fetch("/api/dev/tabs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tabs: tabsData })
-      });
+    $.ajax({
+      url: "/api/dev/tabs",
+      method: "PUT",
+      contentType: "application/json",
+      data: JSON.stringify({ tabs: tabsData }),
+      dataType: "json"
+    }).always(function () {
       // Refresh sidebar
       if (typeof applyTabConfig === "function") applyTabConfig();
-    } catch (_) {}
-    renderStep(2);
+      renderStep(2);
+    });
   }
 
   // ── Step 3: API Keys (skippable) ──
@@ -190,7 +193,7 @@
     grok:    { label: "Grok",    placeholder: "xai-..." },
   };
 
-  function renderApiKeys(body, footer) {
+  function renderApiKeys($body, $footer) {
     var html = '<h2>' + t("onboarding.apikeys_title") + '</h2>' +
       '<p>' + t("onboarding.apikeys_desc") + '</p>' +
       '<div class="onboarding-apikeys-list">';
@@ -202,76 +205,85 @@
         '</label>';
     }
     html += '</div>';
-    body.innerHTML = html;
-    footer.innerHTML =
+    $body.html(html);
+    $footer.html(
       '<button id="onboardingBack3">' + t("onboarding.btn_back") + '</button>' +
       '<div>' +
         '<button id="onboardingSkip3" style="margin-right:8px">' + t("onboarding.btn_skip") + '</button>' +
         '<button class="onboarding-btn-primary" id="onboardingNext3">' + t("onboarding.btn_next") + ' &rarr;</button>' +
-      '</div>';
-    document.getElementById("onboardingBack3").addEventListener("click", function () { renderStep(1); });
-    document.getElementById("onboardingSkip3").addEventListener("click", function () { renderStep(3); });
-    document.getElementById("onboardingNext3").addEventListener("click", saveApiKeys);
+      '</div>'
+    );
+    $("#onboardingBack3").on("click", function () { renderStep(1); });
+    $("#onboardingSkip3").on("click", function () { renderStep(3); });
+    $("#onboardingNext3").on("click", saveApiKeys);
   }
 
-  async function saveApiKeys() {
-    var inputs = document.querySelectorAll(".onboarding-apikey-input");
+  function saveApiKeys() {
     var keys = {};
-    inputs.forEach(function (input) {
-      var val = input.value.trim();
-      if (val) keys[input.dataset.provider] = val;
+    $(".onboarding-apikey-input").each(function () {
+      var $input = $(this);
+      var val = $input.val().trim();
+      if (val) keys[$input.data("provider")] = val;
     });
     if (Object.keys(keys).length > 0) {
-      try {
-        await fetch("/api/dev/ai-keys", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keys: keys })
-        });
+      $.ajax({
+        url: "/api/dev/ai-keys",
+        method: "PUT",
+        contentType: "application/json",
+        data: JSON.stringify({ keys: keys }),
+        dataType: "json"
+      }).always(function () {
         // Refresh provider dropdowns
         if (typeof refreshAiProviders === "function") refreshAiProviders();
-      } catch (_) {}
+        renderStep(3);
+      });
+    } else {
+      renderStep(3);
     }
-    renderStep(3);
   }
 
   // ── Step 4: Complete ──
-  function renderComplete(body, footer) {
-    body.innerHTML =
+  function renderComplete($body, $footer) {
+    $body.html(
       '<div class="onboarding-complete-icon"><i data-lucide="check-circle"></i></div>' +
       '<h2>' + t("onboarding.complete_title") + '</h2>' +
-      '<p>' + t("onboarding.complete_desc") + '</p>';
+      '<p>' + t("onboarding.complete_desc") + '</p>'
+    );
     initLucideInOverlay();
-    footer.innerHTML =
+    $footer.html(
       '<button id="onboardingTutorial">' + t("onboarding.btn_tutorial") + '</button>' +
-      '<button class="onboarding-btn-primary" id="onboardingFinish">' + t("onboarding.btn_finish") + '</button>';
-    document.getElementById("onboardingTutorial").addEventListener("click", async function () {
-      await completeOnboarding();
-      switchTab("tutorial");
+      '<button class="onboarding-btn-primary" id="onboardingFinish">' + t("onboarding.btn_finish") + '</button>'
+    );
+    $("#onboardingTutorial").on("click", function () {
+      completeOnboarding(function () {
+        switchTab("tutorial");
+      });
     });
-    document.getElementById("onboardingFinish").addEventListener("click", function () {
+    $("#onboardingFinish").on("click", function () {
       completeOnboarding();
     });
   }
 
-  async function completeOnboarding() {
-    try {
-      await fetch("/api/dev/onboarding/complete", { method: "POST" });
-    } catch (_) {}
-    if (overlay) overlay.remove();
-    overlay = null;
+  function completeOnboarding(callback) {
+    $.ajax({
+      url: "/api/dev/onboarding/complete",
+      method: "POST",
+      dataType: "json"
+    }).always(function () {
+      if ($overlay) $overlay.remove();
+      $overlay = null;
+      if (typeof callback === "function") callback();
+    });
   }
 
   // ── Utils ──
   function escOnb(s) {
-    var d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
+    return $("<div>").text(s).html();
   }
 
   function initLucideInOverlay() {
-    if (typeof lucide !== "undefined" && overlay) {
-      lucide.createIcons({ nodes: overlay.querySelectorAll("[data-lucide]") });
+    if (typeof lucide !== "undefined" && $overlay) {
+      lucide.createIcons({ nodes: $overlay.find("[data-lucide]").toArray() });
     }
   }
 

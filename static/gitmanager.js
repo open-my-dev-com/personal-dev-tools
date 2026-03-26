@@ -1,37 +1,37 @@
 (function () {
   "use strict";
 
-  // ── DOM refs ──
-  const repoPathEl = document.getElementById("gitRepoPath");
-  const pickRepoBtn = document.getElementById("gitPickRepoBtn");
-  const refreshBtn = document.getElementById("gitRefreshBtn");
-  const branchBar = document.getElementById("gitBranchBar");
-  const currentBranchEl = document.getElementById("gitCurrentBranch");
-  const branchSelect = document.getElementById("gitBranchSelect");
-  const switchBranchBtn = document.getElementById("gitSwitchBranchBtn");
-  const newBranchBtn = document.getElementById("gitNewBranchBtn");
-  const mainEl = document.getElementById("gitMain");
-  const fileListEl = document.getElementById("gitFileList");
-  const diffHeader = document.getElementById("gitDiffHeader");
-  const diffLeft = document.getElementById("gitDiffLeft");
-  const diffRight = document.getElementById("gitDiffRight");
-  const actionBar = document.getElementById("gitActionBar");
-  const selectAllBtn = document.getElementById("gitSelectAllBtn");
-  const deselectAllBtn = document.getElementById("gitDeselectAllBtn");
-  const discardBtn = document.getElementById("gitDiscardBtn");
-  const commitArea = document.getElementById("gitCommitArea");
-  const commitMsg = document.getElementById("gitCommitMsg");
-  const commitBtn = document.getElementById("gitCommitBtn");
-  const templateSelect = document.getElementById("gitTemplateSelect");
-  const templateManageBtn = document.getElementById("gitTemplateManageBtn");
-  const templateModal = document.getElementById("gitTemplateModal");
-  const templateModalClose = document.getElementById("gitTemplateModalClose");
-  const templateList = document.getElementById("gitTemplateList");
-  const templateNameInput = document.getElementById("gitTemplateNameInput");
-  const templateContentInput = document.getElementById("gitTemplateContentInput");
-  const templateAddBtn = document.getElementById("gitTemplateAddBtn");
-  const logArea = document.getElementById("gitLogArea");
-  const logBody = document.getElementById("gitLogBody");
+  // ── DOM refs (jQuery) ──
+  const $repoPathEl = $("#gitRepoPath");
+  const $pickRepoBtn = $("#gitPickRepoBtn");
+  const $refreshBtn = $("#gitRefreshBtn");
+  const $branchBar = $("#gitBranchBar");
+  const $currentBranchEl = $("#gitCurrentBranch");
+  const $branchSelect = $("#gitBranchSelect");
+  const $switchBranchBtn = $("#gitSwitchBranchBtn");
+  const $newBranchBtn = $("#gitNewBranchBtn");
+  const $mainEl = $("#gitMain");
+  const $fileListEl = $("#gitFileList");
+  const $diffHeader = $("#gitDiffHeader");
+  const $diffLeft = $("#gitDiffLeft");
+  const $diffRight = $("#gitDiffRight");
+  const $actionBar = $("#gitActionBar");
+  const $selectAllBtn = $("#gitSelectAllBtn");
+  const $deselectAllBtn = $("#gitDeselectAllBtn");
+  const $discardBtn = $("#gitDiscardBtn");
+  const $commitArea = $("#gitCommitArea");
+  const $commitMsg = $("#gitCommitMsg");
+  const $commitBtn = $("#gitCommitBtn");
+  const $templateSelect = $("#gitTemplateSelect");
+  const $templateManageBtn = $("#gitTemplateManageBtn");
+  const $templateModal = $("#gitTemplateModal");
+  const $templateModalClose = $("#gitTemplateModalClose");
+  const $templateList = $("#gitTemplateList");
+  const $templateNameInput = $("#gitTemplateNameInput");
+  const $templateContentInput = $("#gitTemplateContentInput");
+  const $templateAddBtn = $("#gitTemplateAddBtn");
+  const $logArea = $("#gitLogArea");
+  const $logBody = $("#gitLogBody");
 
   // ── State ──
   let repoPath = localStorage.getItem("gitRepoPath") || "";
@@ -43,38 +43,41 @@
   let gitEmail = "";
 
   if (repoPath) {
-    repoPathEl.value = repoPath;
+    $repoPathEl.val(repoPath);
     loadStatus();
   }
 
   // ── 저장소 선택 ──
-  pickRepoBtn.addEventListener("click", async () => {
+  $pickRepoBtn.on("click", async () => {
     try {
-      const res = await fetch("/api/git/pick-repo", { method: "POST" });
-      const data = await res.json();
+      const data = await $.ajax({
+        url: "/api/git/pick-repo",
+        method: "POST",
+        dataType: "json"
+      });
       if (data.ok && data.path) {
         repoPath = data.path;
-        repoPathEl.value = repoPath;
+        $repoPathEl.val(repoPath);
         localStorage.setItem("gitRepoPath", repoPath);
         loadStatus();
       }
     } catch (e) {
-      showToast(t("git.folder_select_fail", { msg: e.message }), "error");
+      showToast(t("git.folder_select_fail", { msg: e.message || e.statusText }), "error");
     }
   });
 
-  refreshBtn.addEventListener("click", () => {
-    repoPath = repoPathEl.value.trim();
+  $refreshBtn.on("click", () => {
+    repoPath = $repoPathEl.val().trim();
     if (repoPath) {
       localStorage.setItem("gitRepoPath", repoPath);
       loadStatus();
     }
   });
 
-  repoPathEl.addEventListener("keydown", (e) => {
+  $repoPathEl.on("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      refreshBtn.click();
+      $refreshBtn[0].click();
     }
   });
 
@@ -82,8 +85,7 @@
   async function loadStatus() {
     if (!repoPath) return;
     try {
-      const res = await fetch(`/api/git/status?repo=${encodeURIComponent(repoPath)}`);
-      const data = await res.json();
+      const data = await $.getJSON(`/api/git/status?repo=${encodeURIComponent(repoPath)}`);
       if (!data.ok) {
         showToast(data.error, "error");
         hideAll();
@@ -93,13 +95,13 @@
       gitUser = data.user || "";
       gitEmail = data.email || "";
       files = data.files.map((f) => ({ ...f, checked: true }));
-      currentBranchEl.textContent = currentBranch;
+      $currentBranchEl.text(currentBranch);
 
-      branchBar.style.display = "flex";
-      mainEl.style.display = "flex";
-      actionBar.style.display = "flex";
-      commitArea.style.display = "block";
-      logArea.style.display = "block";
+      $branchBar.css("display", "flex");
+      $mainEl.css("display", "flex");
+      $actionBar.css("display", "flex");
+      $commitArea.show();
+      $logArea.show();
 
       renderFileList();
       loadBranches();
@@ -110,29 +112,30 @@
       if (files.length > 0) {
         selectFile(files[0].file);
       } else {
-        diffHeader.textContent = t("git.no_changes");
-        diffLeft.innerHTML = "";
-        diffRight.innerHTML = "";
+        $diffHeader.text(t("git.no_changes"));
+        $diffLeft.html("");
+        $diffRight.html("");
       }
     } catch (e) {
-      showToast(t("git.status_fail", { msg: e.message }), "error");
+      showToast(t("git.status_fail", { msg: e.message || e.statusText }), "error");
     }
   }
 
   function hideAll() {
-    branchBar.style.display = "none";
-    mainEl.style.display = "none";
-    actionBar.style.display = "none";
-    commitArea.style.display = "none";
-    logArea.style.display = "none";
+    $branchBar.hide();
+    $mainEl.hide();
+    $actionBar.hide();
+    $commitArea.hide();
+    $logArea.hide();
   }
 
   // ── 파일 목록 렌더링 ──
   function renderFileList() {
-    fileListEl.innerHTML = "";
+    $fileListEl.html("");
     files.forEach((f) => {
-      const item = document.createElement("div");
-      item.className = "git-file-item" + (selectedFile === f.file ? " active" : "");
+      var $item = $("<div>");
+      $item.addClass("git-file-item");
+      if (selectedFile === f.file) $item.addClass("active");
       const statusChar =
         f.status === "untracked" ? "?" :
         f.status === "added" ? "A" :
@@ -143,20 +146,20 @@
         f.status === "added" ? "A" :
         f.status === "deleted" ? "D" :
         f.status === "renamed" ? "R" : "M";
-      item.innerHTML =
+      $item.html(
         `<input type="checkbox" ${f.checked ? "checked" : ""}>` +
         `<span class="git-file-status git-file-status-${statusClass}">${statusChar}</span>` +
-        `<span class="git-file-name" title="${f.file}">${f.file}</span>`;
-      const cb = item.querySelector("input");
-      cb.addEventListener("change", (e) => {
+        `<span class="git-file-name" title="${f.file}">${f.file}</span>`);
+      var $cb = $item.find("input");
+      $cb.on("change", (e) => {
         e.stopPropagation();
-        f.checked = cb.checked;
+        f.checked = $cb.prop("checked");
       });
-      item.addEventListener("click", (e) => {
+      $item.on("click", (e) => {
         if (e.target.tagName === "INPUT") return;
         selectFile(f.file);
       });
-      fileListEl.appendChild(item);
+      $fileListEl.append($item);
     });
   }
 
@@ -164,24 +167,23 @@
   async function selectFile(fname) {
     selectedFile = fname;
     renderFileList();
-    diffHeader.textContent = fname;
-    diffLeft.innerHTML = "<div style='padding:12px;color:var(--muted)'>" + t("common.load") + "...</div>";
-    diffRight.innerHTML = "";
+    $diffHeader.text(fname);
+    $diffLeft.html("<div style='padding:12px;color:var(--muted)'>" + t("common.load") + "...</div>");
+    $diffRight.html("");
     try {
-      const res = await fetch(`/api/git/diff?repo=${encodeURIComponent(repoPath)}&file=${encodeURIComponent(fname)}`);
-      const data = await res.json();
+      const data = await $.getJSON(`/api/git/diff?repo=${encodeURIComponent(repoPath)}&file=${encodeURIComponent(fname)}`);
       if (!data.ok) {
-        diffLeft.innerHTML = `<div style="padding:12px;color:var(--danger)">${data.error}</div>`;
+        $diffLeft.html(`<div style="padding:12px;color:var(--danger)">${data.error}</div>`);
         return;
       }
       if (data.binary) {
-        diffLeft.innerHTML = '<div style="padding:12px;color:var(--muted)">Binary file</div>';
-        diffRight.innerHTML = '<div style="padding:12px;color:var(--muted)">Binary file</div>';
+        $diffLeft.html('<div style="padding:12px;color:var(--muted)">Binary file</div>');
+        $diffRight.html('<div style="padding:12px;color:var(--muted)">Binary file</div>');
         return;
       }
       renderDiff(data.left, data.right);
     } catch (e) {
-      diffLeft.innerHTML = `<div style="padding:12px;color:var(--danger)">${e.message}</div>`;
+      $diffLeft.html(`<div style="padding:12px;color:var(--danger)">${e.message || e.statusText}</div>`);
     }
   }
 
@@ -232,32 +234,32 @@
       }
     });
 
-    diffLeft.innerHTML = leftHtml.join("");
-    diffRight.innerHTML = rightHtml.join("");
+    $diffLeft.html(leftHtml.join(""));
+    $diffRight.html(rightHtml.join(""));
 
     // 좌우 라인 높이 동기화
     requestAnimationFrame(function () {
-      var leftEls = diffLeft.children;
-      var rightEls = diffRight.children;
+      var leftEls = $diffLeft.children();
+      var rightEls = $diffRight.children();
       var len = Math.min(leftEls.length, rightEls.length);
       for (var i = 0; i < len; i++) {
-        leftEls[i].style.minHeight = "";
-        rightEls[i].style.minHeight = "";
+        $(leftEls[i]).css("minHeight", "");
+        $(rightEls[i]).css("minHeight", "");
       }
-      diffLeft.offsetHeight;
+      $diffLeft[0].offsetHeight;
       for (var i = 0; i < len; i++) {
         var lh = leftEls[i].offsetHeight;
         var rh = rightEls[i].offsetHeight;
         if (lh !== rh) {
           var maxH = Math.max(lh, rh) + "px";
-          leftEls[i].style.minHeight = maxH;
-          rightEls[i].style.minHeight = maxH;
+          $(leftEls[i]).css("minHeight", maxH);
+          $(rightEls[i]).css("minHeight", maxH);
         }
       }
     });
 
     // 동기 스크롤
-    setupSyncScroll(diffLeft, diffRight);
+    setupSyncScroll($diffLeft, $diffRight);
   }
 
   function diffLine(num, text, cls) {
@@ -268,35 +270,35 @@
   }
 
   var scrollSyncing = false;
-  function setupSyncScroll(left, right) {
-    left.onscroll = function () {
+  function setupSyncScroll($left, $right) {
+    $left.on("scroll", function () {
       if (scrollSyncing) return;
       scrollSyncing = true;
-      right.scrollTop = left.scrollTop;
-      right.scrollLeft = left.scrollLeft;
+      $right[0].scrollTop = $left[0].scrollTop;
+      $right[0].scrollLeft = $left[0].scrollLeft;
       scrollSyncing = false;
-    };
-    right.onscroll = function () {
+    });
+    $right.on("scroll", function () {
       if (scrollSyncing) return;
       scrollSyncing = true;
-      left.scrollTop = right.scrollTop;
-      left.scrollLeft = right.scrollLeft;
+      $left[0].scrollTop = $right[0].scrollTop;
+      $left[0].scrollLeft = $right[0].scrollLeft;
       scrollSyncing = false;
-    };
+    });
   }
 
   // ── 전체 선택/해제 ──
-  selectAllBtn.addEventListener("click", () => {
+  $selectAllBtn.on("click", () => {
     files.forEach((f) => (f.checked = true));
     renderFileList();
   });
-  deselectAllBtn.addEventListener("click", () => {
+  $deselectAllBtn.on("click", () => {
     files.forEach((f) => (f.checked = false));
     renderFileList();
   });
 
   // ── Discard ──
-  discardBtn.addEventListener("click", async () => {
+  $discardBtn.on("click", async () => {
     var checked = files.filter((f) => f.checked);
     if (checked.length === 0) {
       showToast(t("git.select_files"), "error");
@@ -306,15 +308,16 @@
       return;
     }
     try {
-      var res = await fetch("/api/git/discard", {
+      var data = await $.ajax({
+        url: "/api/git/discard",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        contentType: "application/json",
+        data: JSON.stringify({
           repo: repoPath,
           files: checked.map((f) => ({ file: f.file, status: f.status })),
         }),
+        dataType: "json"
       });
-      var data = await res.json();
       if (!data.ok) {
         showToast(t("git.discard_fail", { msg: data.error }), "error");
       } else {
@@ -322,84 +325,80 @@
       }
       loadStatus();
     } catch (e) {
-      showToast(t("git.discard_fail", { msg: e.message }), "error");
+      showToast(t("git.discard_fail", { msg: e.message || e.statusText }), "error");
     }
   });
 
   // ── Commit ──
-  commitBtn.addEventListener("click", async () => {
+  $commitBtn.on("click", async () => {
     var checked = files.filter((f) => f.checked);
     if (checked.length === 0) {
       showToast(t("git.select_commit_files"), "error");
       return;
     }
-    var msg = commitMsg.value.trim();
+    var msg = $commitMsg.val().trim();
     if (!msg) {
       showToast(t("git.commit_msg_required"), "error");
-      commitMsg.focus();
+      $commitMsg.trigger("focus");
       return;
     }
     try {
-      var res = await fetch("/api/git/commit", {
+      var data = await $.ajax({
+        url: "/api/git/commit",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        contentType: "application/json",
+        data: JSON.stringify({
           repo: repoPath,
           files: checked.map((f) => f.file),
           message: msg,
         }),
+        dataType: "json"
       });
-      var data = await res.json();
       if (!data.ok) {
         showToast(t("git.commit_fail", { msg: data.error }), "error");
         return;
       }
       showToast(t("git.commit_success"), "success");
-      commitMsg.value = "";
+      $commitMsg.val("");
       loadStatus();
     } catch (e) {
-      showToast(t("git.commit_fail", { msg: e.message }), "error");
+      showToast(t("git.commit_fail", { msg: e.message || e.statusText }), "error");
     }
   });
 
   // ── 브랜치 ──
   async function loadBranches() {
     try {
-      var res = await fetch(`/api/git/branches?repo=${encodeURIComponent(repoPath)}`);
-      var data = await res.json();
+      var data = await $.getJSON(`/api/git/branches?repo=${encodeURIComponent(repoPath)}`);
       if (!data.ok) return;
-      branchSelect.innerHTML = "";
+      $branchSelect.html("");
       data.local.forEach((b) => {
-        var opt = document.createElement("option");
-        opt.value = b;
-        opt.textContent = b;
-        if (b === data.current) opt.selected = true;
-        branchSelect.appendChild(opt);
+        var $opt = $("<option>").val(b).text(b);
+        if (b === data.current) $opt.prop("selected", true);
+        $branchSelect.append($opt);
       });
       if (data.remote.length > 0) {
-        var og = document.createElement("optgroup");
-        og.label = t("git.remote");
+        var $og = $("<optgroup>").attr("label", t("git.remote"));
         data.remote.forEach((b) => {
-          var opt = document.createElement("option");
-          opt.value = b;
-          opt.textContent = b;
-          og.appendChild(opt);
+          var $opt = $("<option>").val(b).text(b);
+          $og.append($opt);
         });
-        branchSelect.appendChild(og);
+        $branchSelect.append($og);
       }
     } catch (_) {}
   }
 
-  switchBranchBtn.addEventListener("click", async () => {
-    var branch = branchSelect.value;
+  $switchBranchBtn.on("click", async () => {
+    var branch = $branchSelect.val();
     if (!branch) return;
     try {
-      var res = await fetch("/api/git/switch-branch", {
+      var data = await $.ajax({
+        url: "/api/git/switch-branch",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo: repoPath, branch }),
+        contentType: "application/json",
+        data: JSON.stringify({ repo: repoPath, branch }),
+        dataType: "json"
       });
-      var data = await res.json();
       if (!data.ok) {
         showToast(t("git.switch_fail", { msg: data.error }), "error");
         return;
@@ -407,20 +406,21 @@
       showToast(t("git.switch_success"), "success");
       loadStatus();
     } catch (e) {
-      showToast(t("git.switch_fail", { msg: e.message }), "error");
+      showToast(t("git.switch_fail", { msg: e.message || e.statusText }), "error");
     }
   });
 
-  newBranchBtn.addEventListener("click", async () => {
+  $newBranchBtn.on("click", async () => {
     var name = prompt(t("git.new_branch_name"));
     if (!name || !name.trim()) return;
     try {
-      var res = await fetch("/api/git/create-branch", {
+      var data = await $.ajax({
+        url: "/api/git/create-branch",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo: repoPath, branch: name.trim() }),
+        contentType: "application/json",
+        data: JSON.stringify({ repo: repoPath, branch: name.trim() }),
+        dataType: "json"
       });
-      var data = await res.json();
       if (!data.ok) {
         showToast(t("git.create_fail", { msg: data.error }), "error");
         return;
@@ -428,25 +428,24 @@
       showToast(t("git.branch_create_success"), "success");
       loadStatus();
     } catch (e) {
-      showToast(t("git.create_fail", { msg: e.message }), "error");
+      showToast(t("git.create_fail", { msg: e.message || e.statusText }), "error");
     }
   });
 
   // ── 커밋 로그 ──
   async function loadLog() {
     try {
-      var res = await fetch(`/api/git/log?repo=${encodeURIComponent(repoPath)}&limit=20`);
-      var data = await res.json();
+      var data = await $.getJSON(`/api/git/log?repo=${encodeURIComponent(repoPath)}&limit=20`);
       if (!data.ok) return;
-      logBody.innerHTML = "";
+      $logBody.html("");
       data.logs.forEach((log) => {
-        var tr = document.createElement("tr");
-        tr.innerHTML =
+        var $tr = $("<tr>");
+        $tr.html(
           "<td>" + esc(log.hash) + "</td>" +
           "<td>" + esc(log.message) + "</td>" +
           "<td>" + esc(log.author) + "</td>" +
-          "<td>" + esc(log.date) + "</td>";
-        logBody.appendChild(tr);
+          "<td>" + esc(log.date) + "</td>");
+        $logBody.append($tr);
       });
     } catch (_) {}
   }
@@ -454,8 +453,7 @@
   // ── 템플릿 ──
   async function loadTemplates() {
     try {
-      var res = await fetch(`/api/git/templates?repo=${encodeURIComponent(repoPath)}`);
-      var data = await res.json();
+      var data = await $.getJSON(`/api/git/templates?repo=${encodeURIComponent(repoPath)}`);
       if (!data.ok) return;
       templates = data.templates;
       renderTemplateSelect();
@@ -463,71 +461,74 @@
   }
 
   function renderTemplateSelect() {
-    templateSelect.innerHTML = '<option value="">' + t("git.template_select") + '</option>';
+    $templateSelect.html('<option value="">' + t("git.template_select") + '</option>');
     templates.forEach((t) => {
-      var opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = t.name;
-      templateSelect.appendChild(opt);
+      var $opt = $("<option>").val(t.id).text(t.name);
+      $templateSelect.append($opt);
     });
   }
 
-  templateSelect.addEventListener("change", () => {
-    var id = parseInt(templateSelect.value);
+  $templateSelect.on("change", () => {
+    var id = parseInt($templateSelect.val());
     if (!id) return;
     var tpl = templates.find((t) => t.id === id);
     if (tpl) {
-      commitMsg.value = resolveTemplate(tpl.template);
-      commitMsg.focus();
+      $commitMsg.val(resolveTemplate(tpl.template));
+      $commitMsg.trigger("focus");
     }
   });
 
-  templateManageBtn.addEventListener("click", () => {
-    templateModal.style.display = templateModal.style.display === "none" ? "block" : "none";
-    if (templateModal.style.display === "block") renderTemplateList();
+  $templateManageBtn.on("click", () => {
+    if ($templateModal.css("display") === "none") {
+      $templateModal.show();
+      renderTemplateList();
+    } else {
+      $templateModal.hide();
+    }
   });
 
-  templateModalClose.addEventListener("click", () => {
-    templateModal.style.display = "none";
+  $templateModalClose.on("click", () => {
+    $templateModal.hide();
   });
 
   function renderTemplateList() {
-    templateList.innerHTML = "";
+    $templateList.html("");
     templates.forEach((t) => {
-      var item = document.createElement("div");
-      item.className = "git-template-item";
-      item.innerHTML =
+      var $item = $("<div>").addClass("git-template-item");
+      $item.html(
         '<span class="git-template-item-name">' + esc(t.name) + "</span>" +
         '<span class="git-template-item-content">' + esc(t.template) + "</span>" +
-        '<button class="git-btn-sm git-btn-danger" data-id="' + t.id + '">' + window.t("common.delete") + '</button>';
-      item.querySelector("button").addEventListener("click", async () => {
-        await fetch("/api/git/templates/" + t.id, { method: "DELETE" });
+        '<button class="git-btn-sm git-btn-danger" data-id="' + t.id + '">' + window.t("common.delete") + '</button>');
+      $item.find("button").on("click", async () => {
+        await $.ajax({ url: "/api/git/templates/" + t.id, method: "DELETE" });
         loadTemplates();
         renderTemplateList();
       });
-      templateList.appendChild(item);
+      $templateList.append($item);
     });
   }
 
-  templateAddBtn.addEventListener("click", async () => {
-    var name = templateNameInput.value.trim();
-    var content = templateContentInput.value;
+  $templateAddBtn.on("click", async () => {
+    var name = $templateNameInput.val().trim();
+    var content = $templateContentInput.val();
     if (!name) {
       showToast(t("git.template_name_required"), "error");
       return;
     }
     try {
-      await fetch("/api/git/templates", {
+      await $.ajax({
+        url: "/api/git/templates",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo: repoPath, name, template: content }),
+        contentType: "application/json",
+        data: JSON.stringify({ repo: repoPath, name, template: content }),
+        dataType: "json"
       });
-      templateNameInput.value = "";
-      templateContentInput.value = "";
+      $templateNameInput.val("");
+      $templateContentInput.val("");
       loadTemplates();
       renderTemplateList();
     } catch (e) {
-      showToast(t("git.template_add_fail", { msg: e.message }), "error");
+      showToast(t("git.template_add_fail", { msg: e.message || e.statusText }), "error");
     }
   });
 
@@ -578,7 +579,7 @@
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  window.addEventListener("langchange", function () {
+  $(window).on("langchange", function () {
     if (templates.length) renderTemplateSelect();
   });
 })();
