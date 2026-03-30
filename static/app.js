@@ -120,7 +120,7 @@ function applyTabConfig() {
       }
     });
     // DOM 순서 재정렬 — DEV 버튼과 구분선 앞에 삽입
-    var $divider = $nav.find(".nav-divider");
+    var $divider = $nav.find(".nav-divider").first();
     tabs.forEach(function (tab) {
       var $btn = $nav.find(".nav-btn[data-tab='" + tab.id + "']");
       if ($btn.length && $divider.length) $divider.before($btn);
