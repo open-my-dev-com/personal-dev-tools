@@ -2081,6 +2081,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/ai-keys":
             self._dev_get_ai_keys()
             return
+        if path == "/api/dev/version":
+            self._dev_get_version()
+            return
         if path == "/api/dev/cdn/status":
             self._dev_cdn_status()
             return
@@ -2161,6 +2164,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             return
         if path == "/api/dev/cdn/sync":
             self._dev_cdn_sync()
+            return
+        if path == "/api/dev/update":
+            self._dev_update()
             return
         # ── PDF conversion ──
         if path == "/api/pdf/convert/xlsx":
@@ -3414,6 +3420,79 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         _save_vendor_meta(meta)
         success = sum(1 for r in results if r["ok"])
         self._send_json({"ok": True, "results": results, "summary": f"{success}/{len(results)} complete"})
+
+    # ══════════════════════════════════
+    # Version management API
+    # ══════════════════════════════════
+    def _dev_get_version(self):
+        """Return current version, latest remote version, and update availability."""
+        version_file = ROOT / "VERSION"
+        current = version_file.read_text().strip() if version_file.exists() else "unknown"
+
+        latest = current
+        update_available = False
+        try:
+            result = subprocess.run(
+                ["git", "fetch", "origin", "--tags", "-q"],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=30
+            )
+            result = subprocess.run(
+                ["git", "tag", "-l", "v*", "--sort=-version:refname"],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=10
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                latest_tag = result.stdout.strip().split("\n")[0]
+                latest = latest_tag.lstrip("v")
+                if latest != current:
+                    update_available = True
+        except Exception as e:
+            logger.warning(f"[Version] Failed to check remote tags: {e}")
+
+        self._send_json({
+            "ok": True,
+            "current": current,
+            "latest": latest,
+            "update_available": update_available,
+        })
+
+    def _dev_update(self):
+        """Pull latest changes from origin main."""
+        if not self._dev_check_auth():
+            return
+
+        # Check for local changes
+        try:
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=10
+            )
+            if result.stdout.strip():
+                files = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
+                self._send_json({"ok": False, "error": "local_changes", "files": files})
+                return
+        except Exception as e:
+            self._send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        # Pull latest
+        try:
+            result = subprocess.run(
+                ["git", "pull", "--ff-only", "origin", "main"],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=60
+            )
+            if result.returncode == 0:
+                version_file = ROOT / "VERSION"
+                new_version = version_file.read_text().strip() if version_file.exists() else "unknown"
+                self._send_json({"ok": True, "version": new_version})
+            else:
+                # Attempt to abort if merge in progress
+                subprocess.run(
+                    ["git", "merge", "--abort"],
+                    cwd=str(ROOT), capture_output=True, text=True, timeout=10
+                )
+                self._send_json({"ok": False, "error": "merge_conflict"})
+        except Exception as e:
+            self._send_json({"ok": False, "error": str(e)}, 500)
 
 
 if __name__ == "__main__":

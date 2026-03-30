@@ -1032,6 +1032,18 @@ textarea.dev-detail-edit { resize: vertical; white-space: pre; min-height: 40px;
 .dev-field input { width: 100%; }
 .dev-field-hint { font-size: 11px !important; color: #9ca3af !important; font-weight: 400 !important; }
 
+/* Version info */
+.dev-version-row { display: flex; align-items: center; gap: 8px; }
+.dev-version-row strong { font-size: 14px; color: #111827; }
+.dev-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.dev-badge.badge-ok { background: #d1fae5; color: #065f46; }
+.dev-badge.badge-warn { background: #fef3c7; color: #92400e; }
+.dev-btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.dev-btn.primary:hover { background: #1d4ed8; }
+.dev-status-msg { margin: 4px 0 0; font-size: 12px; padding: 6px 10px; border-radius: 6px; }
+.dev-status-msg.status-success { background: #d1fae5; color: #065f46; }
+.dev-status-msg.status-error { background: #fee2e2; color: #991b1b; }
+
 /* Toast position picker grid */
 .toast-position-grid {
   display: grid;

@@ -277,13 +277,85 @@ function applySiteName(name) {
 
   // ── 섹션 로드 ──
   function loadDevSection(sec) {
-    if (sec === "general") loadSiteConfig();
+    if (sec === "general") { loadSiteConfig(); loadVersionInfo(); }
     else if (sec === "db") loadDbExplorer();
     else if (sec === "tabs") loadTabManager();
     else if (sec === "modules") loadModuleSettings();
     else if (sec === "cdn") loadCdnManager();
     else if (sec === "plugins") loadPluginManager();
   }
+
+  // ══════════════════════════════════
+  // 버전 관리
+  // ══════════════════════════════════
+  var $verCurrent = $("#devVersionCurrent");
+  var $verBadge = $("#devVersionBadge");
+  var $verCheckBtn = $("#devVersionCheck");
+  var $verUpdateBtn = $("#devVersionUpdate");
+  var $verStatus = $("#devVersionStatus");
+
+  function loadVersionInfo() {
+    $verCheckBtn.prop("disabled", true).text(t("dev.version_checking"));
+    $verBadge.hide();
+    $verUpdateBtn.hide();
+    $verStatus.hide();
+
+    $.getJSON("/api/dev/version").done(function (data) {
+      $verCurrent.text("v" + data.current);
+      if (data.update_available) {
+        $verBadge.text(t("dev.version_new", { version: "v" + data.latest }))
+          .removeClass("badge-ok").addClass("badge-warn").show();
+        $verUpdateBtn.show();
+      } else {
+        $verBadge.text(t("dev.version_latest"))
+          .removeClass("badge-warn").addClass("badge-ok").show();
+      }
+    }).fail(function () {
+      $verCurrent.text("-");
+    }).always(function () {
+      $verCheckBtn.prop("disabled", false).text(t("dev.version_check"));
+    });
+  }
+
+  $verCheckBtn.on("click", function () {
+    loadVersionInfo();
+  });
+
+  $verUpdateBtn.on("click", function () {
+    if (!confirm(t("dev.version_update_confirm"))) return;
+    $verUpdateBtn.prop("disabled", true).text(t("dev.version_updating"));
+    $verStatus.hide();
+
+    devFetch("/api/dev/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data.ok) {
+        $verCurrent.text("v" + data.version);
+        $verBadge.text(t("dev.version_latest")).removeClass("badge-warn").addClass("badge-ok");
+        $verUpdateBtn.hide();
+        $verStatus.text(t("dev.version_updated") + " " + t("dev.version_restart_required"))
+          .removeClass("status-error").addClass("status-success").show();
+        showToast(t("dev.version_updated"), "success");
+      } else if (data.error === "local_changes") {
+        $verStatus.text(t("dev.version_local_changes"))
+          .removeClass("status-success").addClass("status-error").show();
+        showToast(t("dev.version_local_changes"), "error");
+      } else if (data.error === "merge_conflict") {
+        $verStatus.text(t("dev.version_conflict"))
+          .removeClass("status-success").addClass("status-error").show();
+        showToast(t("dev.version_conflict"), "error");
+      } else {
+        $verStatus.text(data.error)
+          .removeClass("status-success").addClass("status-error").show();
+      }
+    }).catch(function () {
+      $verStatus.text("Update failed").removeClass("status-success").addClass("status-error").show();
+    }).finally(function () {
+      $verUpdateBtn.prop("disabled", false).text(t("dev.version_update"));
+    });
+  });
 
   // ══════════════════════════════════
   // DB 탐색기
