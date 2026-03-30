@@ -3440,12 +3440,12 @@ input[type="checkbox"] {{ margin-right: 6px; }}
                 cwd=str(ROOT), capture_output=True, text=True, timeout=30
             )
             result = subprocess.run(
-                ["git", "tag", "-l", "v*", "--sort=-version:refname"],
+                ["git", "tag", "-l", "release/v*", "--sort=-version:refname"],
                 cwd=str(ROOT), capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0 and result.stdout.strip():
                 latest_tag = result.stdout.strip().split("\n")[0]
-                latest = latest_tag.lstrip("v")
+                latest = latest_tag.replace("release/v", "")
                 if latest != current:
                     update_available = True
         except Exception as e:
