@@ -748,6 +748,9 @@
   "dev.version_restart_required": "서버를 재시작해주세요.",
   "dev.version_local_changes": "로컬 변경사항이 있습니다. 커밋 또는 스태시 후 다시 시도하세요.",
   "dev.version_conflict": "병합 충돌이 발생하여 롤백했습니다. 수동으로 업데이트하세요.",
+  "dev.version_release_notes": "릴리즈 노트",
+  "dev.version_no_releases": "릴리즈 내역이 없습니다.",
+  "dev.version_releases_fail": "릴리즈 노트를 불러올 수 없습니다.",
 
   "server.api_key_missing": "OPENAI_API_KEY가 .env에 설정되지 않았습니다.",
   "server.input_required": "데이터 설명을 입력하세요.",

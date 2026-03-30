@@ -2084,6 +2084,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/dev/version":
             self._dev_get_version()
             return
+        if path == "/api/dev/releases":
+            self._dev_get_releases()
+            return
         if path == "/api/dev/cdn/status":
             self._dev_cdn_status()
             return
@@ -3454,6 +3457,42 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             "latest": latest,
             "update_available": update_available,
         })
+
+    def _dev_get_releases(self):
+        """Fetch release notes from GitHub API."""
+        try:
+            result = subprocess.run(
+                ["git", "remote", "get-url", "origin"],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=5
+            )
+            remote_url = result.stdout.strip()
+            m = re.search(r"github\.com[:/](.+?)(?:\.git)?$", remote_url)
+            if not m:
+                self._send_json({"ok": False, "error": "not_github"})
+                return
+            repo_slug = m.group(1)
+
+            api_url = f"https://api.github.com/repos/{repo_slug}/releases?per_page=20"
+            req = urllib.request.Request(api_url, headers={
+                "Accept": "application/vnd.github+json",
+                "User-Agent": "dev-tools/1.0",
+            })
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                releases = json.loads(resp.read().decode())
+
+            items = []
+            for r in releases:
+                items.append({
+                    "tag": r.get("tag_name", ""),
+                    "name": r.get("name", ""),
+                    "body": r.get("body", ""),
+                    "published_at": r.get("published_at", ""),
+                    "html_url": r.get("html_url", ""),
+                })
+            self._send_json({"ok": True, "releases": items})
+        except Exception as e:
+            logger.warning(f"[Version] Failed to fetch releases: {e}")
+            self._send_json({"ok": False, "error": str(e)})
 
     def _dev_update(self):
         """Pull latest changes from origin main."""

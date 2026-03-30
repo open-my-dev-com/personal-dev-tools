@@ -1043,6 +1043,14 @@ textarea.dev-detail-edit { resize: vertical; white-space: pre; min-height: 40px;
 .dev-status-msg { margin: 4px 0 0; font-size: 12px; padding: 6px 10px; border-radius: 6px; }
 .dev-status-msg.status-success { background: #d1fae5; color: #065f46; }
 .dev-status-msg.status-error { background: #fee2e2; color: #991b1b; }
+.dev-release-notes { grid-column: 1 / -1; margin-top: 8px; max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+.dev-release-item { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; }
+.dev-release-item:last-child { border-bottom: none; }
+.dev-release-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.dev-release-header strong { font-size: 13px; color: #111827; }
+.dev-release-date { font-size: 11px; color: #9ca3af; }
+.dev-release-body { font-size: 12px; color: #4b5563; line-height: 1.6; }
+.dev-release-empty { padding: 12px 14px; font-size: 12px; color: #9ca3af; }
 
 /* Toast position picker grid */
 .toast-position-grid {

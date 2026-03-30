@@ -293,6 +293,8 @@ function applySiteName(name) {
   var $verCheckBtn = $("#devVersionCheck");
   var $verUpdateBtn = $("#devVersionUpdate");
   var $verStatus = $("#devVersionStatus");
+  var $releaseNotesBtn = $("#devReleaseNotesBtn");
+  var $releaseNotes = $("#devReleaseNotes");
 
   function loadVersionInfo() {
     $verCheckBtn.prop("disabled", true).text(t("dev.version_checking"));
@@ -354,6 +356,37 @@ function applySiteName(name) {
       $verStatus.text("Update failed").removeClass("status-success").addClass("status-error").show();
     }).finally(function () {
       $verUpdateBtn.prop("disabled", false).text(t("dev.version_update"));
+    });
+  });
+
+  $releaseNotesBtn.on("click", function () {
+    if ($releaseNotes.is(":visible")) {
+      $releaseNotes.slideUp(200);
+      return;
+    }
+    $releaseNotesBtn.prop("disabled", true).text(t("dev.version_checking"));
+    $.getJSON("/api/dev/releases").done(function (data) {
+      if (!data.ok || !data.releases || !data.releases.length) {
+        $releaseNotes.html("<p class='dev-release-empty'>" + t("dev.version_no_releases") + "</p>").slideDown(200);
+        return;
+      }
+      var html = "";
+      data.releases.forEach(function (r) {
+        var date = r.published_at ? r.published_at.substring(0, 10) : "";
+        var body = escapeHtml(r.body || "").replace(/\n/g, "<br>");
+        html += "<div class='dev-release-item'>"
+          + "<div class='dev-release-header'>"
+          + "<strong>" + escapeHtml(r.name || r.tag) + "</strong>"
+          + "<span class='dev-release-date'>" + date + "</span>"
+          + "</div>"
+          + "<div class='dev-release-body'>" + body + "</div>"
+          + "</div>";
+      });
+      $releaseNotes.html(html).slideDown(200);
+    }).fail(function () {
+      $releaseNotes.html("<p class='dev-release-empty'>" + t("dev.version_releases_fail") + "</p>").slideDown(200);
+    }).always(function () {
+      $releaseNotesBtn.prop("disabled", false).text(t("dev.version_release_notes"));
     });
   });
 

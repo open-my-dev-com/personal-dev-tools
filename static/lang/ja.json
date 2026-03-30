@@ -748,6 +748,9 @@
   "dev.version_restart_required": "サーバーを再起動してください。",
   "dev.version_local_changes": "ローカルの変更があります。コミットまたはスタッシュしてから再試行してください。",
   "dev.version_conflict": "マージの競合が発生しロールバックしました。手動でアップデートしてください。",
+  "dev.version_release_notes": "リリースノート",
+  "dev.version_no_releases": "リリース履歴がありません。",
+  "dev.version_releases_fail": "リリースノートを取得できませんでした。",
 
   "server.api_key_missing": "OPENAI_API_KEYが.envに設定されていません。",
   "server.input_required": "データの説明を入力してください。",
