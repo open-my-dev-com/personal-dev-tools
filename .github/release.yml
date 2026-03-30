@@ -1,0 +1,38 @@
+changelog:
+  categories:
+    - title: "⚠️ Breaking Changes"
+      labels:
+        - breaking-change
+    - title: "🚀 Features"
+      labels:
+        - feature
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bugfix
+    - title: "🎨 UI/UX"
+      labels:
+        - ui/ux
+    - title: "🔧 API"
+      labels:
+        - api
+    - title: "🌐 i18n"
+      labels:
+        - i18n
+    - title: "♻️ Refactor"
+      labels:
+        - refactor
+    - title: "📖 Documentation"
+      labels:
+        - documentation
+    - title: "🔒 Security"
+      labels:
+        - security
+    - title: "📦 Dependencies"
+      labels:
+        - dependencies
+    - title: "⚡ Performance"
+      labels:
+        - performance
+    - title: "🔀 Other Changes"
+      labels:
+        - "*"
