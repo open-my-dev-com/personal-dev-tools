@@ -309,6 +309,13 @@ button:hover {
 }
 #statusText { color: var(--muted); font-size: 12px; margin-left: auto; }
 
+/* ===== Mock 폼 영역 구분 ===== */
+.form-grid > label.span-2,
+.form-grid > .span-2 {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
 /* ===== Mock 헤더 입력 ===== */
 .mock-header-rows { margin-bottom: 6px; }
 .mock-header-row {
