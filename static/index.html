@@ -56,9 +56,15 @@
               <label><span data-i18n="mock.path">경로</span> <input id="path" required placeholder="/api/orders" /></label>
               <label><span data-i18n="mock.status_code">응답 코드</span> <input id="status" type="number" value="200" /></label>
 
-              <label class="span-2"><span data-i18n="mock.request_body">요청(JSON, 비우면 어떤 바디든 매칭)</span>
+              <div class="span-2">
+                <span data-i18n="mock.request_body">요청(JSON, 비우면 어떤 바디든 매칭)</span>
+                <div class="mock-body-mode">
+                  <button type="button" class="mock-mode-btn active" data-mode="raw" data-target="request">Raw</button>
+                  <button type="button" class="mock-mode-btn" data-mode="form" data-target="request">Form</button>
+                </div>
                 <textarea id="requestJson" rows="7" placeholder='{"id": 1, "items": [{"sku": "A"}]}'></textarea>
-              </label>
+                <div id="requestJsonForm" class="mock-kv-form" style="display:none"></div>
+              </div>
 
               <div class="span-2">
                 <span data-i18n="mock.response_headers">응답 헤더</span>
@@ -66,12 +72,17 @@
                 <button type="button" id="addResponseHeaderBtn" class="btn-sm" data-i18n="mock.add_header">+ 헤더 추가</button>
               </div>
 
-              <label class="span-2"><span data-i18n="mock.response_body">응답 바디(JSON)</span>
+              <div class="span-2">
+                <span data-i18n="mock.response_body">응답 바디(JSON)</span>
+                <div class="mock-body-mode">
+                  <button type="button" class="mock-mode-btn active" data-mode="raw" data-target="response">Raw</button>
+                  <button type="button" class="mock-mode-btn" data-mode="form" data-target="response">Form</button>
+                </div>
                 <textarea id="responseBody" rows="7" placeholder='{"ok": true, "data": []}'></textarea>
-              </label>
+                <div id="responseBodyForm" class="mock-kv-form" style="display:none"></div>
+              </div>
 
               <div class="actions span-2">
-                <button type="button" id="previewBtn" data-i18n="mock.json_preview">JSON 미리보기/편집</button>
                 <button type="submit" id="saveBtn" data-i18n="common.save">저장</button>
                 <button type="button" id="resetBtn" data-i18n="common.reset">초기화</button>
                 <span id="statusText"></span>
@@ -79,11 +90,6 @@
             </form>
           </section>
 
-          <section class="panel">
-            <h2 data-i18n="mock.json_editor_title">JSON 테이블 편집기 (응답 바디)</h2>
-            <p class="desc" data-i18n-html="mock.json_editor_desc">JSON 붙여넣기 후 미리보기를 누르면 구조가 보입니다. 배열 항목은 <code>+ 복제</code>로 같은 값을 추가할 수 있습니다.</p>
-            <div id="jsonTableWrap"></div>
-          </section>
 
           <section class="panel">
             <h2 data-i18n="mock.saved_list">저장된 Mock 목록</h2>

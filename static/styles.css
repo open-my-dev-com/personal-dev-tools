@@ -317,6 +317,16 @@ button:hover {
 .mock-header-row .mock-header-value { flex: 1; min-width: 0; }
 .mock-header-row .btn-del { flex: 0 0 auto; padding: 4px 8px; font-size: 16px; line-height: 1; cursor: pointer; }
 
+/* ===== Mock 바디 모드 토글 ===== */
+.mock-body-mode { display: flex; gap: 2px; margin-bottom: 8px; }
+.mock-mode-btn { padding: 4px 12px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 12px; border-radius: 4px; }
+.mock-mode-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.mock-kv-form { margin-top: 4px; }
+.kv-form-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.kv-form-table th, .kv-form-table td { padding: 4px 6px; border: 1px solid var(--border); }
+.kv-form-table input { width: 100%; border: none; background: transparent; padding: 2px 4px; font-size: 13px; }
+.kv-add, .kv-add-row { margin-top: 6px; }
+
 /* ===== 툴바 (버튼 + 옵션 분리) ===== */
 .toolbar {
   display: flex;

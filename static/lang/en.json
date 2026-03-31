@@ -99,6 +99,12 @@
   "mock.header_name": "Header Name",
   "mock.header_value": "Value",
   "mock.header_custom": "Custom...",
+  "mock.mode_raw": "Raw JSON",
+  "mock.mode_form": "Form",
+  "mock.add_field": "+ Add Field",
+  "mock.field_key": "Key",
+  "mock.field_value": "Value",
+  "mock.form_parse_error": "JSON parse failed. Check Raw mode.",
 
   "charcount.title": "Character Count",
   "charcount.desc": "Paste text to count characters per line.",
