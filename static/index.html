@@ -56,31 +56,28 @@
               <label><span data-i18n="mock.path">경로</span> <input id="path" required placeholder="/api/orders" /></label>
               <label><span data-i18n="mock.status_code">응답 코드</span> <input id="status" type="number" value="200" /></label>
 
-              <div class="span-2">
-                <span data-i18n="mock.request_body">요청(JSON, 비우면 어떤 바디든 매칭)</span>
+              <label class="span-2"><span data-i18n="mock.request_body">요청(JSON, 비우면 어떤 바디든 매칭)</span>
                 <div class="mock-body-mode">
                   <button type="button" class="mock-mode-btn active" data-mode="raw" data-target="request">Raw</button>
                   <button type="button" class="mock-mode-btn" data-mode="form" data-target="request">Form</button>
                 </div>
                 <textarea id="requestJson" rows="7" placeholder='{"id": 1, "items": [{"sku": "A"}]}'></textarea>
                 <div id="requestJsonForm" class="mock-kv-form" style="display:none"></div>
-              </div>
+              </label>
 
-              <div class="span-2">
-                <span data-i18n="mock.response_headers">응답 헤더</span>
+              <label class="span-2"><span data-i18n="mock.response_headers">응답 헤더</span>
                 <div id="responseHeaderRows" class="mock-header-rows"></div>
                 <button type="button" id="addResponseHeaderBtn" class="btn-sm" data-i18n="mock.add_header">+ 헤더 추가</button>
-              </div>
+              </label>
 
-              <div class="span-2">
-                <span data-i18n="mock.response_body">응답 바디(JSON)</span>
+              <label class="span-2"><span data-i18n="mock.response_body">응답 바디(JSON)</span>
                 <div class="mock-body-mode">
                   <button type="button" class="mock-mode-btn active" data-mode="raw" data-target="response">Raw</button>
                   <button type="button" class="mock-mode-btn" data-mode="form" data-target="response">Form</button>
                 </div>
                 <textarea id="responseBody" rows="7" placeholder='{"ok": true, "data": []}'></textarea>
                 <div id="responseBodyForm" class="mock-kv-form" style="display:none"></div>
-              </div>
+              </label>
 
               <div class="actions span-2">
                 <button type="submit" id="saveBtn" data-i18n="common.save">저장</button>
