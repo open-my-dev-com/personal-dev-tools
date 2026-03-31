@@ -35,6 +35,7 @@
 
   function buildHeaderSelect(selectedName) {
     var $select = $("<select>").addClass("mock-header-select");
+    $select.append($("<option>").val("").text(""));
     headerOptions.forEach(function (h) {
       var $opt = $("<option>").val(h.name).text(h.name);
       if (h.name === selectedName) $opt.prop("selected", true);
@@ -47,14 +48,40 @@
     return $select;
   }
 
-  function addHeaderRow(name, value) {
-    var $row = $("<div>").addClass("mock-header-row");
-    var $select = buildHeaderSelect(name || "");
-    var $customInput = $("<input>").attr("type", "text").addClass("mock-header-custom-input")
+  function renderHeaderForm(headersObj) {
+    var $container = $responseHeaderRows;
+    $container.empty();
+    var html = '<table class="kv-form-table"><thead><tr>' +
+      '<th>' + t("mock.header_name") + '</th>' +
+      '<th>' + t("mock.header_value") + '</th>' +
+      '<th></th></tr></thead><tbody>';
+    if (headersObj && typeof headersObj === "object") {
+      Object.keys(headersObj).forEach(function (key) {
+        html += '<tr class="kv-row"><td class="header-name-cell"></td>' +
+          '<td><input class="kv-val" value="' + esc(headersObj[key] || "") + '" /></td>' +
+          '<td><button type="button" class="btn-sm btn-del kv-del">&times;</button></td></tr>';
+      });
+    }
+    html += '</tbody></table>';
+    $container.html(html);
+
+    // select 삽입 (DOM 빌드 후)
+    var keys = headersObj ? Object.keys(headersObj) : [];
+    $container.find(".header-name-cell").each(function (i) {
+      var name = keys[i] || "";
+      var $cell = $(this);
+      setupHeaderNameCell($cell, name);
+    });
+
+    // 삭제 버튼
+    $container.find(".kv-del").on("click", function () { $(this).closest("tr").remove(); });
+  }
+
+  function setupHeaderNameCell($cell, name) {
+    var $select = buildHeaderSelect(name);
+    var $customInput = $("<input>").attr("type", "text").addClass("kv-key")
       .attr("placeholder", t("mock.header_name")).val("").hide();
-    var $valInput = $("<input>").attr("type", "text").addClass("mock-header-value")
-      .attr("placeholder", t("mock.header_value")).val(value || "");
-    var $delBtn = $("<button>").attr("type", "button").addClass("btn-sm btn-del").html("&times;");
+    $cell.empty().append($select).append($customInput);
 
     $select.on("change", function () {
       if ($(this).val() === "__custom__") {
@@ -65,16 +92,13 @@
     $customInput.on("blur", function () {
       var customName = $(this).val().trim();
       if (customName) {
-        // DB에 커스텀 헤더 저장
         $.ajax({ url: "/api/mock-headers", method: "POST", contentType: "application/json",
           data: JSON.stringify({ name: customName }), dataType: "json" });
-        // 현재 select에 옵션 추가하고 선택
         $select.find("option[value='__custom__']").before(
           $("<option>").val(customName).text(customName)
         );
         $select.val(customName).show();
         $customInput.hide();
-        // 다음 번을 위해 headerOptions에도 추가
         if (!headerOptions.some(function (h) { return h.name === customName; })) {
           headerOptions.push({ name: customName, is_standard: false });
           headerOptions.sort(function (a, b) { return a.name.localeCompare(b.name); });
@@ -84,34 +108,78 @@
         $customInput.hide();
       }
     });
-    $delBtn.on("click", function () { $row.remove(); });
+  }
 
-    $row.append($select).append($customInput).append($valInput).append($delBtn);
-    $responseHeaderRows.append($row);
+  function addHeaderTableRow() {
+    var $tbody = $responseHeaderRows.find("tbody");
+    if (!$tbody.length) {
+      renderHeaderForm({});
+      $tbody = $responseHeaderRows.find("tbody");
+    }
+    var $row = $('<tr class="kv-row"><td class="header-name-cell"></td>' +
+      '<td><input class="kv-val" value="" /></td>' +
+      '<td><button type="button" class="btn-sm btn-del kv-del">&times;</button></td></tr>');
+    $row.find(".kv-del").on("click", function () { $row.remove(); });
+    $tbody.append($row);
+    setupHeaderNameCell($row.find(".header-name-cell"), "");
   }
 
   function collectHeaders() {
     var headers = {};
-    $responseHeaderRows.find(".mock-header-row").each(function () {
+    $responseHeaderRows.find("tbody .kv-row").each(function () {
       var $row = $(this);
       var $select = $row.find(".mock-header-select");
-      var $customInput = $row.find(".mock-header-custom-input");
-      var name = $customInput.is(":visible") ? $customInput.val().trim() : $select.val();
-      var value = $row.find(".mock-header-value").val().trim();
+      var $customInput = $row.find(".kv-key");
+      var name = ($customInput.is(":visible") ? $customInput.val() : $select.val()) || "";
+      name = name.trim();
+      var value = $row.find(".kv-val").val().trim();
       if (name && name !== "__custom__") headers[name] = value;
     });
     return headers;
   }
 
   function populateHeaderRows(headersObj) {
-    $responseHeaderRows.empty();
-    if (!headersObj || typeof headersObj !== "object") return;
-    Object.keys(headersObj).forEach(function (key) {
-      addHeaderRow(key, headersObj[key]);
-    });
+    renderHeaderForm(headersObj);
   }
 
-  $addResponseHeaderBtn.on("click", function () { addHeaderRow("", ""); });
+  $addResponseHeaderBtn.on("click", function () { addHeaderTableRow(); });
+
+  // 초기 빈 헤더 테이블 렌더링
+  renderHeaderForm({});
+
+  // 헤더 Raw/Form 모드 토글
+  var $headerFormWrap = $("#responseHeaderFormWrap");
+  var $headerRawTextarea = $("#responseHeadersRaw");
+
+  $(document).on("click", ".mock-header-mode-btn", function () {
+    var $btn = $(this);
+    var mode = $btn.data("mode");
+    $btn.addClass("active").siblings(".mock-header-mode-btn").removeClass("active");
+
+    if (mode === "raw") {
+      // Form → Raw: 현재 row 데이터를 JSON으로 변환
+      var headers = collectHeaders();
+      $headerRawTextarea.val(Object.keys(headers).length ? JSON.stringify(headers, null, 2) : "{}");
+      $headerFormWrap.hide();
+      $headerRawTextarea.show();
+    } else {
+      // Raw → Form: textarea JSON을 파싱하여 row로 변환
+      var raw = $headerRawTextarea.val().trim();
+      if (raw) {
+        try {
+          var parsed = JSON.parse(raw);
+          populateHeaderRows(parsed);
+        } catch (e) {
+          showToast(t("mock.invalid_header_json"), "error");
+          $btn.removeClass("active");
+          $btn.siblings("[data-mode='raw']").addClass("active");
+          return;
+        }
+      }
+      $headerRawTextarea.hide();
+      $headerFormWrap.show();
+    }
+  });
 
   // 헤더 옵션 초기 로드
   loadHeaderOptions();
@@ -231,6 +299,10 @@
     $responseBodyInput.show();
     $(".mock-mode-btn[data-mode='raw']").addClass("active");
     $(".mock-mode-btn[data-mode='form']").removeClass("active");
+    $(".mock-header-mode-btn[data-mode='form']").addClass("active");
+    $(".mock-header-mode-btn[data-mode='raw']").removeClass("active");
+    $headerFormWrap.show();
+    $headerRawTextarea.hide().val("{}");
     $saveBtn.text(t("common.save"));
     setStatus("");
   }
@@ -254,7 +326,9 @@
       path: $pathInput.val().trim(),
       response_status: parseInt($statusInput.val()) || 200,
       request_json: $requestJsonInput.val().trim() || null,
-      response_headers: JSON.stringify(collectHeaders()),
+      response_headers: $headerRawTextarea.is(":visible")
+        ? ($headerRawTextarea.val().trim() || "{}")
+        : JSON.stringify(collectHeaders()),
       response_body: $responseBodyInput.val().trim() || null,
     };
 
@@ -265,6 +339,11 @@
     if (payload.request_json) {
       try { JSON.parse(payload.request_json); } catch (e) {
         setStatus(t("mock.invalid_request_json"), true); return;
+      }
+    }
+    if ($headerRawTextarea.is(":visible")) {
+      try { JSON.parse(payload.response_headers); } catch (e) {
+        setStatus(t("mock.invalid_header_json"), true); return;
       }
     }
     if (payload.response_body) {

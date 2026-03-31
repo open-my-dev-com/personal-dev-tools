@@ -66,8 +66,15 @@
               </label>
 
               <label class="span-2"><span data-i18n="mock.response_headers">응답 헤더</span>
-                <div id="responseHeaderRows" class="mock-header-rows"></div>
-                <button type="button" id="addResponseHeaderBtn" class="btn-sm" data-i18n="mock.add_header">+ 헤더 추가</button>
+                <div class="mock-body-mode">
+                  <button type="button" class="mock-header-mode-btn" data-mode="raw">Raw</button>
+                  <button type="button" class="mock-header-mode-btn active" data-mode="form">Form</button>
+                </div>
+                <div id="responseHeaderFormWrap">
+                  <div id="responseHeaderRows" class="mock-header-rows"></div>
+                  <button type="button" id="addResponseHeaderBtn" class="btn-sm" data-i18n="mock.add_header">+ 헤더 추가</button>
+                </div>
+                <textarea id="responseHeadersRaw" rows="4" placeholder='{"Content-Type": "application/json"}' style="display:none"></textarea>
               </label>
 
               <label class="span-2"><span data-i18n="mock.response_body">응답 바디(JSON)</span>
