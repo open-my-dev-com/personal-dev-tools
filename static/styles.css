@@ -366,6 +366,9 @@ button:hover {
 .kv-form-table .kv-del:hover { background: #fee2e2; border-color: #fca5a5; }
 .kv-add, .kv-add-row { margin-top: 6px; }
 
+/* ===== Mock 테이블 액션 버튼 ===== */
+.mock-actions { display: flex; gap: 4px; align-items: center; }
+
 /* ===== 툴바 (버튼 + 옵션 분리) ===== */
 .toolbar {
   display: flex;

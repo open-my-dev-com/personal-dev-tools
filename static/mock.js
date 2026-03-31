@@ -235,8 +235,8 @@
           "<td><code>" + esc(m.path) + "</code></td>" +
           '<td class="text-sm">' + esc(reqSummary) + "</td>" +
           '<td class="text-sm">' + m.response_status + " / " + esc(resSummary) + "</td>" +
-          '<td><button class="mock-edit-btn" data-id="' + m.id + '">' + t("common.edit") + '</button> ' +
-          '<button class="mock-del-btn" data-id="' + m.id + '">' + t("common.delete") + '</button></td>');
+          '<td class="mock-actions"><button class="btn-sm mock-edit-btn" data-id="' + m.id + '">' + t("common.edit") + '</button>' +
+          '<button class="btn-sm btn-danger mock-del-btn" data-id="' + m.id + '">' + t("common.delete") + '</button></td>');
         $tbody.append($tr);
       });
 
