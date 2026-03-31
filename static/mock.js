@@ -144,8 +144,8 @@
 
   $addResponseHeaderBtn.on("click", function () { addHeaderTableRow(); });
 
-  // 초기 빈 헤더 테이블 렌더링
-  renderHeaderForm({});
+  // 초기 빈 헤더 테이블 렌더링 (i18n 로드 후)
+  i18nReady(function () { renderHeaderForm({}); });
 
   // 헤더 Raw/Form 모드 토글
   var $headerFormWrap = $("#responseHeaderFormWrap");
