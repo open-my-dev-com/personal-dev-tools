@@ -92,6 +92,9 @@
   "mock.no_logs": "ログがありません。",
   "mock.confirm_clear_logs": "すべてのログを削除しますか？",
   "mock.log_cleared": "ログをクリアしました",
+  "mock.log_filter_all": "すべて",
+  "mock.log_filter_matched": "マッチ済み",
+  "mock.log_filter_unmatched": "未マッチ",
 
   "charcount.title": "文字数チェック",
   "charcount.desc": "テキストを貼り付けると行ごとの文字数を表示します。",

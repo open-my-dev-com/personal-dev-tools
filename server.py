@@ -743,19 +743,20 @@ class MockHandler(BaseHTTPRequestHandler):
             )
         self._send_json({"items": items})
 
-    def _list_logs(self, limit=200):
+    def _list_logs(self, limit=200, filter_val="all"):
         limit = max(1, min(int(limit), 1000))
         conn = get_conn()
-        rows = conn.execute(
-            """
-            SELECT id, matched_mock_id, matched, method, path, request_headers, request_body, request_json,
+        sql = """SELECT id, matched_mock_id, matched, method, path, request_headers, request_body, request_json,
                    response_status, response_headers, response_body, created_at
-            FROM traffic_logs
-            ORDER BY id DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+            FROM traffic_logs"""
+        params = []
+        if filter_val == "matched":
+            sql += " WHERE matched = 1"
+        elif filter_val == "unmatched":
+            sql += " WHERE matched = 0"
+        sql += " ORDER BY id DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(sql, params).fetchall()
         conn.close()
 
         items = []
@@ -1934,18 +1935,22 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             "path": path,
             "received_body": req_json,
         }
-        self._log_traffic(
-            matched=False,
-            matched_mock_id=None,
-            method=method,
-            path=path,
-            request_headers=request_headers,
-            request_body=body_raw,
-            request_json=req_json,
-            response_status=404,
-            response_headers={"Content-Type": "application/json; charset=utf-8"},
-            response_body=miss_payload,
-        )
+        # 정적 파일 등 노이즈 요청은 로그에서 제외
+        _noise_ext = {".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
+                      ".woff", ".woff2", ".ttf", ".map", ".json"}
+        if not any(path.endswith(ext) for ext in _noise_ext):
+            self._log_traffic(
+                matched=False,
+                matched_mock_id=None,
+                method=method,
+                path=path,
+                request_headers=request_headers,
+                request_body=body_raw,
+                request_json=req_json,
+                response_status=404,
+                response_headers={"Content-Type": "application/json; charset=utf-8"},
+                response_body=miss_payload,
+            )
         self._send_json(
             miss_payload,
             status=404,
@@ -1967,7 +1972,8 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             return
         if path == "/api/logs":
             limit = query.get("limit", ["200"])[0]
-            self._list_logs(limit=limit)
+            filter_val = query.get("filter", ["all"])[0]
+            self._list_logs(limit=limit, filter_val=filter_val)
             return
         if path == "/api/json/saves":
             self._list_json_saves()

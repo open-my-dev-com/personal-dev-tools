@@ -92,6 +92,9 @@
   "mock.no_logs": "No logs.",
   "mock.confirm_clear_logs": "Clear all logs?",
   "mock.log_cleared": "Logs cleared",
+  "mock.log_filter_all": "All",
+  "mock.log_filter_matched": "Matched",
+  "mock.log_filter_unmatched": "Unmatched",
 
   "charcount.title": "Character Count",
   "charcount.desc": "Paste text to count characters per line.",

@@ -16,6 +16,7 @@
   var $mockTable = $("#mockTable");
   var $refreshLogsBtn = $("#refreshLogsBtn");
   var $clearLogsBtn = $("#clearLogsBtn");
+  var $logFilter = $("#logFilter");
   var $logTable = $("#logTable");
 
   if ($mockForm.length === 0) return;
@@ -341,7 +342,8 @@
 
   // ── 로그 ──
   function loadLogs() {
-    $.getJSON("/api/logs?limit=200").done(function (data) {
+    var filter = $logFilter.val() || "all";
+    $.getJSON("/api/logs?limit=200&filter=" + filter).done(function (data) {
       var items = data.items || [];
       var $tbody = $logTable.find("tbody");
       $tbody.html("");
@@ -371,6 +373,7 @@
   }
 
   $refreshLogsBtn.on("click", loadLogs);
+  $logFilter.on("change", loadLogs);
 
   $clearLogsBtn.on("click", function () {
     if (!confirm(t("mock.confirm_clear_logs"))) return;
