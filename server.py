@@ -474,10 +474,41 @@ def init_db():
         )
         """
     )
+        CREATE TABLE IF NOT EXISTS mock_headers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            header_name TEXT NOT NULL UNIQUE,
+            is_standard INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
     # Seed i18n from JSON files (INSERT OR IGNORE — adds new keys without overwriting user edits)
     _seed_i18n(conn)
+    _seed_mock_headers(conn)
     conn.commit()
     conn.close()
+
+
+_STANDARD_HEADERS = [
+    "Accept", "Accept-Encoding", "Accept-Language",
+    "Access-Control-Allow-Credentials", "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods", "Access-Control-Allow-Origin",
+    "Authorization", "Cache-Control", "Content-Disposition",
+    "Content-Encoding", "Content-Language", "Content-Type",
+    "Cookie", "ETag", "Expires", "If-None-Match", "Location",
+    "Set-Cookie", "X-Forwarded-For", "X-Forwarded-Proto",
+    "X-Powered-By", "X-RateLimit-Limit", "X-RateLimit-Remaining",
+    "X-Request-ID",
+]
+
+
+def _seed_mock_headers(conn):
+    """Seed standard HTTP headers into mock_headers table."""
+    for name in _STANDARD_HEADERS:
+        conn.execute(
+            "INSERT OR IGNORE INTO mock_headers (header_name, is_standard) VALUES (?, 1)",
+            (name,),
+        )
 
 
 def _seed_i18n(conn):
@@ -824,6 +855,33 @@ class MockHandler(BaseHTTPRequestHandler):
         )
         conn.commit()
         conn.close()
+
+    def _list_mock_headers(self):
+        conn = get_conn()
+        rows = conn.execute(
+            "SELECT header_name, is_standard FROM mock_headers ORDER BY header_name"
+        ).fetchall()
+        conn.close()
+        items = [{"name": r["header_name"], "is_standard": bool(r["is_standard"])} for r in rows]
+        self._send_json({"ok": True, "items": items})
+
+    def _create_mock_header(self):
+        raw = self._read_body()
+        try:
+            payload = json.loads(raw)
+            name = payload.get("name", "").strip()
+            if not name:
+                raise ValueError("name is required")
+            conn = get_conn()
+            conn.execute(
+                "INSERT OR IGNORE INTO mock_headers (header_name, is_standard) VALUES (?, 0)",
+                (name,),
+            )
+            conn.commit()
+            conn.close()
+            self._send_json({"ok": True})
+        except (json.JSONDecodeError, ValueError) as e:
+            self._send_json({"ok": False, "error": str(e)}, status=400)
 
     def _create_mock(self):
         raw = self._read_body()
@@ -1970,6 +2028,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/mocks":
             self._list_mocks()
             return
+        if path == "/api/mock-headers":
+            self._list_mock_headers()
+            return
         if path == "/api/logs":
             limit = query.get("limit", ["200"])[0]
             filter_val = query.get("filter", ["all"])[0]
@@ -2128,6 +2189,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
 
         if path == "/api/mocks":
             self._create_mock()
+            return
+        if path == "/api/mock-headers":
+            self._create_mock_header()
             return
         if path == "/api/translate":
             self._translate()

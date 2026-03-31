@@ -309,6 +309,14 @@ button:hover {
 }
 #statusText { color: var(--muted); font-size: 12px; margin-left: auto; }
 
+/* ===== Mock 헤더 입력 ===== */
+.mock-header-rows { margin-bottom: 6px; }
+.mock-header-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+.mock-header-row select,
+.mock-header-row .mock-header-custom-input { flex: 1; min-width: 0; }
+.mock-header-row .mock-header-value { flex: 1; min-width: 0; }
+.mock-header-row .btn-del { flex: 0 0 auto; padding: 4px 8px; font-size: 16px; line-height: 1; cursor: pointer; }
+
 /* ===== 툴바 (버튼 + 옵션 분리) ===== */
 .toolbar {
   display: flex;

@@ -6,7 +6,8 @@
   var $pathInput = $("#path");
   var $statusInput = $("#status");
   var $requestJsonInput = $("#requestJson");
-  var $responseHeadersInput = $("#responseHeaders");
+  var $responseHeaderRows = $("#responseHeaderRows");
+  var $addResponseHeaderBtn = $("#addResponseHeaderBtn");
   var $responseBodyInput = $("#responseBody");
   var $previewBtn = $("#previewBtn");
   var $saveBtn = $("#saveBtn");
@@ -22,6 +23,98 @@
   if ($mockForm.length === 0) return;
 
   var editingId = null; // 수정 중인 mock ID
+  var headerOptions = []; // API에서 로드된 헤더 목록
+
+  // ── 헤더 드롭다운 관련 ──
+  function loadHeaderOptions(callback) {
+    $.getJSON("/api/mock-headers").done(function (data) {
+      headerOptions = (data.ok && data.items) ? data.items : [];
+      if (callback) callback();
+    }).fail(function () { headerOptions = []; if (callback) callback(); });
+  }
+
+  function buildHeaderSelect(selectedName) {
+    var $select = $("<select>").addClass("mock-header-select");
+    headerOptions.forEach(function (h) {
+      var $opt = $("<option>").val(h.name).text(h.name);
+      if (h.name === selectedName) $opt.prop("selected", true);
+      $select.append($opt);
+    });
+    $select.append($("<option>").val("__custom__").text(t("mock.header_custom")));
+    if (selectedName && !headerOptions.some(function (h) { return h.name === selectedName; })) {
+      $select.prepend($("<option>").val(selectedName).text(selectedName).prop("selected", true));
+    }
+    return $select;
+  }
+
+  function addHeaderRow(name, value) {
+    var $row = $("<div>").addClass("mock-header-row");
+    var $select = buildHeaderSelect(name || "");
+    var $customInput = $("<input>").attr("type", "text").addClass("mock-header-custom-input")
+      .attr("placeholder", t("mock.header_name")).val("").hide();
+    var $valInput = $("<input>").attr("type", "text").addClass("mock-header-value")
+      .attr("placeholder", t("mock.header_value")).val(value || "");
+    var $delBtn = $("<button>").attr("type", "button").addClass("btn-sm btn-del").html("&times;");
+
+    $select.on("change", function () {
+      if ($(this).val() === "__custom__") {
+        $select.hide();
+        $customInput.show().focus();
+      }
+    });
+    $customInput.on("blur", function () {
+      var customName = $(this).val().trim();
+      if (customName) {
+        // DB에 커스텀 헤더 저장
+        $.ajax({ url: "/api/mock-headers", method: "POST", contentType: "application/json",
+          data: JSON.stringify({ name: customName }), dataType: "json" });
+        // 현재 select에 옵션 추가하고 선택
+        $select.find("option[value='__custom__']").before(
+          $("<option>").val(customName).text(customName)
+        );
+        $select.val(customName).show();
+        $customInput.hide();
+        // 다음 번을 위해 headerOptions에도 추가
+        if (!headerOptions.some(function (h) { return h.name === customName; })) {
+          headerOptions.push({ name: customName, is_standard: false });
+          headerOptions.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        }
+      } else {
+        $select.val("").show();
+        $customInput.hide();
+      }
+    });
+    $delBtn.on("click", function () { $row.remove(); });
+
+    $row.append($select).append($customInput).append($valInput).append($delBtn);
+    $responseHeaderRows.append($row);
+  }
+
+  function collectHeaders() {
+    var headers = {};
+    $responseHeaderRows.find(".mock-header-row").each(function () {
+      var $row = $(this);
+      var $select = $row.find(".mock-header-select");
+      var $customInput = $row.find(".mock-header-custom-input");
+      var name = $customInput.is(":visible") ? $customInput.val().trim() : $select.val();
+      var value = $row.find(".mock-header-value").val().trim();
+      if (name && name !== "__custom__") headers[name] = value;
+    });
+    return headers;
+  }
+
+  function populateHeaderRows(headersObj) {
+    $responseHeaderRows.empty();
+    if (!headersObj || typeof headersObj !== "object") return;
+    Object.keys(headersObj).forEach(function (key) {
+      addHeaderRow(key, headersObj[key]);
+    });
+  }
+
+  $addResponseHeaderBtn.on("click", function () { addHeaderRow("", ""); });
+
+  // 헤더 옵션 초기 로드
+  loadHeaderOptions();
 
   function setStatus(msg, isError) {
     $statusText.text(msg);
@@ -121,7 +214,7 @@
     $pathInput.val(mock.path);
     $statusInput.val(mock.response_status);
     $requestJsonInput.val(mock.request_json ? prettyJson(mock.request_json) : "");
-    $responseHeadersInput.val(prettyJson(mock.response_headers || {}));
+    populateHeaderRows(mock.response_headers || {});
     $responseBodyInput.val(mock.response_body ? prettyJson(mock.response_body) : "");
     $saveBtn.text(t("mock.edit_save"));
     setStatus(t("mock.edit_mode", {id: mock.id}));
@@ -131,7 +224,7 @@
   function resetForm() {
     editingId = null;
     $mockForm[0].reset();
-    $responseHeadersInput.val("{}");
+    $responseHeaderRows.empty();
     $saveBtn.text(t("common.save"));
     $jsonTableWrap.html("");
     setStatus("");
@@ -146,7 +239,7 @@
       path: $pathInput.val().trim(),
       response_status: parseInt($statusInput.val()) || 200,
       request_json: $requestJsonInput.val().trim() || null,
-      response_headers: $responseHeadersInput.val().trim() || "{}",
+      response_headers: JSON.stringify(collectHeaders()),
       response_body: $responseBodyInput.val().trim() || null,
     };
 
@@ -158,9 +251,6 @@
       try { JSON.parse(payload.request_json); } catch (e) {
         setStatus(t("mock.invalid_request_json"), true); return;
       }
-    }
-    try { JSON.parse(payload.response_headers); } catch (e) {
-      setStatus(t("mock.invalid_header_json"), true); return;
     }
     if (payload.response_body) {
       try { JSON.parse(payload.response_body); } catch (e) {

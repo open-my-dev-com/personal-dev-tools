@@ -60,9 +60,11 @@
                 <textarea id="requestJson" rows="7" placeholder='{"id": 1, "items": [{"sku": "A"}]}'></textarea>
               </label>
 
-              <label class="span-2"><span data-i18n="mock.response_headers">응답 헤더(JSON object)</span>
-                <textarea id="responseHeaders" rows="4" placeholder='{"X-Mock": "yes"}'>{}</textarea>
-              </label>
+              <div class="span-2">
+                <span data-i18n="mock.response_headers">응답 헤더</span>
+                <div id="responseHeaderRows" class="mock-header-rows"></div>
+                <button type="button" id="addResponseHeaderBtn" class="btn-sm" data-i18n="mock.add_header">+ 헤더 추가</button>
+              </div>
 
               <label class="span-2"><span data-i18n="mock.response_body">응답 바디(JSON)</span>
                 <textarea id="responseBody" rows="7" placeholder='{"ok": true, "data": []}'></textarea>
