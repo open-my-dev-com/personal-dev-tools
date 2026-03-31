@@ -57,19 +57,36 @@
               <label><span data-i18n="mock.status_code">응답 코드</span> <input id="status" type="number" value="200" /></label>
 
               <label class="span-2"><span data-i18n="mock.request_body">요청(JSON, 비우면 어떤 바디든 매칭)</span>
+                <div class="mock-body-mode">
+                  <button type="button" class="mock-mode-btn active" data-mode="raw" data-target="request">Raw</button>
+                  <button type="button" class="mock-mode-btn" data-mode="form" data-target="request">Form</button>
+                </div>
                 <textarea id="requestJson" rows="7" placeholder='{"id": 1, "items": [{"sku": "A"}]}'></textarea>
+                <div id="requestJsonForm" class="mock-kv-form" style="display:none"></div>
               </label>
 
-              <label class="span-2"><span data-i18n="mock.response_headers">응답 헤더(JSON object)</span>
-                <textarea id="responseHeaders" rows="4" placeholder='{"X-Mock": "yes"}'>{}</textarea>
+              <label class="span-2"><span data-i18n="mock.response_headers">응답 헤더</span>
+                <div class="mock-body-mode">
+                  <button type="button" class="mock-header-mode-btn" data-mode="raw">Raw</button>
+                  <button type="button" class="mock-header-mode-btn active" data-mode="form">Form</button>
+                </div>
+                <div id="responseHeaderFormWrap">
+                  <div id="responseHeaderRows" class="mock-header-rows"></div>
+                  <button type="button" id="addResponseHeaderBtn" class="btn-sm" data-i18n="mock.add_header">+ 헤더 추가</button>
+                </div>
+                <textarea id="responseHeadersRaw" rows="4" placeholder='{"Content-Type": "application/json"}' style="display:none"></textarea>
               </label>
 
               <label class="span-2"><span data-i18n="mock.response_body">응답 바디(JSON)</span>
+                <div class="mock-body-mode">
+                  <button type="button" class="mock-mode-btn active" data-mode="raw" data-target="response">Raw</button>
+                  <button type="button" class="mock-mode-btn" data-mode="form" data-target="response">Form</button>
+                </div>
                 <textarea id="responseBody" rows="7" placeholder='{"ok": true, "data": []}'></textarea>
+                <div id="responseBodyForm" class="mock-kv-form" style="display:none"></div>
               </label>
 
               <div class="actions span-2">
-                <button type="button" id="previewBtn" data-i18n="mock.json_preview">JSON 미리보기/편집</button>
                 <button type="submit" id="saveBtn" data-i18n="common.save">저장</button>
                 <button type="button" id="resetBtn" data-i18n="common.reset">초기화</button>
                 <span id="statusText"></span>
@@ -77,11 +94,6 @@
             </form>
           </section>
 
-          <section class="panel">
-            <h2 data-i18n="mock.json_editor_title">JSON 테이블 편집기 (응답 바디)</h2>
-            <p class="desc" data-i18n-html="mock.json_editor_desc">JSON 붙여넣기 후 미리보기를 누르면 구조가 보입니다. 배열 항목은 <code>+ 복제</code>로 같은 값을 추가할 수 있습니다.</p>
-            <div id="jsonTableWrap"></div>
-          </section>
 
           <section class="panel">
             <h2 data-i18n="mock.saved_list">저장된 Mock 목록</h2>
@@ -105,6 +117,11 @@
             <h2 data-i18n="mock.log_title">요청/응답 로그</h2>
             <p class="desc" data-i18n="mock.log_desc">실제 목 엔드포인트로 들어온 트래픽이 저장됩니다. 최근 로그부터 표시합니다.</p>
             <div class="actions">
+              <select id="logFilter">
+                <option value="all" data-i18n="mock.log_filter_all">전체</option>
+                <option value="matched" data-i18n="mock.log_filter_matched">매칭됨</option>
+                <option value="unmatched" data-i18n="mock.log_filter_unmatched">미매칭</option>
+              </select>
               <button type="button" id="refreshLogsBtn" data-i18n="mock.log_refresh">로그 새로고침</button>
               <button type="button" id="clearLogsBtn" data-i18n="mock.log_clear">로그 비우기</button>
             </div>

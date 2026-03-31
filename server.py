@@ -474,10 +474,43 @@ def init_db():
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS mock_headers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            header_name TEXT NOT NULL UNIQUE,
+            is_standard INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
     # Seed i18n from JSON files (INSERT OR IGNORE — adds new keys without overwriting user edits)
     _seed_i18n(conn)
+    _seed_mock_headers(conn)
     conn.commit()
     conn.close()
+
+
+_STANDARD_HEADERS = [
+    "Accept", "Accept-Encoding", "Accept-Language",
+    "Access-Control-Allow-Credentials", "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods", "Access-Control-Allow-Origin",
+    "Authorization", "Cache-Control", "Content-Disposition",
+    "Content-Encoding", "Content-Language", "Content-Type",
+    "Cookie", "ETag", "Expires", "If-None-Match", "Location",
+    "Set-Cookie", "X-Forwarded-For", "X-Forwarded-Proto",
+    "X-Powered-By", "X-RateLimit-Limit", "X-RateLimit-Remaining",
+    "X-Request-ID",
+]
+
+
+def _seed_mock_headers(conn):
+    """Seed standard HTTP headers into mock_headers table."""
+    for name in _STANDARD_HEADERS:
+        conn.execute(
+            "INSERT OR IGNORE INTO mock_headers (header_name, is_standard) VALUES (?, 1)",
+            (name,),
+        )
 
 
 def _seed_i18n(conn):
@@ -743,19 +776,20 @@ class MockHandler(BaseHTTPRequestHandler):
             )
         self._send_json({"items": items})
 
-    def _list_logs(self, limit=200):
+    def _list_logs(self, limit=200, filter_val="all"):
         limit = max(1, min(int(limit), 1000))
         conn = get_conn()
-        rows = conn.execute(
-            """
-            SELECT id, matched_mock_id, matched, method, path, request_headers, request_body, request_json,
+        sql = """SELECT id, matched_mock_id, matched, method, path, request_headers, request_body, request_json,
                    response_status, response_headers, response_body, created_at
-            FROM traffic_logs
-            ORDER BY id DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+            FROM traffic_logs"""
+        params = []
+        if filter_val == "matched":
+            sql += " WHERE matched = 1"
+        elif filter_val == "unmatched":
+            sql += " WHERE matched = 0"
+        sql += " ORDER BY id DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(sql, params).fetchall()
         conn.close()
 
         items = []
@@ -824,6 +858,33 @@ class MockHandler(BaseHTTPRequestHandler):
         conn.commit()
         conn.close()
 
+    def _list_mock_headers(self):
+        conn = get_conn()
+        rows = conn.execute(
+            "SELECT header_name, is_standard FROM mock_headers ORDER BY header_name"
+        ).fetchall()
+        conn.close()
+        items = [{"name": r["header_name"], "is_standard": bool(r["is_standard"])} for r in rows]
+        self._send_json({"ok": True, "items": items})
+
+    def _create_mock_header(self):
+        raw = self._read_body()
+        try:
+            payload = json.loads(raw)
+            name = payload.get("name", "").strip()
+            if not name:
+                raise ValueError("name is required")
+            conn = get_conn()
+            conn.execute(
+                "INSERT OR IGNORE INTO mock_headers (header_name, is_standard) VALUES (?, 0)",
+                (name,),
+            )
+            conn.commit()
+            conn.close()
+            self._send_json({"ok": True})
+        except (json.JSONDecodeError, ValueError) as e:
+            self._send_json({"ok": False, "error": str(e)}, status=400)
+
     def _create_mock(self):
         raw = self._read_body()
         try:
@@ -836,7 +897,7 @@ class MockHandler(BaseHTTPRequestHandler):
 
             request_json = parse_json_or_none(payload.get("request_json"))
             response_status = int(payload.get("response_status", 200))
-            response_headers = payload.get("response_headers") or {}
+            response_headers = parse_json_or_none(payload.get("response_headers")) or {}
             response_body = parse_json_or_none(payload.get("response_body"))
 
             if not name:
@@ -883,7 +944,7 @@ class MockHandler(BaseHTTPRequestHandler):
 
             request_json = parse_json_or_none(payload.get("request_json"))
             response_status = int(payload.get("response_status", 200))
-            response_headers = payload.get("response_headers") or {}
+            response_headers = parse_json_or_none(payload.get("response_headers")) or {}
             response_body = parse_json_or_none(payload.get("response_body"))
 
             conn = get_conn()
@@ -1934,18 +1995,22 @@ input[type="checkbox"] {{ margin-right: 6px; }}
             "path": path,
             "received_body": req_json,
         }
-        self._log_traffic(
-            matched=False,
-            matched_mock_id=None,
-            method=method,
-            path=path,
-            request_headers=request_headers,
-            request_body=body_raw,
-            request_json=req_json,
-            response_status=404,
-            response_headers={"Content-Type": "application/json; charset=utf-8"},
-            response_body=miss_payload,
-        )
+        # 정적 파일 등 노이즈 요청은 로그에서 제외
+        _noise_ext = {".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
+                      ".woff", ".woff2", ".ttf", ".map", ".json"}
+        if not any(path.endswith(ext) for ext in _noise_ext):
+            self._log_traffic(
+                matched=False,
+                matched_mock_id=None,
+                method=method,
+                path=path,
+                request_headers=request_headers,
+                request_body=body_raw,
+                request_json=req_json,
+                response_status=404,
+                response_headers={"Content-Type": "application/json; charset=utf-8"},
+                response_body=miss_payload,
+            )
         self._send_json(
             miss_payload,
             status=404,
@@ -1965,9 +2030,13 @@ input[type="checkbox"] {{ margin-right: 6px; }}
         if path == "/api/mocks":
             self._list_mocks()
             return
+        if path == "/api/mock-headers":
+            self._list_mock_headers()
+            return
         if path == "/api/logs":
             limit = query.get("limit", ["200"])[0]
-            self._list_logs(limit=limit)
+            filter_val = query.get("filter", ["all"])[0]
+            self._list_logs(limit=limit, filter_val=filter_val)
             return
         if path == "/api/json/saves":
             self._list_json_saves()
@@ -2122,6 +2191,9 @@ input[type="checkbox"] {{ margin-right: 6px; }}
 
         if path == "/api/mocks":
             self._create_mock()
+            return
+        if path == "/api/mock-headers":
+            self._create_mock_header()
             return
         if path == "/api/translate":
             self._translate()

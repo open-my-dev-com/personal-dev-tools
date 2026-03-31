@@ -309,6 +309,67 @@ button:hover {
 }
 #statusText { color: var(--muted); font-size: 12px; margin-left: auto; }
 
+/* ===== Mock 폼 영역 구분 ===== */
+.form-grid > label.span-2,
+.form-grid > .span-2 {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+/* ===== Mock 헤더 입력 ===== */
+.mock-header-rows { margin-bottom: 6px; }
+.mock-header-rows .header-name-cell { position: relative; }
+.mock-header-rows .header-name-cell select {
+  width: 100%; border: none; background: transparent; padding: 4px 6px;
+  font-size: 13px; cursor: pointer;
+}
+.mock-header-rows .header-name-cell select:focus { outline: none; background: var(--accent-light); }
+.mock-header-rows .header-name-cell .kv-key {
+  width: 100%; border: none; background: transparent; padding: 4px 6px;
+  font-size: 13px; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+.mock-header-rows .header-name-cell .kv-key:focus { outline: none; background: var(--accent-light); }
+
+/* ===== Mock 바디 모드 토글 ===== */
+.mock-body-mode { display: inline-flex; gap: 0; margin-bottom: 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; }
+.mock-mode-btn, .mock-header-mode-btn {
+  padding: 5px 14px; border: none; border-right: 1px solid var(--line);
+  background: #fff; color: var(--text-secondary); cursor: pointer;
+  font-size: 12px; font-weight: 500; border-radius: 0;
+}
+.mock-mode-btn:last-child, .mock-header-mode-btn:last-child { border-right: none; }
+.mock-mode-btn:hover, .mock-header-mode-btn:hover { background: var(--bg); }
+.mock-mode-btn.active, .mock-header-mode-btn.active { background: var(--accent); color: #fff; }
+
+/* ===== Mock KV 폼 ===== */
+.mock-kv-form { margin-top: 4px; }
+.kv-form-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden;
+}
+.kv-form-table th {
+  padding: 6px 10px; background: var(--bg); color: var(--text-secondary);
+  font-size: 12px; font-weight: 600; text-align: left; border-bottom: 1px solid var(--line);
+}
+.kv-form-table td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.kv-form-table tr:last-child td { border-bottom: none; }
+.kv-form-table input {
+  width: 100%; border: none; background: transparent; padding: 4px 6px;
+  font-size: 13px; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+.kv-form-table input:focus { outline: none; background: var(--accent-light); }
+.kv-form-table .kv-del {
+  padding: 2px 8px; font-size: 14px; line-height: 1;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--danger); cursor: pointer;
+}
+.kv-form-table .kv-del:hover { background: #fee2e2; border-color: #fca5a5; }
+.kv-add, .kv-add-row { margin-top: 6px; }
+
+/* ===== Mock 테이블 액션 버튼 ===== */
+.mock-actions { display: flex; gap: 4px; align-items: center; }
+#mockTable, #logTable { margin-top: 12px; }
+
 /* ===== 툴바 (버튼 + 옵션 분리) ===== */
 .toolbar {
   display: flex;

@@ -6,21 +6,183 @@
   var $pathInput = $("#path");
   var $statusInput = $("#status");
   var $requestJsonInput = $("#requestJson");
-  var $responseHeadersInput = $("#responseHeaders");
+  var $responseHeaderRows = $("#responseHeaderRows");
+  var $addResponseHeaderBtn = $("#addResponseHeaderBtn");
   var $responseBodyInput = $("#responseBody");
-  var $previewBtn = $("#previewBtn");
+  var $requestJsonForm = $("#requestJsonForm");
+  var $responseBodyForm = $("#responseBodyForm");
   var $saveBtn = $("#saveBtn");
   var $resetBtn = $("#resetBtn");
   var $statusText = $("#statusText");
-  var $jsonTableWrap = $("#jsonTableWrap");
   var $mockTable = $("#mockTable");
   var $refreshLogsBtn = $("#refreshLogsBtn");
   var $clearLogsBtn = $("#clearLogsBtn");
+  var $logFilter = $("#logFilter");
   var $logTable = $("#logTable");
 
   if ($mockForm.length === 0) return;
 
   var editingId = null; // 수정 중인 mock ID
+  var headerOptions = []; // API에서 로드된 헤더 목록
+
+  // ── 헤더 드롭다운 관련 ──
+  function loadHeaderOptions(callback) {
+    $.getJSON("/api/mock-headers").done(function (data) {
+      headerOptions = (data.ok && data.items) ? data.items : [];
+      if (callback) callback();
+    }).fail(function () { headerOptions = []; if (callback) callback(); });
+  }
+
+  function buildHeaderSelect(selectedName) {
+    var $select = $("<select>").addClass("mock-header-select");
+    $select.append($("<option>").val("").text(""));
+    headerOptions.forEach(function (h) {
+      var $opt = $("<option>").val(h.name).text(h.name);
+      if (h.name === selectedName) $opt.prop("selected", true);
+      $select.append($opt);
+    });
+    $select.append($("<option>").val("__custom__").text(t("mock.header_custom")));
+    if (selectedName && !headerOptions.some(function (h) { return h.name === selectedName; })) {
+      $select.prepend($("<option>").val(selectedName).text(selectedName).prop("selected", true));
+    }
+    return $select;
+  }
+
+  function renderHeaderForm(headersObj) {
+    var $container = $responseHeaderRows;
+    $container.empty();
+    var html = '<table class="kv-form-table"><thead><tr>' +
+      '<th>' + t("mock.header_name") + '</th>' +
+      '<th>' + t("mock.header_value") + '</th>' +
+      '<th></th></tr></thead><tbody>';
+    if (headersObj && typeof headersObj === "object") {
+      Object.keys(headersObj).forEach(function (key) {
+        html += '<tr class="kv-row"><td class="header-name-cell"></td>' +
+          '<td><input class="kv-val" value="' + esc(headersObj[key] || "") + '" /></td>' +
+          '<td><button type="button" class="btn-sm btn-del kv-del">&times;</button></td></tr>';
+      });
+    }
+    html += '</tbody></table>';
+    $container.html(html);
+
+    // select 삽입 (DOM 빌드 후)
+    var keys = headersObj ? Object.keys(headersObj) : [];
+    $container.find(".header-name-cell").each(function (i) {
+      var name = keys[i] || "";
+      var $cell = $(this);
+      setupHeaderNameCell($cell, name);
+    });
+
+    // 삭제 버튼
+    $container.find(".kv-del").on("click", function () { $(this).closest("tr").remove(); });
+  }
+
+  function setupHeaderNameCell($cell, name) {
+    var $select = buildHeaderSelect(name);
+    var $customInput = $("<input>").attr("type", "text").addClass("kv-key")
+      .attr("placeholder", t("mock.header_name")).val("").hide();
+    $cell.empty().append($select).append($customInput);
+
+    $select.on("change", function () {
+      if ($(this).val() === "__custom__") {
+        $select.hide();
+        $customInput.show().focus();
+      }
+    });
+    $customInput.on("blur", function () {
+      var customName = $(this).val().trim();
+      if (customName) {
+        $.ajax({ url: "/api/mock-headers", method: "POST", contentType: "application/json",
+          data: JSON.stringify({ name: customName }), dataType: "json" });
+        $select.find("option[value='__custom__']").before(
+          $("<option>").val(customName).text(customName)
+        );
+        $select.val(customName).show();
+        $customInput.hide();
+        if (!headerOptions.some(function (h) { return h.name === customName; })) {
+          headerOptions.push({ name: customName, is_standard: false });
+          headerOptions.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        }
+      } else {
+        $select.val("").show();
+        $customInput.hide();
+      }
+    });
+  }
+
+  function addHeaderTableRow() {
+    var $tbody = $responseHeaderRows.find("tbody");
+    if (!$tbody.length) {
+      renderHeaderForm({});
+      $tbody = $responseHeaderRows.find("tbody");
+    }
+    var $row = $('<tr class="kv-row"><td class="header-name-cell"></td>' +
+      '<td><input class="kv-val" value="" /></td>' +
+      '<td><button type="button" class="btn-sm btn-del kv-del">&times;</button></td></tr>');
+    $row.find(".kv-del").on("click", function () { $row.remove(); });
+    $tbody.append($row);
+    setupHeaderNameCell($row.find(".header-name-cell"), "");
+  }
+
+  function collectHeaders() {
+    var headers = {};
+    $responseHeaderRows.find("tbody .kv-row").each(function () {
+      var $row = $(this);
+      var $select = $row.find(".mock-header-select");
+      var $customInput = $row.find(".kv-key");
+      var name = ($customInput.is(":visible") ? $customInput.val() : $select.val()) || "";
+      name = name.trim();
+      var value = $row.find(".kv-val").val().trim();
+      if (name && name !== "__custom__") headers[name] = value;
+    });
+    return headers;
+  }
+
+  function populateHeaderRows(headersObj) {
+    renderHeaderForm(headersObj);
+  }
+
+  $addResponseHeaderBtn.on("click", function () { addHeaderTableRow(); });
+
+  // 초기 빈 헤더 테이블 렌더링 (i18n 로드 후)
+  i18nReady(function () { renderHeaderForm({}); });
+
+  // 헤더 Raw/Form 모드 토글
+  var $headerFormWrap = $("#responseHeaderFormWrap");
+  var $headerRawTextarea = $("#responseHeadersRaw");
+
+  $(document).on("click", ".mock-header-mode-btn", function () {
+    var $btn = $(this);
+    var mode = $btn.data("mode");
+    $btn.addClass("active").siblings(".mock-header-mode-btn").removeClass("active");
+
+    if (mode === "raw") {
+      // Form → Raw: 현재 row 데이터를 JSON으로 변환
+      var headers = collectHeaders();
+      $headerRawTextarea.val(Object.keys(headers).length ? JSON.stringify(headers, null, 2) : "{}");
+      $headerFormWrap.hide();
+      $headerRawTextarea.show();
+    } else {
+      // Raw → Form: textarea JSON을 파싱하여 row로 변환
+      var raw = $headerRawTextarea.val().trim();
+      if (raw) {
+        try {
+          var parsed = JSON.parse(raw);
+          populateHeaderRows(parsed);
+        } catch (e) {
+          showToast(t("mock.invalid_header_json"), "error");
+          $btn.removeClass("active");
+          $btn.siblings("[data-mode='raw']").addClass("active");
+          return;
+        }
+      }
+      $headerRawTextarea.hide();
+      $headerFormWrap.show();
+    }
+  });
+
+  // 헤더 옵션 초기 로드
+  loadHeaderOptions();
 
   function setStatus(msg, isError) {
     $statusText.text(msg);
@@ -73,8 +235,8 @@
           "<td><code>" + esc(m.path) + "</code></td>" +
           '<td class="text-sm">' + esc(reqSummary) + "</td>" +
           '<td class="text-sm">' + m.response_status + " / " + esc(resSummary) + "</td>" +
-          '<td><button class="mock-edit-btn" data-id="' + m.id + '">' + t("common.edit") + '</button> ' +
-          '<button class="mock-del-btn" data-id="' + m.id + '">' + t("common.delete") + '</button></td>');
+          '<td class="mock-actions"><button class="btn-sm mock-edit-btn" data-id="' + m.id + '">' + t("common.edit") + '</button>' +
+          '<button class="btn-sm btn-danger mock-del-btn" data-id="' + m.id + '">' + t("common.delete") + '</button></td>');
         $tbody.append($tr);
       });
 
@@ -120,7 +282,7 @@
     $pathInput.val(mock.path);
     $statusInput.val(mock.response_status);
     $requestJsonInput.val(mock.request_json ? prettyJson(mock.request_json) : "");
-    $responseHeadersInput.val(prettyJson(mock.response_headers || {}));
+    populateHeaderRows(mock.response_headers || {});
     $responseBodyInput.val(mock.response_body ? prettyJson(mock.response_body) : "");
     $saveBtn.text(t("mock.edit_save"));
     setStatus(t("mock.edit_mode", {id: mock.id}));
@@ -130,22 +292,43 @@
   function resetForm() {
     editingId = null;
     $mockForm[0].reset();
-    $responseHeadersInput.val("{}");
+    $responseHeaderRows.empty();
+    $requestJsonForm.empty().hide();
+    $requestJsonInput.show();
+    $responseBodyForm.empty().hide();
+    $responseBodyInput.show();
+    $(".mock-mode-btn[data-mode='raw']").addClass("active");
+    $(".mock-mode-btn[data-mode='form']").removeClass("active");
+    $(".mock-header-mode-btn[data-mode='form']").addClass("active");
+    $(".mock-header-mode-btn[data-mode='raw']").removeClass("active");
+    $headerFormWrap.show();
+    $headerRawTextarea.hide().val("{}");
     $saveBtn.text(t("common.save"));
-    $jsonTableWrap.html("");
     setStatus("");
   }
 
   // ── 저장/수정 ──
   $mockForm.on("submit", function (e) {
     e.preventDefault();
+    // Form 모드인 경우 폼 데이터를 textarea에 동기화
+    ["request", "response"].forEach(function (target) {
+      var els = getBodyFormElements(target);
+      if (els.$form.is(":visible") && els.$form.find(".kv-form-table").length) {
+        var isArray = els.$form.find("thead th").length > 3;
+        var data = collectKvData(els.$form, isArray);
+        els.$textarea.val(JSON.stringify(data, null, 2));
+      }
+    });
+
     var payload = {
       name: $nameInput.val().trim(),
       method: $methodInput.val(),
       path: $pathInput.val().trim(),
       response_status: parseInt($statusInput.val()) || 200,
       request_json: $requestJsonInput.val().trim() || null,
-      response_headers: $responseHeadersInput.val().trim() || "{}",
+      response_headers: $headerRawTextarea.is(":visible")
+        ? ($headerRawTextarea.val().trim() || "{}")
+        : JSON.stringify(collectHeaders()),
       response_body: $responseBodyInput.val().trim() || null,
     };
 
@@ -158,8 +341,10 @@
         setStatus(t("mock.invalid_request_json"), true); return;
       }
     }
-    try { JSON.parse(payload.response_headers); } catch (e) {
-      setStatus(t("mock.invalid_header_json"), true); return;
+    if ($headerRawTextarea.is(":visible")) {
+      try { JSON.parse(payload.response_headers); } catch (e) {
+        setStatus(t("mock.invalid_header_json"), true); return;
+      }
     }
     if (payload.response_body) {
       try { JSON.parse(payload.response_body); } catch (e) {
@@ -200,39 +385,53 @@
 
   $resetBtn.on("click", resetForm);
 
-  // ── JSON 미리보기/편집 (응답 바디) ──
-  $previewBtn.on("click", function () {
-    var raw = $responseBodyInput.val().trim();
-    if (!raw) {
-      $jsonTableWrap.html('<p style="color:#888">' + t("mock.body_required") + '</p>');
-      return;
-    }
-    var parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      $jsonTableWrap.html('<p style="color:var(--danger)">' + t("mock.json_parse_error", {msg: esc(e.message)}) + "</p>");
-      return;
-    }
-    renderJsonTable(parsed);
-  });
+  // ── 바디 입력 모드 토글 (Raw ↔ Form) ──
+  function kvAutoType(val) {
+    if (val === "null") return null;
+    if (val === "true") return true;
+    if (val === "false") return false;
+    if (val !== "" && !isNaN(val)) return Number(val);
+    try { var p = JSON.parse(val); if (typeof p === "object") return p; } catch (_) {}
+    return val;
+  }
 
-  function renderJsonTable(data) {
+  function renderKvForm($container, data) {
+    $container.empty();
     if (Array.isArray(data)) {
-      renderArrayTable(data);
+      renderKvArray($container, data);
     } else if (typeof data === "object" && data !== null) {
-      renderObjectTable(data);
+      renderKvObject($container, data);
     } else {
-      $jsonTableWrap.html("<pre>" + esc(JSON.stringify(data, null, 2)) + "</pre>");
+      $container.html('<p style="color:#888">' + t("mock.form_parse_error") + '</p>');
     }
   }
 
-  function renderArrayTable(arr) {
-    if (arr.length === 0) {
-      $jsonTableWrap.html('<p style="color:#888">' + t("mock.empty_array") + '</p>');
-      return;
-    }
-    // 배열의 첫 항목에서 키 추출
+  function renderKvObject($container, obj) {
+    var html = '<table class="kv-form-table"><thead><tr><th>' + t("mock.field_key") +
+      '</th><th>' + t("mock.field_value") + '</th><th></th></tr></thead><tbody>';
+    Object.keys(obj).forEach(function (k) {
+      var val = obj[k];
+      var display = val === null ? "null" : typeof val === "object" ? JSON.stringify(val) : String(val);
+      html += '<tr class="kv-row"><td><input class="kv-key" value="' + esc(k) + '" /></td>' +
+        '<td><input class="kv-val" value="' + esc(display) + '" /></td>' +
+        '<td><button type="button" class="btn-sm btn-del kv-del">&times;</button></td></tr>';
+    });
+    html += '</tbody></table>';
+    html += '<button type="button" class="btn-sm kv-add">' + t("mock.add_field") + '</button>';
+    $container.html(html);
+    $container.find(".kv-del").on("click", function () { $(this).closest("tr").remove(); });
+    $container.find(".kv-add").on("click", function () {
+      var $tbody = $container.find("tbody");
+      var $row = $('<tr class="kv-row"><td><input class="kv-key" value="" /></td>' +
+        '<td><input class="kv-val" value="" /></td>' +
+        '<td><button type="button" class="btn-sm btn-del kv-del">&times;</button></td></tr>');
+      $row.find(".kv-del").on("click", function () { $row.remove(); });
+      $tbody.append($row);
+    });
+  }
+
+  function renderKvArray($container, arr) {
+    // 배열의 키 추출
     var keys = [];
     arr.forEach(function (item) {
       if (typeof item === "object" && item !== null) {
@@ -241,107 +440,116 @@
         });
       }
     });
-
     if (keys.length === 0) {
-      $jsonTableWrap.html("<pre>" + esc(JSON.stringify(arr, null, 2)) + "</pre>");
+      $container.html('<p style="color:#888">' + esc(JSON.stringify(arr, null, 2)) + '</p>');
       return;
     }
-
-    var html = '<table class="json-edit-table"><thead><tr>';
-    html += "<th>#</th>";
-    keys.forEach(function (k) { html += "<th>" + esc(k) + "</th>"; });
-    html += "<th>" + t("common.action") + "</th></tr></thead><tbody>";
-
+    var html = '<table class="kv-form-table"><thead><tr><th>#</th>';
+    keys.forEach(function (k) { html += '<th>' + esc(k) + '</th>'; });
+    html += '<th></th></tr></thead><tbody>';
     arr.forEach(function (item, idx) {
-      html += "<tr>";
-      html += "<td>" + (idx + 1) + "</td>";
+      html += '<tr class="kv-row" data-idx="' + idx + '"><td>' + (idx + 1) + '</td>';
       keys.forEach(function (k) {
-        var val = item[k];
+        var val = item ? item[k] : undefined;
         var display = val === null || val === undefined ? "" :
           typeof val === "object" ? JSON.stringify(val) : String(val);
-        html += '<td><input class="json-cell" data-idx="' + idx + '" data-key="' + esc(k) + '" value="' + esc(display) + '" /></td>';
+        html += '<td><input class="kv-val" data-key="' + esc(k) + '" value="' + esc(display) + '" /></td>';
       });
-      html += '<td><button class="json-clone-btn" data-idx="' + idx + '">' + t("mock.clone") + '</button></td>';
-      html += "</tr>";
+      html += '<td><button type="button" class="btn-sm btn-del kv-row-del">&times;</button></td></tr>';
     });
-    html += "</tbody></table>";
-    html += '<button type="button" class="json-apply-btn" style="margin-top:8px">' + t("mock.apply_edit") + '</button>';
-
-    $jsonTableWrap.html(html);
-
-    // 복제 버튼
-    $jsonTableWrap.find(".json-clone-btn").on("click", function () {
-      var idx = parseInt($(this).data("idx"));
-      var clone = JSON.parse(JSON.stringify(arr[idx]));
-      arr.splice(idx + 1, 0, clone);
-      $responseBodyInput.val(JSON.stringify(arr, null, 2));
-      renderArrayTable(arr);
+    html += '</tbody></table>';
+    html += '<button type="button" class="btn-sm kv-add-row">' + t("mock.add_field") + '</button>';
+    $container.html(html);
+    $container.find(".kv-row-del").on("click", function () { $(this).closest("tr").remove(); });
+    $container.find(".kv-add-row").on("click", function () {
+      var $tbody = $container.find("tbody");
+      var idx = $tbody.find("tr").length;
+      var rowHtml = '<tr class="kv-row" data-idx="' + idx + '"><td>' + (idx + 1) + '</td>';
+      keys.forEach(function (k) {
+        rowHtml += '<td><input class="kv-val" data-key="' + esc(k) + '" value="" /></td>';
+      });
+      rowHtml += '<td><button type="button" class="btn-sm btn-del kv-row-del">&times;</button></td></tr>';
+      var $row = $(rowHtml);
+      $row.find(".kv-row-del").on("click", function () { $row.remove(); });
+      $tbody.append($row);
     });
+  }
 
-    // 반영 버튼
-    var $applyBtn = $jsonTableWrap.find(".json-apply-btn");
-    if ($applyBtn.length) {
-      $applyBtn.on("click", function () {
-        $jsonTableWrap.find(".json-cell").each(function () {
-          var $input = $(this);
-          var idx = parseInt($input.data("idx"));
-          var key = $input.data("key");
-          var val = $input.val();
-          // 숫자/boolean/null 자동 변환
-          if (val === "null") arr[idx][key] = null;
-          else if (val === "true") arr[idx][key] = true;
-          else if (val === "false") arr[idx][key] = false;
-          else if (val !== "" && !isNaN(val)) arr[idx][key] = Number(val);
-          else {
-            try { arr[idx][key] = JSON.parse(val); } catch (e) { arr[idx][key] = val; }
-          }
+  function collectKvData($container, isArray) {
+    if (isArray) {
+      var keys = [];
+      $container.find("thead th").each(function (i) {
+        if (i > 0 && $(this).text()) keys.push($(this).text());
+      });
+      keys.pop(); // 마지막은 액션 열
+      var arr = [];
+      $container.find("tbody .kv-row").each(function () {
+        var obj = {};
+        $(this).find(".kv-val").each(function () {
+          var key = $(this).data("key");
+          obj[key] = kvAutoType($(this).val());
         });
-        $responseBodyInput.val(JSON.stringify(arr, null, 2));
-        setStatus(t("mock.edit_applied"));
+        arr.push(obj);
       });
+      return arr;
+    } else {
+      var result = {};
+      $container.find("tbody .kv-row").each(function () {
+        var key = $(this).find(".kv-key").val().trim();
+        var val = $(this).find(".kv-val").val();
+        if (key) result[key] = kvAutoType(val);
+      });
+      return result;
     }
   }
 
-  function renderObjectTable(obj) {
-    var keys = Object.keys(obj);
-    var html = '<table class="json-edit-table"><thead><tr><th>' + t("json.key_ph") + '</th><th>' + t("json.value_ph") + '</th></tr></thead><tbody>';
-    keys.forEach(function (k) {
-      var val = obj[k];
-      var display = val === null || val === undefined ? "" :
-        typeof val === "object" ? JSON.stringify(val) : String(val);
-      html += "<tr>";
-      html += "<td>" + esc(k) + "</td>";
-      html += '<td><input class="json-cell" data-key="' + esc(k) + '" value="' + esc(display) + '" /></td>';
-      html += "</tr>";
-    });
-    html += "</tbody></table>";
-    html += '<button type="button" class="json-apply-btn" style="margin-top:8px">' + t("mock.apply_edit") + '</button>';
-    $jsonTableWrap.html(html);
-
-    var $applyBtn = $jsonTableWrap.find(".json-apply-btn");
-    if ($applyBtn.length) {
-      $applyBtn.on("click", function () {
-        $jsonTableWrap.find(".json-cell").each(function () {
-          var $input = $(this);
-          var key = $input.data("key");
-          var val = $input.val();
-          if (val === "null") obj[key] = null;
-          else if (val === "true") obj[key] = true;
-          else if (val === "false") obj[key] = false;
-          else if (val !== "" && !isNaN(val)) obj[key] = Number(val);
-          else {
-            try { obj[key] = JSON.parse(val); } catch (e) { obj[key] = val; }
-          }
-        });
-        $responseBodyInput.val(JSON.stringify(obj, null, 2));
-        setStatus(t("mock.edit_applied"));
-      });
-    }
+  function getBodyFormElements(target) {
+    if (target === "request") return { $textarea: $requestJsonInput, $form: $requestJsonForm };
+    return { $textarea: $responseBodyInput, $form: $responseBodyForm };
   }
+
+  $(document).on("click", ".mock-mode-btn", function () {
+    var $btn = $(this);
+    var target = $btn.data("target");
+    var mode = $btn.data("mode");
+    var els = getBodyFormElements(target);
+
+    $btn.addClass("active").siblings(".mock-mode-btn").removeClass("active");
+
+    if (mode === "form") {
+      var raw = els.$textarea.val().trim();
+      if (!raw) {
+        renderKvForm(els.$form, {});
+        els.$textarea.hide();
+        els.$form.show();
+        return;
+      }
+      try {
+        var parsed = JSON.parse(raw);
+        renderKvForm(els.$form, parsed);
+        els.$textarea.hide();
+        els.$form.show();
+      } catch (e) {
+        showToast(t("mock.form_parse_error"), "error");
+        $btn.removeClass("active");
+        $btn.siblings("[data-mode='raw']").addClass("active");
+      }
+    } else {
+      // Form → Raw: 폼 데이터 수집 후 textarea에 반영
+      if (els.$form.is(":visible") && els.$form.find(".kv-form-table").length) {
+        var isArray = els.$form.find("thead th").length > 3;
+        var data = collectKvData(els.$form, isArray);
+        els.$textarea.val(JSON.stringify(data, null, 2));
+      }
+      els.$form.hide().empty();
+      els.$textarea.show();
+    }
+  });
 
   // ── 로그 ──
   function loadLogs() {
-    $.getJSON("/api/logs?limit=200").done(function (data) {
+    var filter = $logFilter.val() || "all";
+    $.getJSON("/api/logs?limit=200&filter=" + filter).done(function (data) {
       var items = data.items || [];
       var $tbody = $logTable.find("tbody");
       $tbody.html("");
@@ -371,6 +579,7 @@
   }
 
   $refreshLogsBtn.on("click", loadLogs);
+  $logFilter.on("change", loadLogs);
 
   $clearLogsBtn.on("click", function () {
     if (!confirm(t("mock.confirm_clear_logs"))) return;
@@ -393,4 +602,5 @@
   // 초기 로드
   loadMocks();
   loadLogs();
+  i18nReady(function () { loadMocks(); loadLogs(); });
 })();
