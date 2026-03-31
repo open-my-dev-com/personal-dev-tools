@@ -474,6 +474,8 @@ def init_db():
         )
         """
     )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS mock_headers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             header_name TEXT NOT NULL UNIQUE,
