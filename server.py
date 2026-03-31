@@ -836,7 +836,7 @@ class MockHandler(BaseHTTPRequestHandler):
 
             request_json = parse_json_or_none(payload.get("request_json"))
             response_status = int(payload.get("response_status", 200))
-            response_headers = payload.get("response_headers") or {}
+            response_headers = parse_json_or_none(payload.get("response_headers")) or {}
             response_body = parse_json_or_none(payload.get("response_body"))
 
             if not name:
@@ -883,7 +883,7 @@ class MockHandler(BaseHTTPRequestHandler):
 
             request_json = parse_json_or_none(payload.get("request_json"))
             response_status = int(payload.get("response_status", 200))
-            response_headers = payload.get("response_headers") or {}
+            response_headers = parse_json_or_none(payload.get("response_headers")) or {}
             response_body = parse_json_or_none(payload.get("response_body"))
 
             conn = get_conn()

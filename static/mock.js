@@ -393,4 +393,5 @@
   // 초기 로드
   loadMocks();
   loadLogs();
+  i18nReady(function () { loadMocks(); loadLogs(); });
 })();
