@@ -153,10 +153,10 @@ except ImportError:
 
 # ── AI Provider abstraction ──
 AI_PROVIDERS = {
-    "openai":  {"label": "OpenAI",  "default_model": "gpt-4.1-nano"},
-    "gemini":  {"label": "Gemini",  "default_model": "gemini-2.0-flash-lite"},
+    "openai":  {"label": "OpenAI",  "default_model": "gpt-5-nano"},
+    "gemini":  {"label": "Gemini",  "default_model": "gemini-3.1-flash-lite-preview"},
     "claude":  {"label": "Claude",  "default_model": "claude-haiku-4-5-20251001"},
-    "grok":    {"label": "Grok",    "default_model": "grok-3-mini-fast"},
+    "grok":    {"label": "Grok",    "default_model": "grok-4.1-fast"},
 }
 
 
@@ -247,11 +247,15 @@ def _ai_chat(provider, system_prompt, user_prompt, model=None):
     elif provider == "grok":
         if xai_sdk is None:
             raise RuntimeError("xai-sdk package not installed")
+        from xai_sdk.chat import system as _xai_system, user as _xai_user
         client = xai_sdk.Client(api_key=api_key)
-        conversation = client.chat.create(model=model)
-        conversation.add_system(system_prompt)
-        resp = conversation.add_user(user_prompt)
-        return resp.text.strip()
+        chat = client.chat.create(
+            model=model,
+            messages=[_xai_system(system_prompt)],
+        )
+        chat.append(_xai_user(user_prompt))
+        resp = chat.sample()
+        return (resp.content or "").strip()
 
     else:
         raise ValueError(f"Unsupported provider: {provider}")
